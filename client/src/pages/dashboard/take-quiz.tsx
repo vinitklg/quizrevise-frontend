@@ -74,11 +74,44 @@ const TakeQuiz = () => {
     setSelectedAnswers(newAnswers);
   };
   
+  const calculateScore = () => {
+    let correctCount = 0;
+    selectedAnswers.forEach((selectedAnswer, index) => {
+      if (questions[index] && selectedAnswer === questions[index].correctAnswer) {
+        correctCount++;
+      }
+    });
+    return Math.round((correctCount / questions.length) * 100);
+  };
+
+  const handleQuizCompletion = async () => {
+    const score = calculateScore();
+    try {
+      await apiRequest("POST", `/api/quizzes/complete/${quiz.id}/${quizSet.id}`, {
+        score,
+        answers: selectedAnswers
+      });
+      setShowResults(true);
+      toast({
+        title: "Quiz Completed",
+        description: `You scored ${score}% on this quiz set!`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error completing quiz:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit quiz. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      setShowResults(true);
+      handleQuizCompletion();
     }
   };
   

@@ -61,7 +61,9 @@ export interface IStorage {
   getQuizSchedulesByUser(userId: number): Promise<QuizSchedule[]>;
   getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]>;
   getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]>;
+  getQuizSchedulesByQuizAndSet(quizId: number, quizSetId: number, userId: number): Promise<QuizSchedule[]>;
   updateQuizSchedule(id: number, data: Partial<QuizSchedule>): Promise<QuizSchedule | undefined>;
+  getQuizPerformance(userId: number, subjectId?: number, startDate?: Date, endDate?: Date): Promise<{ date: string; score: number; quizSet: number }[]>;
 
   // Doubt Query operations
   createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
@@ -257,6 +259,64 @@ export class DatabaseStorage implements IStorage {
       .where(eq(quizSchedules.id, id))
       .returning();
     return schedule;
+  }
+  
+  async getQuizSchedulesByQuizAndSet(quizId: number, quizSetId: number, userId: number): Promise<QuizSchedule[]> {
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.quizId, quizId),
+          eq(quizSchedules.quizSetId, quizSetId),
+          eq(quizSchedules.userId, userId)
+        )
+      );
+  }
+  
+  async getQuizPerformance(
+    userId: number, 
+    subjectId?: number, 
+    startDate?: Date, 
+    endDate?: Date
+  ): Promise<{ date: string; score: number; quizSet: number }[]> {
+    let query = db
+      .select({
+        date: quizSchedules.completedDate,
+        score: quizSchedules.score,
+        quizSet: quizSchedules.quizSetId,
+        quizId: quizSchedules.quizId
+      })
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.userId, userId),
+          eq(quizSchedules.status, "completed"),
+          isNotNull(quizSchedules.completedDate),
+          isNotNull(quizSchedules.score)
+        )
+      );
+    
+    if (subjectId) {
+      query = query.innerJoin(quizzes, eq(quizzes.id, quizSchedules.quizId))
+        .where(eq(quizzes.subjectId, subjectId));
+    }
+    
+    if (startDate) {
+      query = query.where(gte(quizSchedules.completedDate, startDate));
+    }
+    
+    if (endDate) {
+      query = query.where(lte(quizSchedules.completedDate, endDate));
+    }
+    
+    const results = await query.orderBy(asc(quizSchedules.completedDate));
+    
+    return results.map(result => ({
+      date: result.date?.toISOString().split('T')[0] || '',
+      score: result.score || 0,
+      quizSet: result.quizSet
+    }));
   }
 
   // Doubt Query operations

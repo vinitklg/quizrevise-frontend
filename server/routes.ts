@@ -347,6 +347,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/quizzes/complete/:quizId/:quizSetId", isAuthenticated, async (req, res) => {
+    try {
+      const { quizId, quizSetId } = req.params;
+      const { score, answers } = req.body;
+      const userId = req.session.userId!;
+      
+      // Find the quiz schedule
+      const schedules = await storage.getQuizSchedulesByQuizAndSet(
+        parseInt(quizId), 
+        parseInt(quizSetId), 
+        userId
+      );
+      
+      if (!schedules || schedules.length === 0) {
+        return res.status(404).json({ message: "Quiz schedule not found" });
+      }
+      
+      // Update the quiz schedule as completed
+      const updatedSchedule = await storage.updateQuizSchedule(schedules[0].id, {
+        status: "completed",
+        completedDate: new Date(),
+        score: score
+      });
+      
+      res.json({
+        success: true,
+        schedule: updatedSchedule
+      });
+    } catch (error) {
+      console.error("Error completing quiz:", error);
+      res.status(500).json({ message: "Failed to complete quiz" });
+    }
+  });
+  
   app.get("/api/quizzes/today", isAuthenticated, async (req, res) => {
     try {
       const schedules = await storage.getTodayQuizSchedules(req.session.userId!);
