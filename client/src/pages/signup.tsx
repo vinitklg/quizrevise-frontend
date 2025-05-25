@@ -26,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 const signupSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().optional(),
@@ -55,11 +56,13 @@ const Signup = () => {
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      username: "",
       email: "",
       password: "",
       firstName: "",
       lastName: "",
       phoneNumber: "",
+      preferredSubject: "",
     },
   });
 
@@ -141,6 +144,20 @@ const Signup = () => {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="johndoe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

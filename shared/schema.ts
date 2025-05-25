@@ -5,6 +5,7 @@ import { z } from "zod";
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   firstName: text("first_name"),
@@ -126,6 +127,7 @@ export const loginSchema = z.object({
 });
 
 export const signupSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().optional(),
