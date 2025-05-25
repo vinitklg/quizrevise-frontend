@@ -22,7 +22,7 @@ import {
   type InsertDoubtQuery
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lt } from "drizzle-orm";
+import { eq, and, gte, lt, gt, lte, asc, desc, isNull, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -280,37 +280,42 @@ export class DatabaseStorage implements IStorage {
     startDate?: Date, 
     endDate?: Date
   ): Promise<{ date: string; score: number; quizSet: number }[]> {
-    let query = db
+    // Build the condition for filtering
+    const whereConditions = [
+      eq(quizSchedules.userId, userId),
+      eq(quizSchedules.status, "completed"),
+      sql`${quizSchedules.completedDate} IS NOT NULL`,
+      sql`${quizSchedules.score} IS NOT NULL`
+    ];
+    
+    // Add subject filter if provided
+    let queryBuilder = db
       .select({
         date: quizSchedules.completedDate,
         score: quizSchedules.score,
         quizSet: quizSchedules.quizSetId,
         quizId: quizSchedules.quizId
       })
-      .from(quizSchedules)
-      .where(
-        and(
-          eq(quizSchedules.userId, userId),
-          eq(quizSchedules.status, "completed"),
-          isNotNull(quizSchedules.completedDate),
-          isNotNull(quizSchedules.score)
-        )
-      );
+      .from(quizSchedules);
     
     if (subjectId) {
-      query = query.innerJoin(quizzes, eq(quizzes.id, quizSchedules.quizId))
-        .where(eq(quizzes.subjectId, subjectId));
+      queryBuilder = queryBuilder
+        .innerJoin(quizzes, eq(quizzes.id, quizSchedules.quizId))
+        .where(and(...whereConditions, eq(quizzes.subjectId, subjectId)));
+    } else {
+      queryBuilder = queryBuilder.where(and(...whereConditions));
     }
     
+    // Add date range filters if provided
     if (startDate) {
-      query = query.where(gte(quizSchedules.completedDate, startDate));
+      queryBuilder = queryBuilder.where(gte(quizSchedules.completedDate, startDate));
     }
     
     if (endDate) {
-      query = query.where(lte(quizSchedules.completedDate, endDate));
+      queryBuilder = queryBuilder.where(lte(quizSchedules.completedDate, endDate));
     }
     
-    const results = await query.orderBy(asc(quizSchedules.completedDate));
+    const results = await queryBuilder.orderBy(asc(quizSchedules.completedDate));
     
     return results.map(result => ({
       date: result.date?.toISOString().split('T')[0] || '',

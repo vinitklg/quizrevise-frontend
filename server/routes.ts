@@ -347,6 +347,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/quizzes/performance", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { subjectId, startDate, endDate } = req.query;
+      
+      let subjectIdNumber: number | undefined;
+      let startDateObj: Date | undefined;
+      let endDateObj: Date | undefined;
+      
+      if (subjectId && typeof subjectId === 'string') {
+        subjectIdNumber = parseInt(subjectId);
+      }
+      
+      if (startDate && typeof startDate === 'string') {
+        startDateObj = new Date(startDate);
+      }
+      
+      if (endDate && typeof endDate === 'string') {
+        endDateObj = new Date(endDate);
+      }
+      
+      const performanceData = await storage.getQuizPerformance(
+        userId, 
+        subjectIdNumber, 
+        startDateObj, 
+        endDateObj
+      );
+      
+      res.json(performanceData);
+    } catch (error) {
+      console.error("Error fetching performance data:", error);
+      res.status(500).json({ message: "Failed to get performance data" });
+    }
+  });
+
   app.post("/api/quizzes/complete/:quizId/:quizSetId", isAuthenticated, async (req, res) => {
     try {
       const { quizId, quizSetId } = req.params;

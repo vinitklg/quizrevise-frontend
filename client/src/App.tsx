@@ -20,6 +20,7 @@ import TakeQuiz from "@/pages/dashboard/take-quiz";
 import TodayQuizzes from "@/pages/dashboard/today";
 import AskDoubts from "@/pages/dashboard/doubts";
 import Settings from "@/pages/dashboard/settings";
+import Performance from "@/pages/dashboard/performance";
 import AdminDashboard from "@/pages/admin";
 
 function Router() {
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/dashboard/take-quiz/:id" component={TakeQuiz} />
       <Route path="/dashboard/today" component={TodayQuizzes} />
       <Route path="/dashboard/doubts" component={AskDoubts} />
+      <Route path="/dashboard/performance" component={Performance} />
       <Route path="/dashboard/settings" component={Settings} />
       
       {/* Admin pages */}
