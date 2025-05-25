@@ -97,9 +97,11 @@ export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, cre
 export const insertQuizSetSchema = createInsertSchema(quizSets).omit({ id: true, createdAt: true });
 export const insertQuizScheduleSchema = createInsertSchema(quizSchedules).omit({ id: true, completedDate: true, score: true });
 export const insertDoubtQuerySchema = createInsertSchema(doubtQueries).omit({ id: true, answer: true, createdAt: true, answeredAt: true, status: true }).extend({
+  question: z.string().min(10, "Question must be at least 10 characters"),
   board: z.string().optional(),
   class: z.string().optional(),
   subjectName: z.string().optional(),
+  subjectId: z.number().optional(), // Make subjectId optional since we're using text fields now
   fileUrl: z.string().optional(),
   fileType: z.string().optional()
 });

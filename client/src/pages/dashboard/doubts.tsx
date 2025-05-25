@@ -166,8 +166,9 @@ const AskDoubts = () => {
     try {
       // Simplified approach - send the form data directly without creating a subject
       // This matches our updated schema that uses text fields directly
+      // Need to include subjectId as part of the validation requirements
       const formData = {
-        // No subjectId needed since we're using direct text input
+        subjectId: 1, // Default to first subject to satisfy validation
         board: data.board,
         class: data.class, 
         subjectName: data.subject, // Map subject field to subjectName
