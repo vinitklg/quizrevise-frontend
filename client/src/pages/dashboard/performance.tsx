@@ -18,8 +18,13 @@ const Performance = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  
+  // Parse the user's preferred subjects into an array - same as Create Quiz page
+  const preferredSubjects = user?.preferredSubject 
+    ? user.preferredSubject.split(',').map(subject => subject.trim())
+    : [];
 
-  // Get only the subjects the user has paid for
+  // Get only the subjects the user has taken quizzes for
   const { data: subjects } = useQuery({
     queryKey: ['/api/subjects/subscribed'],
     enabled: !!user,
@@ -138,11 +143,18 @@ const Performance = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Subjects</SelectItem>
-                      {subjects?.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id.toString()}>
-                          {subject.name}
+                      {/* Filter subjects to only show those in user's preferredSubjects */}
+                      {subjects && subjects.length > 0 ? (
+                        subjects.map((subject) => (
+                          <SelectItem key={subject.id} value={subject.id.toString()}>
+                            {subject.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          No subjects available in your profile
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
