@@ -164,42 +164,13 @@ const AskDoubts = () => {
     setIsSubmitting(true);
     
     try {
-      // Normally we would upload the file to a cloud storage here
-      // and then save the URL in the database
-      // For demonstration, we'll just use a dummy URL
-      
-      // Find or create a subject based on the entered text
-      let subjectId: number;
-      
-      // First try to find a matching subject
-      const subjectResponse = await fetch(`/api/subjects?name=${encodeURIComponent(data.subject)}`);
-      const matchingSubjects = await subjectResponse.json();
-      
-      if (matchingSubjects && matchingSubjects.length > 0) {
-        // Use existing subject
-        subjectId = matchingSubjects[0].id;
-      } else {
-        // Create a new subject
-        const createSubjectResponse = await apiRequest("POST", "/api/subjects", {
-          name: data.subject,
-          board: data.board,
-          gradeLevel: parseInt(data.class) || 10, // Default to 10 if parsing fails
-          description: `Auto-created subject from doubt query: ${data.subject}`
-        });
-        
-        if (!createSubjectResponse.ok) {
-          throw new Error("Failed to create subject for doubt query");
-        }
-        
-        const newSubject = await createSubjectResponse.json();
-        subjectId = newSubject.id;
-      }
-      
+      // Simplified approach - send the form data directly without creating a subject
+      // This matches our updated schema that uses text fields directly
       const formData = {
-        subjectId: subjectId,
+        // No subjectId needed since we're using direct text input
         board: data.board,
-        class: data.class,
-        subjectName: data.subject,
+        class: data.class, 
+        subjectName: data.subject, // Map subject field to subjectName
         question: data.question,
         fileUrl: data.fileUrl || "",
         fileType: data.fileType || "",
