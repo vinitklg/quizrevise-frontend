@@ -69,7 +69,7 @@ export async function generateQuizQuestions(
 export async function answerDoubtQuery(
   question: string,
   subject: string,
-  grade: number,
+  grade: number | string,
   board: string
 ): Promise<string> {
   try {

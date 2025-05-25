@@ -97,6 +97,9 @@ export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, cre
 export const insertQuizSetSchema = createInsertSchema(quizSets).omit({ id: true, createdAt: true });
 export const insertQuizScheduleSchema = createInsertSchema(quizSchedules).omit({ id: true, completedDate: true, score: true });
 export const insertDoubtQuerySchema = createInsertSchema(doubtQueries).omit({ id: true, answer: true, createdAt: true, answeredAt: true, status: true }).extend({
+  board: z.string().optional(),
+  class: z.string().optional(),
+  subjectName: z.string().optional(),
   fileUrl: z.string().optional(),
   fileType: z.string().optional()
 });

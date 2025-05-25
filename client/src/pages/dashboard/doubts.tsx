@@ -69,6 +69,9 @@ interface DoubtQuery {
   subjectId: number;
   question: string;
   answer: string | null;
+  board?: string;
+  class?: string;
+  subjectName?: string;
   status: string;
   fileUrl?: string;
   fileType?: string;
@@ -430,6 +433,26 @@ const AskDoubts = () => {
                                   {formatDate(doubt.createdAt)}
                                 </div>
                               </div>
+                              
+                              {/* Display board, class, and subject information */}
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {doubt.board && (
+                                  <span className="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900/30 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
+                                    Board: {doubt.board}
+                                  </span>
+                                )}
+                                {doubt.class && (
+                                  <span className="inline-flex items-center rounded-md bg-green-50 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
+                                    Class: {doubt.class}
+                                  </span>
+                                )}
+                                {doubt.subjectName && (
+                                  <span className="inline-flex items-center rounded-md bg-purple-50 dark:bg-purple-900/30 px-2 py-1 text-xs font-medium text-purple-700 dark:text-purple-300">
+                                    Subject: {doubt.subjectName}
+                                  </span>
+                                )}
+                              </div>
+                              
                               <p className="text-gray-700 dark:text-gray-300">{doubt.question}</p>
                               
                               {doubt.fileUrl && (

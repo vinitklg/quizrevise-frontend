@@ -658,17 +658,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id
       });
       
-      // Get subject details
-      let subjectName = "general";
-      if (validatedData.subjectId) {
-        const [subject] = await storage.getSubjectsByBoard(user.board || "CBSE");
-        if (subject) {
-          subjectName = subject.name;
-        }
-      }
+      // Get subject details - use the direct input from the form
+      let subjectName = validatedData.subjectName || "general";
+      let boardName = validatedData.board || user.board || "CBSE";
+      let className = validatedData.class || user.grade?.toString() || "10";
       
       // Generate answer with OpenAI, potentially analyzing file content if a file was uploaded
-      let questionText = validatedData.question;
+      let questionText = `[Board: ${boardName}] [Class: ${className}] [Subject: ${subjectName}]\n\n${validatedData.question}`;
       
       if (validatedData.fileUrl) {
         questionText += `\n\nThe student has also uploaded a ${validatedData.fileType} file for reference. Please analyze the content carefully.`;
