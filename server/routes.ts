@@ -356,8 +356,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let startDateObj: Date | undefined;
       let endDateObj: Date | undefined;
       
-      if (subjectId && typeof subjectId === 'string') {
-        subjectIdNumber = parseInt(subjectId);
+      if (subjectId && typeof subjectId === 'string' && subjectId !== 'all') {
+        const parsed = parseInt(subjectId);
+        if (!isNaN(parsed)) {
+          subjectIdNumber = parsed;
+        }
       }
       
       if (startDate && typeof startDate === 'string') {
