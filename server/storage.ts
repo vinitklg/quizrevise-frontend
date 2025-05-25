@@ -87,11 +87,15 @@ export class DatabaseStorage implements IStorage {
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     
+    // Ensure subscribedSubjects is an array if not provided
+    const subscribedSubjects = userData.subscribedSubjects || [];
+    
     const [user] = await db
       .insert(users)
       .values({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword,
+        subscribedSubjects
       })
       .returning();
     return user;

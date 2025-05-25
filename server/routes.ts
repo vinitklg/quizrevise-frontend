@@ -68,10 +68,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already in use" });
       }
       
-      // Set initial empty subscribed subjects array
+      // Set initial empty subscribed subjects array and ensure required fields
       const userData = {
         ...validatedData,
-        subscribedSubjects: []
+        username: validatedData.username,
+        email: validatedData.email,
+        password: validatedData.password,
+        firstName: validatedData.firstName || null,
+        lastName: validatedData.lastName || null,
+        phoneNumber: validatedData.phoneNumber || null,
+        preferredSubject: validatedData.preferredSubject || null,
+        grade: validatedData.grade || null,
+        board: validatedData.board || null,
+        subscribedSubjects: [],
+        subscriptionTier: "free"
       };
       
       const user = await storage.createUser(userData);
