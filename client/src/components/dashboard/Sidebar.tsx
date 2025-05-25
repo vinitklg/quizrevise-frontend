@@ -9,7 +9,8 @@ import {
   Settings,
   BookOpen,
   MessageSquare,
-  LogOut
+  LogOut,
+  BarChart2
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -20,6 +21,7 @@ const Sidebar = () => {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Create Quiz", href: "/dashboard/create-quiz", icon: PlusCircle },
     { name: "Today's Quizzes", href: "/dashboard/today", icon: BookOpen },
+    { name: "Performance", href: "/dashboard/performance", icon: BarChart2 },
     { name: "Ask Doubts", href: "/dashboard/doubts", icon: MessageSquare },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
