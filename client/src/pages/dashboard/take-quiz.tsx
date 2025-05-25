@@ -306,15 +306,28 @@ const TakeQuiz = () => {
                       onValueChange={handleAnswerChange}
                       className="space-y-3"
                     >
-                      {currentQuestion.options.map((option, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <RadioGroupItem value={String.fromCharCode(65 + index)} id={`option-${index}`} />
-                          <Label htmlFor={`option-${index}`} className="flex-1">
-                            <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
+                      {/* Handle options safely in case they're not in the expected format */}
+                      {Array.isArray(currentQuestion.options) ? 
+                        currentQuestion.options.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <RadioGroupItem value={String.fromCharCode(65 + index)} id={`option-${index}`} />
+                            <Label htmlFor={`option-${index}`} className="flex-1">
+                              <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
+                              {option}
+                            </Label>
+                          </div>
+                        )) : 
+                        // If options is not an array, create default options
+                        ["A", "B", "C", "D"].map((letter, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <RadioGroupItem value={letter} id={`option-${index}`} />
+                            <Label htmlFor={`option-${index}`} className="flex-1">
+                              <span className="font-medium mr-2">{letter}.</span>
+                              Option {letter}
+                            </Label>
+                          </div>
+                        ))
+                      }
                     </RadioGroup>
                     
                     {!selectedAnswers[currentQuestionIndex] && (
