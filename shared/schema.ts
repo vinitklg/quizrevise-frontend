@@ -79,6 +79,9 @@ export const doubtQueries = pgTable("doubt_queries", {
   question: text("question").notNull(),
   answer: text("answer"),
   subjectId: integer("subject_id"),
+  board: text("board"), // New: Student's board (CBSE, ICSE, etc.)
+  class: text("class"), // New: Student's class/grade
+  subjectName: text("subject_name"), // New: Subject name as text
   status: text("status").default("pending").notNull(), // pending, answered
   fileUrl: text("file_url"), // URL to the uploaded file (if any)
   fileType: text("file_type"), // Type of file uploaded (PDF, Word, etc.)

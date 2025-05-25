@@ -40,9 +40,15 @@ import { FileText, HelpCircle, Loader2, Upload } from "lucide-react";
 
 // Form schema for asking a doubt
 const doubtSchema = z.object({
-  subjectId: z.string({
-    required_error: "Please select a subject",
-  }),
+  board: z.string({
+    required_error: "Please enter your board",
+  }).min(2, "Board must be at least 2 characters"),
+  class: z.string({
+    required_error: "Please enter your class",
+  }).min(1, "Class must not be empty"),
+  subject: z.string({
+    required_error: "Please enter a subject",
+  }).min(2, "Subject must be at least 2 characters"),
   question: z.string()
     .min(10, "Question must be at least 10 characters")
     .max(1000, "Question must be less than 1000 characters"),
@@ -91,6 +97,9 @@ const AskDoubts = () => {
   const form = useForm<DoubtFormValues>({
     resolver: zodResolver(doubtSchema),
     defaultValues: {
+      board: user?.board || "",
+      class: user?.grade?.toString() || "",
+      subject: "",
       question: "",
     },
   });
@@ -156,15 +165,52 @@ const AskDoubts = () => {
       // and then save the URL in the database
       // For demonstration, we'll just use a dummy URL
       
+      // Find or create a subject based on the entered text
+      let subjectId: number;
+      
+      // First try to find a matching subject
+      const subjectResponse = await fetch(`/api/subjects?name=${encodeURIComponent(data.subject)}`);
+      const matchingSubjects = await subjectResponse.json();
+      
+      if (matchingSubjects && matchingSubjects.length > 0) {
+        // Use existing subject
+        subjectId = matchingSubjects[0].id;
+      } else {
+        // Create a new subject
+        const createSubjectResponse = await apiRequest("POST", "/api/subjects", {
+          name: data.subject,
+          board: data.board,
+          gradeLevel: parseInt(data.class) || 10, // Default to 10 if parsing fails
+          description: `Auto-created subject from doubt query: ${data.subject}`
+        });
+        
+        if (!createSubjectResponse.ok) {
+          throw new Error("Failed to create subject for doubt query");
+        }
+        
+        const newSubject = await createSubjectResponse.json();
+        subjectId = newSubject.id;
+      }
+      
       const formData = {
-        ...data,
-        subjectId: parseInt(data.subjectId),
+        subjectId: subjectId,
+        board: data.board,
+        class: data.class,
+        subjectName: data.subject,
+        question: data.question,
+        fileUrl: data.fileUrl || "",
+        fileType: data.fileType || "",
       };
       
       await apiRequest("POST", "/api/doubt-queries", formData);
       
-      // Reset form
-      form.reset();
+      // Reset form with defaults
+      form.reset({
+        board: user?.board || "",
+        class: user?.grade?.toString() || "",
+        subject: "",
+        question: "",
+      });
       removeFile();
       
       // Invalidate queries to fetch updated data
@@ -225,39 +271,49 @@ const AskDoubts = () => {
                   <CardContent>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormField
-                          control={form.control}
-                          name="subjectId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Subject</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="board"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Board</FormLabel>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a subject" />
-                                  </SelectTrigger>
+                                  <Input placeholder="e.g., CBSE, ICSE, ISC" {...field} />
                                 </FormControl>
-                                <SelectContent>
-                                  {isLoadingSubjects ? (
-                                    <SelectItem value="loading" disabled>Loading subjects...</SelectItem>
-                                  ) : subjects && subjects.length > 0 ? (
-                                    subjects.map((subject: Subject) => (
-                                      <SelectItem key={subject.id} value={subject.id.toString()}>
-                                        {subject.name}
-                                      </SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="none" disabled>No subjects available</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="class"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Class</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., 10, 11, 12" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="subject"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Subject</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., Mathematics, Physics" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                         
                         <FormField
                           control={form.control}
