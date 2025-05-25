@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,6 @@ import { AlertTriangle, CheckCircle2, CreditCard, User } from "lucide-react";
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
   phoneNumber: z.string()
     .min(10, "Phone number must be at least 10 digits")
@@ -75,14 +74,20 @@ const Settings = () => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Fetch subjects for the dropdown
+  const { data: subjects = [] } = useQuery<{id: number, name: string}[]>({
+    queryKey: ["/api/subjects"],
+  });
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
-      username: user?.username || "",
       email: user?.email || "",
+      phoneNumber: user?.phoneNumber || "",
+      preferredSubject: user?.preferredSubject?.toString() || "",
     },
   });
 
@@ -266,10 +271,10 @@ const Settings = () => {
                             
                             <FormField
                               control={profileForm.control}
-                              name="username"
+                              name="phoneNumber"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Username</FormLabel>
+                                  <FormLabel>Phone Number</FormLabel>
                                   <FormControl>
                                     <Input {...field} />
                                   </FormControl>
@@ -287,6 +292,38 @@ const Settings = () => {
                                   <FormControl>
                                     <Input {...field} type="email" />
                                   </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={profileForm.control}
+                              name="preferredSubject"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Preferred Subject</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select your preferred subject" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {subjects && subjects.length > 0 ? (
+                                        subjects.map((subject) => (
+                                          <SelectItem key={subject.id} value={subject.id.toString()}>
+                                            {subject.name}
+                                          </SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="none" disabled>No subjects available</SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}
