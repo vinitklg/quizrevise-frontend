@@ -44,12 +44,12 @@ interface Chapter {
 }
 
 const createQuizSchema = z.object({
-  subjectId: z.string({
-    required_error: "Please select a subject",
-  }),
-  chapterId: z.string({
-    required_error: "Please select a chapter",
-  }),
+  subject: z.string({
+    required_error: "Please enter a subject",
+  }).min(2, "Subject must be at least 2 characters"),
+  chapter: z.string({
+    required_error: "Please enter a chapter",
+  }).min(2, "Chapter must be at least 2 characters"),
   title: z.string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
@@ -83,6 +83,8 @@ const CreateQuiz = () => {
   const form = useForm<CreateQuizFormValues>({
     resolver: zodResolver(createQuizSchema),
     defaultValues: {
+      subject: "",
+      chapter: "",
       title: "",
       topic: "",
       questionTypes: [],
@@ -95,10 +97,10 @@ const CreateQuiz = () => {
   const onSubmit = async (data: CreateQuizFormValues) => {
     setIsSubmitting(true);
     try {
-      // Convert string IDs to numbers
+      // Use text inputs for subject and chapter
       const formattedData = {
-        subjectId: parseInt(data.subjectId),
-        chapterId: parseInt(data.chapterId),
+        subject: data.subject,
+        chapter: data.chapter,
         title: data.title,
         topic: data.topic || data.title,
         questionTypes: data.questionTypes && data.questionTypes.length ? data.questionTypes : ["mcq"],
@@ -135,11 +137,7 @@ const CreateQuiz = () => {
     }
   };
 
-  const handleSubjectChange = (value: string) => {
-    setSelectedSubjectId(value);
-    form.setValue("subjectId", value);
-    form.setValue("chapterId", ""); // Reset chapter when subject changes
-  };
+  // No longer need the handleSubjectChange function since we're using text inputs
 
   return (
     <div className="flex h-screen overflow-hidden">
