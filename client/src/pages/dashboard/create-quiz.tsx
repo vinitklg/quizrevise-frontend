@@ -44,9 +44,12 @@ interface Chapter {
 }
 
 const createQuizSchema = z.object({
+  class: z.string({
+    required_error: "Please select a class",
+  }),
   subject: z.string({
-    required_error: "Please enter a subject",
-  }).min(2, "Subject must be at least 2 characters"),
+    required_error: "Please select a subject",
+  }),
   chapter: z.string({
     required_error: "Please enter a chapter",
   }).min(2, "Chapter must be at least 2 characters"),
@@ -67,11 +70,25 @@ const CreateQuiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // No longer need to query subjects and chapters since we're using text inputs
+  
+  // Get user's subscribed subjects
+  const subscribedSubjects = user?.subscribedSubjects || [];
+  
+  // Define class options (grades 6-12)
+  const classOptions = [
+    { value: "6", label: "Class 6" },
+    { value: "7", label: "Class 7" },
+    { value: "8", label: "Class 8" },
+    { value: "9", label: "Class 9" },
+    { value: "10", label: "Class 10" },
+    { value: "11", label: "Class 11" },
+    { value: "12", label: "Class 12" },
+  ];
 
   const form = useForm<CreateQuizFormValues>({
     resolver: zodResolver(createQuizSchema),
     defaultValues: {
+      class: "",
       subject: "",
       chapter: "",
       title: "",
@@ -86,8 +103,9 @@ const CreateQuiz = () => {
   const onSubmit = async (data: CreateQuizFormValues) => {
     setIsSubmitting(true);
     try {
-      // Use text inputs for subject and chapter
+      // Include all form data
       const formattedData = {
+        class: data.class,
         subject: data.subject,
         chapter: data.chapter,
         title: data.title,
@@ -190,18 +208,83 @@ const CreateQuiz = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={form.control}
+                              name="class"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Class</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a class" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {classOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                          {option.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription>
+                                    Select your class/grade
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
                               name="subject"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Subject</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      placeholder="e.g., Physics, Chemistry, Mathematics" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
+                                  <Select 
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a subject" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {user?.subscriptionTier === "free" ? (
+                                        // Free users can select any subject
+                                        <>
+                                          <SelectItem value="Physics">Physics</SelectItem>
+                                          <SelectItem value="Chemistry">Chemistry</SelectItem>
+                                          <SelectItem value="Mathematics">Mathematics</SelectItem>
+                                          <SelectItem value="Biology">Biology</SelectItem>
+                                          <SelectItem value="English">English</SelectItem>
+                                          <SelectItem value="History">History</SelectItem>
+                                          <SelectItem value="Geography">Geography</SelectItem>
+                                          <SelectItem value="Computer Science">Computer Science</SelectItem>
+                                        </>
+                                      ) : (
+                                        // Paid users can only select subjects they've subscribed to
+                                        user?.subscribedSubjects && user.subscribedSubjects.length > 0 ? (
+                                          user.subscribedSubjects.map((subject, index) => (
+                                            <SelectItem key={index} value={subject}>
+                                              {subject}
+                                            </SelectItem>
+                                          ))
+                                        ) : (
+                                          <SelectItem value="none" disabled>
+                                            No subscribed subjects. Please update your subscription.
+                                          </SelectItem>
+                                        )
+                                      )}
+                                    </SelectContent>
+                                  </Select>
                                   <FormDescription>
-                                    Enter the subject name
+                                    {user?.subscriptionTier !== "free" 
+                                      ? "Select from your subscribed subjects" 
+                                      : "Select a subject"}
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>

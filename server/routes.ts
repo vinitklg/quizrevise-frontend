@@ -195,25 +195,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quiz routes
   app.post("/api/quizzes", isAuthenticated, async (req, res) => {
     try {
-      // Create custom validation schema for text inputs
-      const textInputQuizSchema = z.object({
-        subject: z.string().min(2, "Subject must be at least 2 characters"),
-        chapter: z.string().min(2, "Chapter must be at least 2 characters"),
-        title: z.string().min(3, "Title must be at least 3 characters"),
-        topic: z.string().min(3, "Topic must be at least 3 characters"),
-        questionTypes: z.array(z.string()).min(1, "Select at least one question type"),
-        bloomTaxonomy: z.array(z.string()).min(1, "Select at least one Bloom's taxonomy level"),
-        difficultyLevels: z.array(z.string()).min(1, "Select at least one difficulty level"),
-        numberOfQuestions: z.number().min(5).max(50),
-      });
+      // Get the request data and ensure required fields
+      const reqData = req.body;
       
-      const validatedData = textInputQuizSchema.parse(req.body);
+      // Basic validation
+      if (!reqData.subject || !reqData.chapter || !reqData.title || !reqData.topic || !reqData.class) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
       
-      // Get the user to check subscription tier
+      // Get the user to check subscription tier and validate subject access
       const user = await storage.getUser(req.session.userId!);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      // Verify subject is in the user's subscribed subjects if they're on a paid plan
+      if (user.subscriptionTier !== "free" && user.subscribedSubjects && user.subscribedSubjects.length > 0) {
+        if (!user.subscribedSubjects.includes(reqData.subject)) {
+          return res.status(403).json({ 
+            message: "You don't have access to this subject. Please subscribe to it first."
+          });
+        }
+      }
+      
+      // Process the data
+      const validatedData = {
+        subjectId: 1, // Using default ID as we're using subject name directly
+        chapterId: 1, // Using default ID as we're using chapter name directly
+        title: reqData.title,
+        topic: reqData.topic,
+        questionTypes: reqData.questionTypes || ["mcq"],
+        bloomTaxonomy: reqData.bloomTaxonomy || ["knowledge", "comprehension"],
+        difficultyLevels: reqData.difficultyLevels || ["standard"],
+        numberOfQuestions: reqData.numberOfQuestions || 10
+      };
       
       // Check if user has reached their quiz limit
       const today = new Date();
@@ -262,8 +277,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Use the subject and chapter text directly from the form data
-      const subject = { name: validatedData.subject };
-      const chapter = { name: validatedData.chapter };
+      const subject = { name: reqData.subject };
+      const chapter = { name: reqData.chapter };
       
       // Generate 8 sets of questions with the new parameters
       const quizSets = [];
