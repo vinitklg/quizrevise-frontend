@@ -15,20 +15,16 @@ import { cn } from '@/lib/utils';
 
 const Performance = () => {
   const { user } = useAuth();
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
-  // Parse the user's preferred subjects into an array - same as Create Quiz page
-  const preferredSubjects = user?.preferredSubject 
-    ? user.preferredSubject.split(',').map(subject => subject.trim())
-    : [];
-
-  // Get only the subjects the user has taken quizzes for
-  const { data: subjects } = useQuery({
-    queryKey: ['/api/subjects/subscribed'],
-    enabled: !!user,
-  });
+  // Hard code the commercial subjects that match the Create Quiz page
+  const commercialSubjects = [
+    "commercial studies",
+    "economic",
+    "accounts"
+  ];
 
   const { data: performanceData, isLoading } = useQuery({
     queryKey: ['/api/quizzes/performance', selectedSubject, startDate, endDate],
@@ -143,18 +139,12 @@ const Performance = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Subjects</SelectItem>
-                      {/* Filter subjects to only show those in user's preferredSubjects */}
-                      {subjects && subjects.length > 0 ? (
-                        subjects.map((subject) => (
-                          <SelectItem key={subject.id} value={subject.id.toString()}>
-                            {subject.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="none" disabled>
-                          No subjects available in your profile
+                      {/* Show commercial subjects from Create Quiz page */}
+                      {commercialSubjects.map((subject, index) => (
+                        <SelectItem key={`commercial-${index}`} value={subject}>
+                          {subject}
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
