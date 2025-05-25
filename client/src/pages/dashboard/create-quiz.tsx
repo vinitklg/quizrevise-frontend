@@ -44,6 +44,9 @@ interface Chapter {
 }
 
 const createQuizSchema = z.object({
+  board: z.string({
+    required_error: "Please select a board",
+  }),
   class: z.string({
     required_error: "Please select a class",
   }),
@@ -74,6 +77,13 @@ const CreateQuiz = () => {
   // Get user's subscribed subjects
   const subscribedSubjects = user?.subscribedSubjects || [];
   
+  // Define board options
+  const boardOptions = [
+    { value: "CBSE", label: "CBSE" },
+    { value: "ICSE", label: "ICSE" },
+    { value: "ISC", label: "ISC" }
+  ];
+  
   // Define class options (grades 6-12)
   const classOptions = [
     { value: "6", label: "Class 6" },
@@ -85,11 +95,13 @@ const CreateQuiz = () => {
     { value: "12", label: "Class 12" },
   ];
 
+  // Use profile data for default values
   const form = useForm<CreateQuizFormValues>({
     resolver: zodResolver(createQuizSchema),
     defaultValues: {
-      class: "",
-      subject: "",
+      board: user?.board || "CBSE",
+      class: user?.grade?.toString() || "",
+      subject: user?.preferredSubject?.split(",")[0]?.trim() || "",
       chapter: "",
       title: "",
       topic: "",
@@ -105,6 +117,7 @@ const CreateQuiz = () => {
     try {
       // Include all form data
       const formattedData = {
+        board: data.board,
         class: data.class,
         subject: data.subject,
         chapter: data.chapter,
@@ -208,6 +221,37 @@ const CreateQuiz = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={form.control}
+                              name="board"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Board</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a board" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {boardOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                          {option.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription>
+                                    Using board from your profile
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
                               name="class"
                               render={({ field }) => (
                                 <FormItem>
@@ -230,7 +274,7 @@ const CreateQuiz = () => {
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    Select your class/grade
+                                    Using class from your profile
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
