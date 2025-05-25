@@ -302,28 +302,13 @@ const Settings = () => {
                               name="preferredSubject"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Preferred Subject</FormLabel>
-                                  <Select 
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select your preferred subject" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {subjects && subjects.length > 0 ? (
-                                        subjects.map((subject) => (
-                                          <SelectItem key={subject.id} value={subject.id.toString()}>
-                                            {subject.name}
-                                          </SelectItem>
-                                        ))
-                                      ) : (
-                                        <SelectItem value="none" disabled>No subjects available</SelectItem>
-                                      )}
-                                    </SelectContent>
-                                  </Select>
+                                  <FormLabel>Preferred Subjects</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Physics, Chemistry, Mathematics" {...field} />
+                                  </FormControl>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Enter multiple subjects separated by commas (e.g., Physics, Mathematics)
+                                  </p>
                                   <FormMessage />
                                 </FormItem>
                               )}

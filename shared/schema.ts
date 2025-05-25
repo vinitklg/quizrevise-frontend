@@ -10,7 +10,7 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   phoneNumber: text("phone_number"),
-  preferredSubject: integer("preferred_subject"), // Primary subject of interest
+  preferredSubject: text("preferred_subject"), // Primary subjects of interest (comma-separated)
   grade: integer("grade"),
   board: text("board"), // CBSE, ICSE, or ISC
   subscribedSubjects: text("subscribed_subjects").array(), // Array of subject IDs the user has subscribed to
