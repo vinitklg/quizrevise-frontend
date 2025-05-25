@@ -93,7 +93,9 @@ const TodayQuizzes = ({ userId }: TodayQuizProps) => {
                 <span>Scheduled for {new Date(schedule.scheduledDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               <div className="text-sm font-medium">
-                {new Date(schedule.scheduledDate) <= new Date() ? (
+                {schedule.status === "completed" ? (
+                  <span className="text-blue-600 dark:text-blue-400">Completed</span>
+                ) : new Date(schedule.scheduledDate) <= new Date() ? (
                   <span className="text-green-600 dark:text-green-400">Ready to take</span>
                 ) : (
                   <span className="text-amber-600 dark:text-amber-400">
@@ -106,10 +108,10 @@ const TodayQuizzes = ({ userId }: TodayQuizProps) => {
               <Link href={`/dashboard/take-quiz/${schedule.quizId}?scheduleId=${schedule.id}`} className="w-full">
                 <Button
                   className="w-full"
-                  disabled={new Date(schedule.scheduledDate) > new Date()}
+                  disabled={schedule.status === "completed" || new Date(schedule.scheduledDate) > new Date()}
                 >
-                  Start Quiz
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  {schedule.status === "completed" ? "Completed" : "Start Quiz"}
+                  {schedule.status !== "completed" && <ChevronRight className="h-4 w-4 ml-1" />}
                 </Button>
               </Link>
             </CardFooter>

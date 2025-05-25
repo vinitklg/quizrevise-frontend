@@ -30,7 +30,7 @@ const Performance = () => {
       let url = '/api/quizzes/performance';
       const params = new URLSearchParams();
       
-      if (selectedSubject) {
+      if (selectedSubject && selectedSubject !== "all") {
         params.append('subjectId', selectedSubject);
       }
       
@@ -56,7 +56,7 @@ const Performance = () => {
   });
 
   const resetFilters = () => {
-    setSelectedSubject("");
+    setSelectedSubject("all");
     setStartDate(undefined);
     setEndDate(undefined);
   };
@@ -136,7 +136,7 @@ const Performance = () => {
                       <SelectValue placeholder="All Subjects" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Subjects</SelectItem>
+                      <SelectItem value="all">All Subjects</SelectItem>
                       {subjects?.map((subject) => (
                         <SelectItem key={subject.id} value={subject.id.toString()}>
                           {subject.name}
