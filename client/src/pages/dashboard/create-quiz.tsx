@@ -180,6 +180,26 @@ const CreateQuiz = () => {
                             )}
                           />
                           
+                          <FormField
+                            control={form.control}
+                            name="topic"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Topic</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="e.g., Force and Acceleration" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Specify the particular topic within the chapter you want to focus on
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={form.control}
@@ -252,6 +272,110 @@ const CreateQuiz = () => {
                               )}
                             />
                           </div>
+                          
+                          <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                            <h3 className="font-medium">Question Types</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { id: 'mcq', label: 'Multiple Choice' },
+                                { id: 'assertion-reasoning', label: 'Assertion & Reasoning' },
+                                { id: 'fill-in-blanks', label: 'Fill in the Blanks' },
+                                { id: 'true-false', label: 'True/False' }
+                              ].map((type) => (
+                                <div key={type.id} className="flex items-center space-x-2">
+                                  <Checkbox id={type.id} 
+                                    onCheckedChange={(checked) => {
+                                      const current = form.getValues('questionTypes') || [];
+                                      if (checked) {
+                                        form.setValue('questionTypes', [...current, type.id]);
+                                      } else {
+                                        form.setValue('questionTypes', current.filter(t => t !== type.id));
+                                      }
+                                    }}
+                                  />
+                                  <label htmlFor={type.id} className="text-sm font-normal">{type.label}</label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                            <h3 className="font-medium">Bloom's Taxonomy Levels</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { id: 'knowledge', label: 'Knowledge' },
+                                { id: 'comprehension', label: 'Comprehension' },
+                                { id: 'application', label: 'Application' },
+                                { id: 'analysis', label: 'Analysis' },
+                                { id: 'synthesis', label: 'Synthesis' },
+                                { id: 'evaluation', label: 'Evaluation' }
+                              ].map((level) => (
+                                <div key={level.id} className="flex items-center space-x-2">
+                                  <Checkbox id={level.id}
+                                    onCheckedChange={(checked) => {
+                                      const current = form.getValues('bloomTaxonomy') || [];
+                                      if (checked) {
+                                        form.setValue('bloomTaxonomy', [...current, level.id]);
+                                      } else {
+                                        form.setValue('bloomTaxonomy', current.filter(t => t !== level.id));
+                                      }
+                                    }}
+                                  />
+                                  <label htmlFor={level.id} className="text-sm font-normal">{level.label}</label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                            <h3 className="font-medium">Difficulty Levels</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                              {[
+                                { id: 'basic', label: 'Basic' },
+                                { id: 'standard', label: 'Standard' },
+                                { id: 'challenging', label: 'Challenging' },
+                                { id: 'most-challenging', label: 'Most Challenging' }
+                              ].map((level) => (
+                                <div key={level.id} className="flex items-center space-x-2">
+                                  <Checkbox id={level.id}
+                                    onCheckedChange={(checked) => {
+                                      const current = form.getValues('difficultyLevels') || [];
+                                      if (checked) {
+                                        form.setValue('difficultyLevels', [...current, level.id]);
+                                      } else {
+                                        form.setValue('difficultyLevels', current.filter(t => t !== level.id));
+                                      }
+                                    }}
+                                  />
+                                  <label htmlFor={level.id} className="text-sm font-normal">{level.label}</label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <FormField
+                            control={form.control}
+                            name="numberOfQuestions"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Number of Questions</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min={5}
+                                    max={50}
+                                    placeholder="10" 
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Choose between 5 and 50 questions per quiz set
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                           
                           <Button 
                             type="submit" 
