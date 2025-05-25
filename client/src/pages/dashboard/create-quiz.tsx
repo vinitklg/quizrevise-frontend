@@ -11,6 +11,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, BookOpen, Sparkles } from "lucide-react";
 
@@ -51,18 +53,11 @@ const createQuizSchema = z.object({
   title: z.string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
-  topic: z.string()
-    .min(3, "Topic must be at least 3 characters")
-    .max(100, "Topic must be less than 100 characters"),
-  questionTypes: z.array(z.string())
-    .min(1, "Select at least one question type"),
-  bloomTaxonomy: z.array(z.string())
-    .min(1, "Select at least one Bloom's taxonomy level"),
-  difficultyLevels: z.array(z.string())
-    .min(1, "Select at least one difficulty level"),
-  numberOfQuestions: z.number()
-    .min(5, "Minimum 5 questions required")
-    .max(50, "Maximum 50 questions allowed"),
+  topic: z.string().optional(),
+  questionTypes: z.array(z.string()).optional(),
+  bloomTaxonomy: z.array(z.string()).optional(),
+  difficultyLevels: z.array(z.string()).optional(),
+  numberOfQuestions: z.number().optional(),
 });
 
 type CreateQuizFormValues = z.infer<typeof createQuizSchema>;
@@ -89,6 +84,11 @@ const CreateQuiz = () => {
     resolver: zodResolver(createQuizSchema),
     defaultValues: {
       title: "",
+      topic: "",
+      questionTypes: [],
+      bloomTaxonomy: [],
+      difficultyLevels: [],
+      numberOfQuestions: 10,
     },
   });
 
@@ -100,9 +100,15 @@ const CreateQuiz = () => {
         subjectId: parseInt(data.subjectId),
         chapterId: parseInt(data.chapterId),
         title: data.title,
+        topic: data.topic || data.title,
+        questionTypes: data.questionTypes && data.questionTypes.length ? data.questionTypes : ["mcq"],
+        bloomTaxonomy: data.bloomTaxonomy && data.bloomTaxonomy.length ? data.bloomTaxonomy : ["knowledge", "comprehension"],
+        difficultyLevels: data.difficultyLevels && data.difficultyLevels.length ? data.difficultyLevels : ["standard"],
+        numberOfQuestions: data.numberOfQuestions || 10,
       };
 
       const response = await apiRequest("POST", "/api/quizzes", formattedData);
+      const responseData = await response.json();
       
       toast({
         title: "Quiz created successfully!",
@@ -110,7 +116,7 @@ const CreateQuiz = () => {
       });
       
       // Navigate to take the quiz
-      navigate(`/dashboard/take-quiz/${response.quiz.id}`);
+      navigate(`/dashboard/take-quiz/${responseData.id}`);
     } catch (error) {
       let errorMessage = "Failed to create quiz. Please try again.";
       
@@ -166,6 +172,23 @@ const CreateQuiz = () => {
                                 <FormControl>
                                   <Input 
                                     placeholder="e.g., Newton's Laws of Motion" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="topic"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Topic</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="e.g., Force and Acceleration" 
                                     {...field} 
                                   />
                                 </FormControl>
@@ -246,6 +269,183 @@ const CreateQuiz = () => {
                               )}
                             />
                           </div>
+
+                          <FormField
+                            control={form.control}
+                            name="questionTypes"
+                            render={() => (
+                              <FormItem>
+                                <div className="mb-4">
+                                  <FormLabel className="text-base">Question Types</FormLabel>
+                                  <FormDescription>
+                                    Select the types of questions to include in this quiz.
+                                  </FormDescription>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['mcq', 'assertion-reasoning', 'fill-in-blanks', 'true-false'].map((type) => (
+                                    <FormField
+                                      key={type}
+                                      control={form.control}
+                                      name="questionTypes"
+                                      render={({ field }) => {
+                                        return (
+                                          <FormItem
+                                            key={type}
+                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                          >
+                                            <FormControl>
+                                              <Checkbox
+                                                checked={field.value?.includes(type)}
+                                                onCheckedChange={(checked) => {
+                                                  return checked
+                                                    ? field.onChange([...field.value, type])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                          (value) => value !== type
+                                                        )
+                                                      )
+                                                }}
+                                              />
+                                            </FormControl>
+                                            <FormLabel className="font-normal capitalize">
+                                              {type.replace(/-/g, ' ')}
+                                            </FormLabel>
+                                          </FormItem>
+                                        )
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="bloomTaxonomy"
+                            render={() => (
+                              <FormItem>
+                                <div className="mb-4">
+                                  <FormLabel className="text-base">Bloom's Taxonomy Levels</FormLabel>
+                                  <FormDescription>
+                                    Select the cognitive levels to target in this quiz.
+                                  </FormDescription>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['knowledge', 'comprehension', 'application', 'analysis', 'synthesis', 'evaluation'].map((level) => (
+                                    <FormField
+                                      key={level}
+                                      control={form.control}
+                                      name="bloomTaxonomy"
+                                      render={({ field }) => {
+                                        return (
+                                          <FormItem
+                                            key={level}
+                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                          >
+                                            <FormControl>
+                                              <Checkbox
+                                                checked={field.value?.includes(level)}
+                                                onCheckedChange={(checked) => {
+                                                  return checked
+                                                    ? field.onChange([...field.value, level])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                          (value) => value !== level
+                                                        )
+                                                      )
+                                                }}
+                                              />
+                                            </FormControl>
+                                            <FormLabel className="font-normal capitalize">
+                                              {level}
+                                            </FormLabel>
+                                          </FormItem>
+                                        )
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="difficultyLevels"
+                            render={() => (
+                              <FormItem>
+                                <div className="mb-4">
+                                  <FormLabel className="text-base">Difficulty Levels</FormLabel>
+                                  <FormDescription>
+                                    Select the difficulty levels to include in this quiz.
+                                  </FormDescription>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['basic', 'standard', 'challenging', 'most-challenging'].map((level) => (
+                                    <FormField
+                                      key={level}
+                                      control={form.control}
+                                      name="difficultyLevels"
+                                      render={({ field }) => {
+                                        return (
+                                          <FormItem
+                                            key={level}
+                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                          >
+                                            <FormControl>
+                                              <Checkbox
+                                                checked={field.value?.includes(level)}
+                                                onCheckedChange={(checked) => {
+                                                  return checked
+                                                    ? field.onChange([...field.value, level])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                          (value) => value !== level
+                                                        )
+                                                      )
+                                                }}
+                                              />
+                                            </FormControl>
+                                            <FormLabel className="font-normal capitalize">
+                                              {level.replace(/-/g, ' ')}
+                                            </FormLabel>
+                                          </FormItem>
+                                        )
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="numberOfQuestions"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Number of Questions</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min={5}
+                                    max={50}
+                                    placeholder="10" 
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Choose between 5 and 50 questions per quiz set.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                           
                           <Button 
                             type="submit" 
