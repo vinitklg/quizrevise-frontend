@@ -20,7 +20,6 @@ const Sidebar = () => {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Create Quiz", href: "/dashboard/create-quiz", icon: PlusCircle },
     { name: "Today's Quizzes", href: "/dashboard/today", icon: BookOpen },
-    { name: "History", href: "/dashboard/history", icon: History },
     { name: "Ask Doubts", href: "/dashboard/doubts", icon: MessageSquare },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
@@ -64,13 +63,13 @@ const Sidebar = () => {
           <div className="relative w-10 h-10">
             <div className="absolute inset-0 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
               <span className="text-primary-600 dark:text-primary-300 font-medium text-lg">
-                {user?.firstName?.charAt(0) || user?.username?.charAt(0) || "U"}
+                {user?.firstName?.charAt(0) || (user?.email ? user.email.charAt(0).toUpperCase() : "U")}
               </span>
             </div>
           </div>
           <div className="mt-2 text-center">
             <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : user?.username}
+              {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : user?.email}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {user?.subscriptionTier === "free" ? "Free Plan" : 
