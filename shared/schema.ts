@@ -77,6 +77,8 @@ export const doubtQueries = pgTable("doubt_queries", {
   answer: text("answer"),
   subjectId: integer("subject_id"),
   status: text("status").default("pending").notNull(), // pending, answered
+  fileUrl: text("file_url"), // URL to the uploaded file (if any)
+  fileType: text("file_type"), // Type of file uploaded (PDF, Word, etc.)
   createdAt: timestamp("created_at").defaultNow(),
   answeredAt: timestamp("answered_at"),
 });
@@ -88,7 +90,10 @@ export const insertChapterSchema = createInsertSchema(chapters).omit({ id: true 
 export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, createdAt: true });
 export const insertQuizSetSchema = createInsertSchema(quizSets).omit({ id: true, createdAt: true });
 export const insertQuizScheduleSchema = createInsertSchema(quizSchedules).omit({ id: true, completedDate: true, score: true });
-export const insertDoubtQuerySchema = createInsertSchema(doubtQueries).omit({ id: true, answer: true, createdAt: true, answeredAt: true, status: true });
+export const insertDoubtQuerySchema = createInsertSchema(doubtQueries).omit({ id: true, answer: true, createdAt: true, answeredAt: true, status: true }).extend({
+  fileUrl: z.string().optional(),
+  fileType: z.string().optional()
+});
 
 // Types
 export type User = typeof users.$inferSelect;

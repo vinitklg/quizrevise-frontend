@@ -337,6 +337,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get today's quizzes" });
     }
   });
+  
+  app.get("/api/quizzes/upcoming", isAuthenticated, async (req, res) => {
+    try {
+      const schedules = await storage.getUpcomingQuizSchedules(req.session.userId!);
+      
+      // Get the quiz and quiz set details
+      const enrichedSchedules = await Promise.all(
+        schedules.map(async (schedule) => {
+          const quiz = await storage.getQuizById(schedule.quizId);
+          const quizSet = await storage.getQuizSetById(schedule.quizSetId);
+          
+          return {
+            ...schedule,
+            quiz,
+            quizSet
+          };
+        })
+      );
+      
+      res.json(enrichedSchedules);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to get upcoming quizzes" });
+    }
+  });
 
   app.get("/api/quizzes/:quizId", isAuthenticated, async (req, res) => {
     try {
@@ -430,7 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create the doubt query
+      // Create the doubt query with file information if provided
       const doubt = await storage.createDoubtQuery({
         ...validatedData,
         userId: user.id
@@ -445,9 +470,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate answer with OpenAI
+      // Generate answer with OpenAI, potentially analyzing file content if a file was uploaded
+      let questionText = validatedData.question;
+      
+      if (validatedData.fileUrl) {
+        questionText += `\n\nThe student has also uploaded a ${validatedData.fileType} file for reference. Please analyze the content carefully.`;
+      }
+      
       const answer = await answerDoubtQuery(
-        validatedData.question,
+        questionText,
         subjectName,
         user.grade || 10,
         user.board || "CBSE"

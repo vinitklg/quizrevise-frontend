@@ -51,6 +51,18 @@ const createQuizSchema = z.object({
   title: z.string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
+  topic: z.string()
+    .min(3, "Topic must be at least 3 characters")
+    .max(100, "Topic must be less than 100 characters"),
+  questionTypes: z.array(z.string())
+    .min(1, "Select at least one question type"),
+  bloomTaxonomy: z.array(z.string())
+    .min(1, "Select at least one Bloom's taxonomy level"),
+  difficultyLevels: z.array(z.string())
+    .min(1, "Select at least one difficulty level"),
+  numberOfQuestions: z.number()
+    .min(5, "Minimum 5 questions required")
+    .max(50, "Maximum 50 questions allowed"),
 });
 
 type CreateQuizFormValues = z.infer<typeof createQuizSchema>;

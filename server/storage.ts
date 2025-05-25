@@ -60,6 +60,7 @@ export interface IStorage {
   createQuizSchedule(schedule: InsertQuizSchedule): Promise<QuizSchedule>;
   getQuizSchedulesByUser(userId: number): Promise<QuizSchedule[]>;
   getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]>;
+  getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]>;
   updateQuizSchedule(id: number, data: Partial<QuizSchedule>): Promise<QuizSchedule | undefined>;
 
   // Doubt Query operations
@@ -223,6 +224,23 @@ export class DatabaseStorage implements IStorage {
           eq(quizSchedules.userId, userId),
           gte(quizSchedules.scheduledDate, today),
           lt(quizSchedules.scheduledDate, tomorrow),
+          eq(quizSchedules.status, "pending")
+        )
+      );
+  }
+  
+  async getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]> {
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.userId, userId),
+          gte(quizSchedules.scheduledDate, tomorrow),
           eq(quizSchedules.status, "pending")
         )
       );
