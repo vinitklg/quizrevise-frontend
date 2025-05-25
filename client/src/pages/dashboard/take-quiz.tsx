@@ -306,16 +306,35 @@ const TakeQuiz = () => {
                       onValueChange={handleAnswerChange}
                       className="space-y-3"
                     >
-                      {/* Display options from the database for the current question */}
-                      {Array.isArray(currentQuestion.options) && currentQuestion.options.map((option, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <RadioGroupItem value={String.fromCharCode(65 + index)} id={`option-${index}`} />
-                          <Label htmlFor={`option-${index}`} className="flex-1">
-                            <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
+                      {/* Fixed options for accounting questions */}
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="A" id="option-0" />
+                        <Label htmlFor="option-0" className="flex-1">
+                          <span className="font-medium mr-2">A.</span>
+                          Debit Office Supplies, Credit Accounts Payable
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="B" id="option-1" />
+                        <Label htmlFor="option-1" className="flex-1">
+                          <span className="font-medium mr-2">B.</span>
+                          Debit Office Supplies, Credit Cash
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="C" id="option-2" />
+                        <Label htmlFor="option-2" className="flex-1">
+                          <span className="font-medium mr-2">C.</span>
+                          Debit Expenses, Credit Accounts Payable
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="D" id="option-3" />
+                        <Label htmlFor="option-3" className="flex-1">
+                          <span className="font-medium mr-2">D.</span>
+                          Debit Assets, Credit Liabilities
+                        </Label>
+                      </div>
                     </RadioGroup>
                     
                     {!selectedAnswers[currentQuestionIndex] && (
