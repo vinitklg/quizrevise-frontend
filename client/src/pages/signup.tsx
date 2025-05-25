@@ -23,13 +23,18 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 const signupSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  phoneNumber: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must not exceed 15 digits")
+    .optional(),
+  preferredSubject: z.string().optional(),
   grade: z.coerce.number().min(6).max(12).optional(),
   board: z.enum(["CBSE", "ICSE", "ISC"]).optional(),
 });
@@ -42,14 +47,19 @@ const Signup = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Fetch subjects for the dropdown
+  const { data: subjects = [] } = useQuery<{id: number, name: string}[]>({
+    queryKey: ["/api/subjects"],
+  });
+  
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      username: "",
       email: "",
       password: "",
       firstName: "",
       lastName: "",
+      phoneNumber: "",
     },
   });
 
@@ -134,12 +144,12 @@ const Signup = () => {
 
               <FormField
                 control={form.control}
-                name="username"
+                name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="johndoe" {...field} />
+                      <Input placeholder="Your mobile number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,6 +247,38 @@ const Signup = () => {
                   )}
                 />
               </div>
+              
+              <FormField
+                control={form.control}
+                name="preferredSubject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Subject</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your preferred subject" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {subjects && subjects.length > 0 ? (
+                          subjects.map((subject) => (
+                            <SelectItem key={subject.id} value={subject.id.toString()}>
+                              {subject.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>No subjects available</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div>
                 <Button

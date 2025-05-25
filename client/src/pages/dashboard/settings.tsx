@@ -43,6 +43,11 @@ const profileSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
+  phoneNumber: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must not exceed 15 digits")
+    .optional(),
+  preferredSubject: z.string().optional(),
 });
 
 const educationSchema = z.object({

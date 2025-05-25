@@ -9,6 +9,8 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
+  phoneNumber: text("phone_number"),
+  preferredSubject: integer("preferred_subject"), // Primary subject of interest
   grade: integer("grade"),
   board: text("board"), // CBSE, ICSE, or ISC
   subscribedSubjects: text("subscribed_subjects").array(), // Array of subject IDs the user has subscribed to
