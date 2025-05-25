@@ -406,34 +406,133 @@ const TakeQuiz = () => {
                         </>
                       )}
                       
-                      {currentQuestionIndex > 2 && (
+                      {currentQuestionIndex === 3 && (
                         <>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="A" id="option-0" />
                             <Label htmlFor="option-0" className="flex-1">
                               <span className="font-medium mr-2">A.</span>
-                              Option A for Question {currentQuestionIndex + 1}
+                              Debit Accounts Receivable, Credit Revenue
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="B" id="option-1" />
                             <Label htmlFor="option-1" className="flex-1">
                               <span className="font-medium mr-2">B.</span>
-                              Option B for Question {currentQuestionIndex + 1}
+                              Debit Revenue, Credit Accounts Receivable
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="C" id="option-2" />
                             <Label htmlFor="option-2" className="flex-1">
                               <span className="font-medium mr-2">C.</span>
-                              Option C for Question {currentQuestionIndex + 1}
+                              Debit Cash, Credit Revenue
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="D" id="option-3" />
                             <Label htmlFor="option-3" className="flex-1">
                               <span className="font-medium mr-2">D.</span>
-                              Option D for Question {currentQuestionIndex + 1}
+                              No journal entry is needed until cash is received
+                            </Label>
+                          </div>
+                        </>
+                      )}
+                      
+                      {currentQuestionIndex === 4 && (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="A" id="option-0" />
+                            <Label htmlFor="option-0" className="flex-1">
+                              <span className="font-medium mr-2">A.</span>
+                              Debit Equipment, Credit Cash
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="B" id="option-1" />
+                            <Label htmlFor="option-1" className="flex-1">
+                              <span className="font-medium mr-2">B.</span>
+                              Debit Equipment, Credit Accounts Payable
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="C" id="option-2" />
+                            <Label htmlFor="option-2" className="flex-1">
+                              <span className="font-medium mr-2">C.</span>
+                              Debit Assets, Credit Cash
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="D" id="option-3" />
+                            <Label htmlFor="option-3" className="flex-1">
+                              <span className="font-medium mr-2">D.</span>
+                              Debit Cash, Credit Equipment
+                            </Label>
+                          </div>
+                        </>
+                      )}
+                      
+                      {currentQuestionIndex === 5 && (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="A" id="option-0" />
+                            <Label htmlFor="option-0" className="flex-1">
+                              <span className="font-medium mr-2">A.</span>
+                              Debit Accounts Payable, Credit Cash
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="B" id="option-1" />
+                            <Label htmlFor="option-1" className="flex-1">
+                              <span className="font-medium mr-2">B.</span>
+                              Debit Office Furniture, Credit Accounts Payable
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="C" id="option-2" />
+                            <Label htmlFor="option-2" className="flex-1">
+                              <span className="font-medium mr-2">C.</span>
+                              Reverse the original entry and record: Debit Office Furniture, Credit Accounts Payable
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="D" id="option-3" />
+                            <Label htmlFor="option-3" className="flex-1">
+                              <span className="font-medium mr-2">D.</span>
+                              No correction needed, the original entry is correct
+                            </Label>
+                          </div>
+                        </>
+                      )}
+                      
+                      {currentQuestionIndex > 5 && (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="A" id="option-0" />
+                            <Label htmlFor="option-0" className="flex-1">
+                              <span className="font-medium mr-2">A.</span>
+                              Debit Asset Account, Credit Cash/Accounts Payable
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="B" id="option-1" />
+                            <Label htmlFor="option-1" className="flex-1">
+                              <span className="font-medium mr-2">B.</span>
+                              Debit Expense Account, Credit Cash/Accounts Payable
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="C" id="option-2" />
+                            <Label htmlFor="option-2" className="flex-1">
+                              <span className="font-medium mr-2">C.</span>
+                              Debit Cash/Accounts Receivable, Credit Revenue Account
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="D" id="option-3" />
+                            <Label htmlFor="option-3" className="flex-1">
+                              <span className="font-medium mr-2">D.</span>
+                              Debit Liability Account, Credit Asset Account
                             </Label>
                           </div>
                         </>
