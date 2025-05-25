@@ -52,8 +52,8 @@ const doubtSchema = z.object({
   question: z.string()
     .min(10, "Question must be at least 10 characters")
     .max(1000, "Question must be less than 1000 characters"),
-  fileUrl: z.string().optional(),
-  fileType: z.string().optional(),
+  fileUrl: z.string().optional().default(""),
+  fileType: z.string().optional().default(""),
 });
 
 type DoubtFormValues = z.infer<typeof doubtSchema>;

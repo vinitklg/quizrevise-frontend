@@ -614,6 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Doubt query routes
   app.post("/api/doubt-queries", isAuthenticated, async (req, res) => {
     try {
+      // Validate the input using our schema
       const validatedData = insertDoubtQuerySchema.parse(req.body);
       
       // Get the user to check subscription tier
@@ -652,19 +653,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create the doubt query with file information if provided
+      // Find an appropriate subject ID based on subject name
+      let subjectId = 1; // Default to first subject
+      
+      try {
+        const subjects = await storage.getAllSubjects();
+        const matchingSubject = subjects.find(s => 
+          s.name.toLowerCase() === validatedData.subjectName.toLowerCase()
+        );
+        
+        if (matchingSubject) {
+          subjectId = matchingSubject.id;
+        }
+      } catch (err) {
+        console.error("Error finding matching subject:", err);
+      }
+      
+      // Create the doubt query with all information
       const doubt = await storage.createDoubtQuery({
-        ...validatedData,
-        userId: user.id
+        userId: user.id,
+        subjectId: subjectId,
+        question: validatedData.question,
+        board: validatedData.board,
+        class: validatedData.class,
+        subjectName: validatedData.subjectName,
+        fileUrl: validatedData.fileUrl || "",
+        fileType: validatedData.fileType || "",
+        status: "pending"
       });
       
-      // Get subject details - use the direct input from the form
-      let subjectName = validatedData.subjectName || "general";
-      let boardName = validatedData.board || user.board || "CBSE";
-      let className = validatedData.class || user.grade?.toString() || "10";
-      
-      // Generate answer with OpenAI, potentially analyzing file content if a file was uploaded
-      let questionText = `[Board: ${boardName}] [Class: ${className}] [Subject: ${subjectName}]\n\n${validatedData.question}`;
+      // Build question text with context information
+      let questionText = `[Board: ${validatedData.board}] [Class: ${validatedData.class}] [Subject: ${validatedData.subjectName}]\n\n${validatedData.question}`;
       
       if (validatedData.fileUrl) {
         questionText += `\n\nThe student has also uploaded a ${validatedData.fileType} file for reference. Please analyze the content carefully.`;

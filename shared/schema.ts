@@ -78,7 +78,7 @@ export const doubtQueries = pgTable("doubt_queries", {
   userId: integer("user_id").notNull(),
   question: text("question").notNull(),
   answer: text("answer"),
-  subjectId: integer("subject_id"),
+  subjectId: integer("subject_id").notNull().default(1), // Default to first subject
   board: text("board"), // New: Student's board (CBSE, ICSE, etc.)
   class: text("class"), // New: Student's class/grade
   subjectName: text("subject_name"), // New: Subject name as text
@@ -96,14 +96,14 @@ export const insertChapterSchema = createInsertSchema(chapters).omit({ id: true 
 export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, createdAt: true });
 export const insertQuizSetSchema = createInsertSchema(quizSets).omit({ id: true, createdAt: true });
 export const insertQuizScheduleSchema = createInsertSchema(quizSchedules).omit({ id: true, completedDate: true, score: true });
-export const insertDoubtQuerySchema = createInsertSchema(doubtQueries).omit({ id: true, answer: true, createdAt: true, answeredAt: true, status: true }).extend({
+// Custom doubt query schema matching exactly what we send from the client
+export const insertDoubtQuerySchema = z.object({
   question: z.string().min(10, "Question must be at least 10 characters"),
-  board: z.string().optional(),
-  class: z.string().optional(),
-  subjectName: z.string().optional(),
-  subjectId: z.number().optional(), // Make subjectId optional since we're using text fields now
-  fileUrl: z.string().optional(),
-  fileType: z.string().optional()
+  board: z.string().min(2, "Board must be at least 2 characters"),
+  class: z.string().min(1, "Class must not be empty"),
+  subject: z.string().min(2, "Subject must be at least 2 characters"),
+  fileUrl: z.string().optional().default(""),
+  fileType: z.string().optional().default("")
 });
 
 // Types
@@ -126,7 +126,17 @@ export type QuizSchedule = typeof quizSchedules.$inferSelect;
 export type InsertQuizSchedule = z.infer<typeof insertQuizScheduleSchema>;
 
 export type DoubtQuery = typeof doubtQueries.$inferSelect;
-export type InsertDoubtQuery = z.infer<typeof insertDoubtQuerySchema>;
+// Updated InsertDoubtQuery type that includes all fields needed for database insertion
+export type InsertDoubtQuery = {
+  userId: number;
+  question: string;
+  subjectId: number;
+  board?: string;
+  class?: string;
+  subjectName?: string;
+  fileUrl?: string;
+  fileType?: string;
+};
 
 // Authentication schemas
 export const loginSchema = z.object({
