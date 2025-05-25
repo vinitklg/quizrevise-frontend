@@ -371,6 +371,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // User update endpoint
+  app.patch("/api/users/:id", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Verify that the user is updating their own profile
+      if (userId !== req.session.userId) {
+        return res.status(403).json({ message: "You can only update your own profile" });
+      }
+      
+      // Get the data to update
+      const updateData = req.body;
+      console.log("Updating user with data:", updateData);
+      
+      // Update the user
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return the updated user without the password
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   app.get("/api/quizzes/upcoming", isAuthenticated, async (req, res) => {
     try {
       const schedules = await storage.getUpcomingQuizSchedules(req.session.userId!);
