@@ -250,7 +250,7 @@ const CreateQuiz = () => {
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    Using board from your profile
+                                    Choose your preferred board
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
@@ -281,7 +281,7 @@ const CreateQuiz = () => {
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    Using class from your profile
+                                    Choose your class/grade
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
@@ -304,7 +304,14 @@ const CreateQuiz = () => {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {/* Show all subjects */}
+                                      {/* Show preferred subjects first if available */}
+                                      {preferredSubjects.length > 0 && preferredSubjects.map((subject, index) => (
+                                        <SelectItem key={`preferred-${index}`} value={subject}>
+                                          {subject} ★
+                                        </SelectItem>
+                                      ))}
+                                      
+                                      {/* Then show all available subjects */}
                                       <SelectItem value="Physics">Physics</SelectItem>
                                       <SelectItem value="Chemistry">Chemistry</SelectItem>
                                       <SelectItem value="Mathematics">Mathematics</SelectItem>
@@ -318,9 +325,7 @@ const CreateQuiz = () => {
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    {user?.subscriptionTier !== "free" 
-                                      ? "Select from your subscribed subjects" 
-                                      : "Select a subject"}
+                                    Subjects with a star (★) are from your profile
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
