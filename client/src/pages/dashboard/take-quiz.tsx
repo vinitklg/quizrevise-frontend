@@ -306,28 +306,23 @@ const TakeQuiz = () => {
                       onValueChange={handleAnswerChange}
                       className="space-y-3"
                     >
-                      {/* Handle options safely in case they're not in the expected format */}
-                      {Array.isArray(currentQuestion.options) ? 
-                        currentQuestion.options.map((option, index) => (
-                          <div key={index} className="flex items-center space-x-2">
-                            <RadioGroupItem value={String.fromCharCode(65 + index)} id={`option-${index}`} />
-                            <Label htmlFor={`option-${index}`} className="flex-1">
-                              <span className="font-medium mr-2">{String.fromCharCode(65 + index)}.</span>
-                              {option}
-                            </Label>
-                          </div>
-                        )) : 
-                        // If options is not an array, create default options
-                        ["A", "B", "C", "D"].map((letter, index) => (
+                      {/* Display the actual content of the quiz instead of generic option labels */}
+                      {["A", "B", "C", "D"].map((letter, index) => {
+                        // Get the content from the options array if it exists
+                        const optionContent = Array.isArray(currentQuestion.options) && index < currentQuestion.options.length
+                          ? currentQuestion.options[index]
+                          : `This is the content for option ${letter}`;
+                          
+                        return (
                           <div key={index} className="flex items-center space-x-2">
                             <RadioGroupItem value={letter} id={`option-${index}`} />
                             <Label htmlFor={`option-${index}`} className="flex-1">
                               <span className="font-medium mr-2">{letter}.</span>
-                              Option {letter}
+                              {optionContent}
                             </Label>
                           </div>
-                        ))
-                      }
+                        );
+                      })}
                     </RadioGroup>
                     
                     {!selectedAnswers[currentQuestionIndex] && (
