@@ -188,9 +188,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // If the user has no subscribed subjects or is not subscribed
+      // If the user has no subscribed subjects or is not subscribed, return all subjects
       if (!user.subscribedSubjects || user.subscribedSubjects.length === 0) {
-        return res.json([]);
+        const allSubjects = await storage.getAllSubjects();
+        return res.json(allSubjects);
       }
       
       // Get all subjects that match the user's subscribed subjects
