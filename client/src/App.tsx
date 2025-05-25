@@ -17,7 +17,8 @@ import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
 import CreateQuiz from "@/pages/dashboard/create-quiz";
 import TakeQuiz from "@/pages/dashboard/take-quiz";
-import History from "@/pages/dashboard/history";
+import TodayQuizzes from "@/pages/dashboard/today";
+import AskDoubts from "@/pages/dashboard/doubts";
 import Settings from "@/pages/dashboard/settings";
 import AdminDashboard from "@/pages/admin";
 
@@ -36,7 +37,8 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/create-quiz" component={CreateQuiz} />
       <Route path="/dashboard/take-quiz/:id" component={TakeQuiz} />
-      <Route path="/dashboard/history" component={History} />
+      <Route path="/dashboard/today" component={TodayQuizzes} />
+      <Route path="/dashboard/doubts" component={AskDoubts} />
       <Route path="/dashboard/settings" component={Settings} />
       
       {/* Admin pages */}

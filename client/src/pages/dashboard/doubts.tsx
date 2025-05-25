@@ -78,12 +78,12 @@ const AskDoubts = () => {
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   
   // Fetch subjects
-  const { data: subjects, isLoading: isLoadingSubjects } = useQuery({
+  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery<Subject[]>({
     queryKey: ["/api/subjects"],
   });
   
   // Fetch user's doubt queries
-  const { data: doubtQueries, isLoading: isLoadingDoubts } = useQuery({
+  const { data: doubtQueries = [], isLoading: isLoadingDoubts } = useQuery<DoubtQuery[]>({
     queryKey: ["/api/doubt-queries"],
   });
   

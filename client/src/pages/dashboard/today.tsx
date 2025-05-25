@@ -31,7 +31,7 @@ const TodayQuizzes = () => {
   const [, navigate] = useLocation();
   const { user } = useAuth();
 
-  const { data: todayQuizzes, isLoading, isError } = useQuery({
+  const { data: todayQuizzes = [], isLoading, isError } = useQuery<QuizSchedule[]>({
     queryKey: ["/api/quizzes/today"],
     retry: 1,
   });
