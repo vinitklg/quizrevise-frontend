@@ -659,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const subjects = await storage.getAllSubjects();
         const matchingSubject = subjects.find(s => 
-          s.name.toLowerCase() === validatedData.subjectName.toLowerCase()
+          s.name.toLowerCase() === validatedData.subject.toLowerCase()
         );
         
         if (matchingSubject) {
@@ -676,14 +676,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         question: validatedData.question,
         board: validatedData.board,
         class: validatedData.class,
-        subjectName: validatedData.subjectName,
-        fileUrl: validatedData.fileUrl || "",
-        fileType: validatedData.fileType || "",
-        status: "pending"
+        subjectName: validatedData.subject, // Using the subject field from form
+        fileUrl: validatedData.fileUrl,
+        fileType: validatedData.fileType
       });
       
       // Build question text with context information
-      let questionText = `[Board: ${validatedData.board}] [Class: ${validatedData.class}] [Subject: ${validatedData.subjectName}]\n\n${validatedData.question}`;
+      let questionText = `[Board: ${validatedData.board}] [Class: ${validatedData.class}] [Subject: ${validatedData.subject}]\n\n${validatedData.question}`;
       
       if (validatedData.fileUrl) {
         questionText += `\n\nThe student has also uploaded a ${validatedData.fileType} file for reference. Please analyze the content carefully.`;
@@ -691,9 +690,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const answer = await answerDoubtQuery(
         questionText,
-        subjectName,
-        user.grade || 10,
-        user.board || "CBSE"
+        validatedData.subject,
+        parseInt(validatedData.class) || 10,
+        validatedData.board || "CBSE"
       );
       
       // Update the doubt query with the answer
@@ -702,9 +701,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(answeredDoubt);
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error("Validation error:", JSON.stringify(error.errors, null, 2));
+        console.error("Request body:", JSON.stringify(req.body, null, 2));
         res.status(400).json({ message: "Validation error", errors: error.errors });
       } else {
-        console.error(error);
+        console.error("Error creating doubt query:", error);
         res.status(500).json({ message: "Failed to create doubt query" });
       }
     }

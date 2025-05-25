@@ -164,14 +164,11 @@ const AskDoubts = () => {
     setIsSubmitting(true);
     
     try {
-      // Simplified approach - send the form data directly without creating a subject
-      // This matches our updated schema that uses text fields directly
-      // Need to include subjectId as part of the validation requirements
+      // Send form data with the exact field names expected by the server
       const formData = {
-        subjectId: 1, // Default to first subject to satisfy validation
         board: data.board,
         class: data.class, 
-        subjectName: data.subject, // Map subject field to subjectName
+        subject: data.subject, // Using subject as field name to match server schema
         question: data.question,
         fileUrl: data.fileUrl || "",
         fileType: data.fileType || "",

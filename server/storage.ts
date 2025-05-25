@@ -332,10 +332,18 @@ export class DatabaseStorage implements IStorage {
 
   // Doubt Query operations
   async createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery> {
+    // Map subject name to the database column
     const [createdDoubt] = await db
       .insert(doubtQueries)
       .values({
-        ...doubt,
+        userId: doubt.userId,
+        subjectId: doubt.subjectId,
+        question: doubt.question,
+        board: doubt.board,
+        class: doubt.class,
+        subjectName: doubt.subjectName,
+        fileUrl: doubt.fileUrl,
+        fileType: doubt.fileType,
         status: "pending",
         createdAt: new Date()
       })
