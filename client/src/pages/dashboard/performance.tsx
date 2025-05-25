@@ -19,8 +19,9 @@ const Performance = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
+  // Get only the subjects the user has paid for
   const { data: subjects } = useQuery({
-    queryKey: ['/api/subjects'],
+    queryKey: ['/api/subjects/subscribed'],
     enabled: !!user,
   });
 

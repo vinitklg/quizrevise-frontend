@@ -179,6 +179,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get subjects" });
     }
   });
+  
+  // Get subjects that the user has subscribed to
+  app.get("/api/subjects/subscribed", isAuthenticated, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // If the user has no subscribed subjects or is not subscribed
+      if (!user.subscribedSubjects || user.subscribedSubjects.length === 0) {
+        return res.json([]);
+      }
+      
+      // Get all subjects that match the user's subscribed subjects
+      const subscribedSubjects = await Promise.all(
+        user.subscribedSubjects.map(async (subjectId) => {
+          const subject = await storage.getSubjectById(parseInt(subjectId));
+          return subject;
+        })
+      );
+      
+      // Filter out any undefined subjects (in case a subscribed subject doesn't exist)
+      const validSubjects = subscribedSubjects.filter(subject => subject !== undefined);
+      
+      res.json(validSubjects);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to get subscribed subjects" });
+    }
+  });
 
   // Chapter routes
   app.get("/api/subjects/:subjectId/chapters", async (req, res) => {
@@ -340,7 +371,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/quizzes", isAuthenticated, async (req, res) => {
     try {
       const quizzes = await storage.getQuizzesByUser(req.session.userId!);
-      res.json(quizzes);
+      const schedules = await storage.getQuizSchedulesByUser(req.session.userId!);
+      
+      // Create a map of quizIds that have at least one completed schedule
+      const completedQuizIds = new Set();
+      schedules.forEach(schedule => {
+        if (schedule.status === "completed") {
+          completedQuizIds.add(schedule.quizId);
+        }
+      });
+      
+      // Update the quiz status based on the completed schedules
+      const enrichedQuizzes = quizzes.map(quiz => {
+        if (completedQuizIds.has(quiz.id)) {
+          return { ...quiz, status: "completed" };
+        }
+        return quiz;
+      });
+      
+      res.json(enrichedQuizzes);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to get quizzes" });

@@ -36,6 +36,7 @@ export interface IStorage {
 
   // Subject operations
   getAllSubjects(): Promise<Subject[]>;
+  getSubjectById(id: number): Promise<Subject | undefined>;
   getSubjectsByBoard(board: string): Promise<Subject[]>;
   getSubjectsByGrade(grade: number): Promise<Subject[]>;
   getSubjectsByBoardAndGrade(board: string, grade: number): Promise<Subject[]>;
@@ -136,6 +137,11 @@ export class DatabaseStorage implements IStorage {
   // Subject operations
   async getAllSubjects(): Promise<Subject[]> {
     return await db.select().from(subjects);
+  }
+
+  async getSubjectById(id: number): Promise<Subject | undefined> {
+    const [subject] = await db.select().from(subjects).where(eq(subjects.id, id));
+    return subject;
   }
 
   async getSubjectsByBoard(board: string): Promise<Subject[]> {
