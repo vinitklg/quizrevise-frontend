@@ -29,10 +29,9 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined>;
-  updateSubscription(id: number, tier: string): Promise<User | undefined>;
+  updateSubscription(id: number, tier: string, subjectIds: string[]): Promise<User | undefined>;
 
   // Subject operations
   getAllSubjects(): Promise<Subject[]>;
@@ -80,10 +79,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
+  // Username is no longer used, we're using email as the primary identifier
 
   async createUser(userData: InsertUser): Promise<User> {
     // Hash password
@@ -113,10 +109,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateSubscription(id: number, tier: string): Promise<User | undefined> {
+  async updateSubscription(id: number, tier: string, subjectIds: string[]): Promise<User | undefined> {
     const [user] = await db
       .update(users)
-      .set({ subscriptionTier: tier })
+      .set({ 
+        subscriptionTier: tier,
+        subscribedSubjects: subjectIds
+      })
       .where(eq(users.id, id))
       .returning();
     return user;

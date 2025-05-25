@@ -5,13 +5,13 @@ import { z } from "zod";
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
   grade: integer("grade"),
   board: text("board"), // CBSE, ICSE, or ISC
+  subscribedSubjects: text("subscribed_subjects").array(), // Array of subject IDs the user has subscribed to
   subscriptionTier: text("subscription_tier").default("free").notNull(), // free, standard, premium
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -39,6 +39,11 @@ export const quizzes = pgTable("quizzes", {
   chapterId: integer("chapter_id").notNull(),
   subjectId: integer("subject_id").notNull(),
   title: text("title").notNull(),
+  topic: text("topic").notNull(),
+  questionTypes: text("question_types").array().notNull(), // mcq, assertion-reasoning, fill-in-blanks, true-false
+  bloomTaxonomy: text("bloom_taxonomy").array().notNull(), // knowledge, comprehension, application, analysis, synthesis, evaluation
+  difficultyLevels: text("difficulty_levels").array().notNull(), // basic, standard, challenging, most-challenging
+  numberOfQuestions: integer("number_of_questions").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   status: text("status").default("active").notNull(), // active, completed, etc.
 });
@@ -114,7 +119,6 @@ export const loginSchema = z.object({
 });
 
 export const signupSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().optional(),
@@ -128,4 +132,9 @@ export const generateQuizSchema = z.object({
   subjectId: z.number(),
   chapterId: z.number(),
   title: z.string().min(3, "Title must be at least 3 characters"),
+  topic: z.string().min(3, "Topic must be at least 3 characters"),
+  questionTypes: z.array(z.enum(["mcq", "assertion-reasoning", "fill-in-blanks", "true-false"])).min(1, "Select at least one question type"),
+  bloomTaxonomy: z.array(z.enum(["knowledge", "comprehension", "application", "analysis", "synthesis", "evaluation"])).min(1, "Select at least one Bloom's taxonomy level"),
+  difficultyLevels: z.array(z.enum(["basic", "standard", "challenging", "most-challenging"])).min(1, "Select at least one difficulty level"),
+  numberOfQuestions: z.number().min(5).max(50),
 });

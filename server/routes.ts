@@ -12,6 +12,16 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 
+// Add missing type declarations
+import { SessionData } from 'express-session';
+
+// Extend SessionData interface to include userId
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+  }
+}
+
 // Middleware to check if user is authenticated
 const isAuthenticated = (req: Request, res: Response, next: Function) => {
   if (req.session.userId) {
