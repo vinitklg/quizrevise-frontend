@@ -144,8 +144,9 @@ const CreateQuiz = () => {
         description: "Your quiz has been created and scheduled for spaced repetition.",
       });
       
-      // Navigate to take the quiz
-      navigate(`/dashboard/take-quiz/${responseData.id}`);
+      // Navigate to the dashboard after successful quiz creation
+      // Don't navigate to take-quiz since it should be scheduled for later
+      navigate(`/dashboard`);
     } catch (error) {
       let errorMessage = "Failed to create quiz. Please try again.";
       
