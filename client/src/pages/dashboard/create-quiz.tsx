@@ -286,7 +286,7 @@ const CreateQuiz = () => {
                                           </SelectItem>
                                         ))
                                       ) : (
-                                        <SelectItem value="" disabled>
+                                        <SelectItem value="none" disabled>
                                           No subjects available in your profile
                                         </SelectItem>
                                       )}
