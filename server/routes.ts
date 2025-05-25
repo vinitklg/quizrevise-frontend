@@ -188,22 +188,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // If the user has no subscribed subjects or is not subscribed, return all subjects
-      if (!user.subscribedSubjects || user.subscribedSubjects.length === 0) {
-        const allSubjects = await storage.getAllSubjects();
-        return res.json(allSubjects);
-      }
+      // For this user, only include subjects they've taken quizzes for
+      // Get all quizzes created by the user
+      const userQuizzes = await storage.getQuizzesByUser(req.session.userId!);
       
-      // Get all subjects that match the user's subscribed subjects
-      const subscribedSubjects = await Promise.all(
-        user.subscribedSubjects.map(async (subjectId) => {
-          const subject = await storage.getSubjectById(parseInt(subjectId));
-          return subject;
+      // Get unique subject IDs from user's quizzes
+      const subjectIds = new Set();
+      userQuizzes.forEach(quiz => {
+        subjectIds.add(quiz.subjectId);
+      });
+      
+      // Convert to array and get subjects
+      const subjectObjects = await Promise.all(
+        Array.from(subjectIds).map(async (subjectId) => {
+          return await storage.getSubjectById(subjectId as number);
         })
       );
       
-      // Filter out any undefined subjects (in case a subscribed subject doesn't exist)
-      const validSubjects = subscribedSubjects.filter(subject => subject !== undefined);
+      // Filter out any undefined subjects
+      const validSubjects = subjectObjects.filter(subject => subject !== undefined);
+      
+      // If no subjects found from quizzes, return a default subject (Mathematics)
+      if (validSubjects.length === 0) {
+        const mathSubject = await storage.getSubjectById(1); // Assuming Mathematics has ID 1
+        if (mathSubject) {
+          validSubjects.push(mathSubject);
+        }
+      }
       
       res.json(validSubjects);
     } catch (error) {
