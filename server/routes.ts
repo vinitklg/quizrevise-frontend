@@ -68,12 +68,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already in use" });
       }
       
-      const existingUserByUsername = await storage.getUserByUsername(validatedData.username);
-      if (existingUserByUsername) {
-        return res.status(400).json({ message: "Username already taken" });
-      }
+      // Set initial empty subscribed subjects array
+      const userData = {
+        ...validatedData,
+        subscribedSubjects: []
+      };
       
-      const user = await storage.createUser(validatedData);
+      const user = await storage.createUser(userData);
       
       // Set session
       req.session.userId = user.id;
@@ -223,12 +224,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create a new quiz
+      // Create a new quiz with the expanded fields
       const quiz = await storage.createQuiz({
         userId: user.id,
         chapterId: validatedData.chapterId,
         subjectId: validatedData.subjectId,
         title: validatedData.title,
+        topic: validatedData.topic,
+        questionTypes: validatedData.questionTypes,
+        bloomTaxonomy: validatedData.bloomTaxonomy,
+        difficultyLevels: validatedData.difficultyLevels,
+        numberOfQuestions: validatedData.numberOfQuestions,
         status: "active"
       });
       
@@ -241,14 +247,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Subject or chapter not found" });
       }
       
-      // Generate 8 sets of questions
+      // Generate 8 sets of questions with the new parameters
       const quizSets = [];
       for (let i = 1; i <= 8; i++) {
         const questions = await generateQuizQuestions(
           subject.name,
           chapter.name,
+          validatedData.topic,
           user.grade || 10,
           user.board || "CBSE",
+          validatedData.questionTypes,
+          validatedData.bloomTaxonomy,
+          validatedData.difficultyLevels,
+          validatedData.numberOfQuestions,
           i
         );
         
@@ -469,21 +480,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subscription routes
   app.post("/api/subscription", isAuthenticated, async (req, res) => {
     try {
-      const { tier } = req.body;
+      const { tier, subjectIds } = req.body;
       
       if (!tier || !["free", "standard", "premium"].includes(tier)) {
         return res.status(400).json({ message: "Invalid subscription tier" });
       }
       
-      const updatedUser = await storage.updateSubscription(req.session.userId!, tier);
+      if (!Array.isArray(subjectIds) || subjectIds.length === 0) {
+        return res.status(400).json({ message: "Please select at least one subject" });
+      }
+      
+      // Calculate total price based on tier and number of subjects
+      let pricePerSubject = 0;
+      if (tier === "standard") {
+        pricePerSubject = 999;
+      } else if (tier === "premium") {
+        pricePerSubject = 1999;
+      }
+      
+      const totalPrice = pricePerSubject * subjectIds.length;
+      
+      const updatedUser = await storage.updateSubscription(req.session.userId!, tier, subjectIds);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Return user without password
+      // Return user without password, and include pricing information
       const { password, ...userWithoutPassword } = updatedUser;
-      res.json(userWithoutPassword);
+      res.json({
+        ...userWithoutPassword,
+        subscription: {
+          tier,
+          subjectCount: subjectIds.length,
+          pricePerSubject,
+          totalPrice
+        }
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to update subscription" });
@@ -494,7 +527,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", isAuthenticated, async (req, res) => {
     try {
       // In a real app, you would check if the user is an admin
-      const allUsers = await db.select().from(users);
+      // Get all users from the database
+      const allUsers = await storage.getAllUsers();
       
       // Remove passwords
       const usersWithoutPasswords = allUsers.map(user => {

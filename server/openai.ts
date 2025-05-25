@@ -3,12 +3,17 @@ import OpenAI from "openai";
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Generate quiz questions based on subject, chapter, and grade level
+// Generate quiz questions based on subject, chapter, topic, and various parameters
 export async function generateQuizQuestions(
   subject: string,
   chapter: string,
+  topic: string,
   grade: number,
   board: string,
+  questionTypes: string[],
+  bloomTaxonomyLevels: string[],
+  difficultyLevels: string[],
+  numberOfQuestions: number,
   setNumber: number
 ): Promise<{
   questions: Array<{
@@ -16,6 +21,9 @@ export async function generateQuizQuestions(
     options: string[];
     correctAnswer: string;
     explanation: string;
+    questionType: string;
+    bloomTaxonomy: string;
+    difficultyLevel: string;
   }>;
 }> {
   try {
@@ -26,16 +34,24 @@ export async function generateQuizQuestions(
         {
           role: "system",
           content: `You are an expert educational content creator specializing in ${board} curriculum for grade ${grade} students. 
-          Create 5 multiple-choice questions for a quiz on the subject ${subject}, chapter "${chapter}". 
+          Create ${numberOfQuestions} questions for a quiz on the subject ${subject}, chapter "${chapter}", focusing on the topic "${topic}".
+          
+          Use the following question types: ${questionTypes.join(', ')}.
+          Incorporate Bloom's Taxonomy levels: ${bloomTaxonomyLevels.join(', ')}.
+          Include questions at these difficulty levels: ${difficultyLevels.join(', ')}.
+          
           For each question, provide:
           1. The question text
           2. Four options (A, B, C, D)
           3. The correct answer (as the letter)
           4. A brief explanation of why the answer is correct
+          5. The question type used (from the provided types)
+          6. The Bloom's Taxonomy level targeted
+          7. The difficulty level assigned
           
-          This is set ${setNumber} of 8 for a spaced repetition learning system. Ensure questions test genuine understanding and not just memorization.
+          This is set ${setNumber} of 8 for a spaced repetition learning system. Ensure questions test genuine understanding at the appropriate cognitive levels.
           
-          Format your response as a JSON object with an array of questions.`
+          Format your response as a JSON object with an array of questions. Each question should have fields: question, options, correctAnswer, explanation, questionType, bloomTaxonomy, and difficultyLevel.`
         }
       ],
       response_format: { type: "json_object" }
