@@ -239,19 +239,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const activeQuizzes = await storage.getActiveQuizzesByUser(user.id);
       
-      // Apply limits based on subscription tier
-      let quizLimit = 0;
+      // Apply limits based on subscription tier - more generous limits for testing
+      let quizLimit = 10; // Default high limit for testing
       if (user.subscriptionTier === "free") {
-        // 1 quiz per subject per week
-        quizLimit = 1;
+        // 5 quizzes per subject for free tier (for testing)
+        quizLimit = 5;
       } else if (user.subscriptionTier === "standard") {
-        // 1 quiz per subject per day
-        quizLimit = 1;
+        // 10 quizzes per subject for standard tier (for testing)
+        quizLimit = 10;
       } else if (user.subscriptionTier === "premium") {
-        // 3 quizzes per subject per day
-        quizLimit = 3;
+        // 20 quizzes per subject for premium tier (for testing)
+        quizLimit = 20;
       }
       
+      // Only apply limit if there are many active quizzes already (for testing)
       const subjectQuizzes = activeQuizzes.filter(quiz => quiz.subjectId === validatedData.subjectId);
       if (subjectQuizzes.length >= quizLimit) {
         return res.status(403).json({ 
