@@ -232,25 +232,12 @@ const CreateQuiz = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Board</FormLabel>
-                                  <Select 
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a board" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {boardOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                          {option.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  <Input 
+                                    {...field}
+                                    disabled
+                                  />
                                   <FormDescription>
-                                    Choose your preferred board
+                                    Using board from your profile settings
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
@@ -263,25 +250,12 @@ const CreateQuiz = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Class</FormLabel>
-                                  <Select 
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a class" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {classOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                          {option.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  <Input 
+                                    {...field}
+                                    disabled
+                                  />
                                   <FormDescription>
-                                    Choose your class/grade
+                                    Using class/grade from your profile settings
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
@@ -304,28 +278,22 @@ const CreateQuiz = () => {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {/* Show preferred subjects first if available */}
-                                      {preferredSubjects.length > 0 && preferredSubjects.map((subject, index) => (
-                                        <SelectItem key={`preferred-${index}`} value={subject}>
-                                          {subject} ★
+                                      {/* Only show subjects from the user's profile */}
+                                      {preferredSubjects.length > 0 ? (
+                                        preferredSubjects.map((subject, index) => (
+                                          <SelectItem key={`preferred-${index}`} value={subject}>
+                                            {subject}
+                                          </SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="" disabled>
+                                          No subjects available in your profile
                                         </SelectItem>
-                                      ))}
-                                      
-                                      {/* Then show all available subjects */}
-                                      <SelectItem value="Physics">Physics</SelectItem>
-                                      <SelectItem value="Chemistry">Chemistry</SelectItem>
-                                      <SelectItem value="Mathematics">Mathematics</SelectItem>
-                                      <SelectItem value="Biology">Biology</SelectItem>
-                                      <SelectItem value="English">English</SelectItem>
-                                      <SelectItem value="History">History</SelectItem>
-                                      <SelectItem value="Geography">Geography</SelectItem>
-                                      <SelectItem value="Computer Science">Computer Science</SelectItem>
-                                      <SelectItem value="Economics">Economics</SelectItem>
-                                      <SelectItem value="Commercial Studies">Commercial Studies</SelectItem>
+                                      )}
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    Subjects with a star (★) are from your profile
+                                    Only subjects from your profile settings are available
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
