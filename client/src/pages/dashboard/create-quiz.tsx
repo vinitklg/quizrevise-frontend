@@ -67,18 +67,7 @@ const CreateQuiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
-
-  // Query for subjects based on user's grade and board
-  const { data: subjects, isLoading: isLoadingSubjects } = useQuery<Subject[]>({
-    queryKey: ["/api/subjects", { board: user?.board, grade: user?.grade }],
-  });
-
-  // Query for chapters based on selected subject
-  const { data: chapters, isLoading: isLoadingChapters } = useQuery<Chapter[]>({
-    queryKey: ["/api/subjects", selectedSubjectId, "chapters"],
-    enabled: !!selectedSubjectId,
-  });
+  // No longer need to query subjects and chapters since we're using text inputs
 
   const form = useForm<CreateQuizFormValues>({
     resolver: zodResolver(createQuizSchema),
@@ -201,33 +190,19 @@ const CreateQuiz = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={form.control}
-                              name="subjectId"
+                              name="subject"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Subject</FormLabel>
-                                  <Select 
-                                    onValueChange={(value) => handleSubjectChange(value)}
-                                    defaultValue={field.value}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a subject" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {isLoadingSubjects ? (
-                                        <SelectItem value="loading" disabled>Loading subjects...</SelectItem>
-                                      ) : subjects && subjects.length > 0 ? (
-                                        subjects.map((subject) => (
-                                          <SelectItem key={subject.id} value={subject.id.toString()}>
-                                            {subject.name}
-                                          </SelectItem>
-                                        ))
-                                      ) : (
-                                        <SelectItem value="none" disabled>No subjects available</SelectItem>
-                                      )}
-                                    </SelectContent>
-                                  </Select>
+                                  <FormControl>
+                                    <Input 
+                                      placeholder="e.g., Physics, Chemistry, Mathematics" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter the subject name
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -235,36 +210,19 @@ const CreateQuiz = () => {
                             
                             <FormField
                               control={form.control}
-                              name="chapterId"
+                              name="chapter"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Chapter</FormLabel>
-                                  <Select 
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                    disabled={!selectedSubjectId}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a chapter" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {isLoadingChapters ? (
-                                        <SelectItem value="loading" disabled>Loading chapters...</SelectItem>
-                                      ) : chapters && chapters.length > 0 ? (
-                                        chapters.map((chapter) => (
-                                          <SelectItem key={chapter.id} value={chapter.id.toString()}>
-                                            {chapter.name}
-                                          </SelectItem>
-                                        ))
-                                      ) : (
-                                        <SelectItem value="none" disabled>
-                                          {selectedSubjectId ? "No chapters available" : "Select a subject first"}
-                                        </SelectItem>
-                                      )}
-                                    </SelectContent>
-                                  </Select>
+                                  <FormControl>
+                                    <Input 
+                                      placeholder="e.g., Mechanics, Organic Chemistry" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter the chapter name
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}

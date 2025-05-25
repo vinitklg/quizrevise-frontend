@@ -195,7 +195,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Quiz routes
   app.post("/api/quizzes", isAuthenticated, async (req, res) => {
     try {
-      const validatedData = generateQuizSchema.parse(req.body);
+      // Create custom validation schema for text inputs
+      const textInputQuizSchema = z.object({
+        subject: z.string().min(2, "Subject must be at least 2 characters"),
+        chapter: z.string().min(2, "Chapter must be at least 2 characters"),
+        title: z.string().min(3, "Title must be at least 3 characters"),
+        topic: z.string().min(3, "Topic must be at least 3 characters"),
+        questionTypes: z.array(z.string()).min(1, "Select at least one question type"),
+        bloomTaxonomy: z.array(z.string()).min(1, "Select at least one Bloom's taxonomy level"),
+        difficultyLevels: z.array(z.string()).min(1, "Select at least one difficulty level"),
+        numberOfQuestions: z.number().min(5).max(50),
+      });
+      
+      const validatedData = textInputQuizSchema.parse(req.body);
       
       // Get the user to check subscription tier
       const user = await storage.getUser(req.session.userId!);
@@ -234,11 +246,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create a new quiz with the expanded fields
+      // Create a new quiz with text inputs for subject and chapter
       const quiz = await storage.createQuiz({
         userId: user.id,
-        chapterId: validatedData.chapterId,
-        subjectId: validatedData.subjectId,
+        // Use default values for IDs since we're now using text inputs
+        chapterId: 1,
+        subjectId: 1,
         title: validatedData.title,
         topic: validatedData.topic,
         questionTypes: validatedData.questionTypes,
@@ -248,14 +261,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Get subject and chapter details for OpenAI
-      const [subject] = await storage.getSubjectsByBoard(user.board || "CBSE");
-      const chapters = await storage.getChaptersBySubject(validatedData.subjectId);
-      const chapter = chapters.find(c => c.id === validatedData.chapterId);
-      
-      if (!subject || !chapter) {
-        return res.status(404).json({ message: "Subject or chapter not found" });
-      }
+      // Use the subject and chapter text directly from the form data
+      const subject = { name: validatedData.subject };
+      const chapter = { name: validatedData.chapter };
       
       // Generate 8 sets of questions with the new parameters
       const quizSets = [];
