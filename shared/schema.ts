@@ -130,6 +130,8 @@ export const signupSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number must not exceed 15 digits").optional(),
+  preferredSubject: z.string().optional(),
   grade: z.number().min(6).max(12).optional(),
   board: z.enum(["CBSE", "ICSE", "ISC"]).optional(),
 });
