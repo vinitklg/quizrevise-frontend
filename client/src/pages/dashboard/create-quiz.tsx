@@ -23,6 +23,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectLabel,
+  SelectSeparator,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,6 +75,11 @@ const CreateQuiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Parse the user's preferred subjects into an array
+  const preferredSubjects = user?.preferredSubject 
+    ? user.preferredSubject.split(',').map(subject => subject.trim())
+    : [];
   
   // Get user's subscribed subjects
   const subscribedSubjects = user?.subscribedSubjects || [];
@@ -297,32 +304,17 @@ const CreateQuiz = () => {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {user?.subscriptionTier === "free" ? (
-                                        // Free users can select any subject
-                                        <>
-                                          <SelectItem value="Physics">Physics</SelectItem>
-                                          <SelectItem value="Chemistry">Chemistry</SelectItem>
-                                          <SelectItem value="Mathematics">Mathematics</SelectItem>
-                                          <SelectItem value="Biology">Biology</SelectItem>
-                                          <SelectItem value="English">English</SelectItem>
-                                          <SelectItem value="History">History</SelectItem>
-                                          <SelectItem value="Geography">Geography</SelectItem>
-                                          <SelectItem value="Computer Science">Computer Science</SelectItem>
-                                        </>
-                                      ) : (
-                                        // Paid users can only select subjects they've subscribed to
-                                        user?.subscribedSubjects && user.subscribedSubjects.length > 0 ? (
-                                          user.subscribedSubjects.map((subject, index) => (
-                                            <SelectItem key={index} value={subject}>
-                                              {subject}
-                                            </SelectItem>
-                                          ))
-                                        ) : (
-                                          <SelectItem value="none" disabled>
-                                            No subscribed subjects. Please update your subscription.
-                                          </SelectItem>
-                                        )
-                                      )}
+                                      {/* Show all subjects */}
+                                      <SelectItem value="Physics">Physics</SelectItem>
+                                      <SelectItem value="Chemistry">Chemistry</SelectItem>
+                                      <SelectItem value="Mathematics">Mathematics</SelectItem>
+                                      <SelectItem value="Biology">Biology</SelectItem>
+                                      <SelectItem value="English">English</SelectItem>
+                                      <SelectItem value="History">History</SelectItem>
+                                      <SelectItem value="Geography">Geography</SelectItem>
+                                      <SelectItem value="Computer Science">Computer Science</SelectItem>
+                                      <SelectItem value="Economics">Economics</SelectItem>
+                                      <SelectItem value="Commercial Studies">Commercial Studies</SelectItem>
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
