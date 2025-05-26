@@ -17,6 +17,7 @@ import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
 import CreateQuiz from "@/pages/dashboard/create-quiz";
 import TakeQuiz from "@/pages/dashboard/take-quiz";
+import QuizResults from "@/pages/dashboard/quiz-results";
 import TodayQuizzes from "@/pages/dashboard/today";
 import AskDoubts from "@/pages/dashboard/doubts";
 import Settings from "@/pages/dashboard/settings";
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/create-quiz" component={CreateQuiz} />
       <Route path="/dashboard/take-quiz/:scheduleId" component={TakeQuiz} />
+      <Route path="/dashboard/quiz-results/:scheduleId" component={QuizResults} />
       <Route path="/dashboard/today" component={TodayQuizzes} />
       <Route path="/dashboard/doubts" component={AskDoubts} />
       <Route path="/dashboard/performance" component={Performance} />

@@ -607,6 +607,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get today's quizzes" });
     }
   });
+
+  // Get quiz results
+  app.get("/api/quiz-results/:scheduleId", isAuthenticated, async (req, res) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      
+      // Get the completed quiz schedule
+      const schedules = await storage.getQuizSchedulesByUser(req.session.userId!);
+      const schedule = schedules.find(s => s.id === scheduleId && s.status === "completed");
+      
+      if (!schedule) {
+        return res.status(404).json({ message: "Quiz results not found" });
+      }
+      
+      // Get quiz and quiz set details
+      const quiz = await storage.getQuizById(schedule.quizId);
+      const quizSet = await storage.getQuizSetById(schedule.quizSetId);
+      
+      res.json({
+        schedule: {
+          ...schedule,
+          quiz,
+          quizSet
+        },
+        userAnswers: schedule.userAnswers || {}
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to get quiz results" });
+    }
+  });
   
   // User update endpoint
   app.patch("/api/users/:id", isAuthenticated, async (req, res) => {
