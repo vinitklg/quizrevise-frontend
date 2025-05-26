@@ -46,8 +46,8 @@ const TodayQuizzes = () => {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-          <div className="pt-2 pb-6">
-            <div className="px-4 sm:px-6 md:px-8">
+          <div className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Today's Quizzes</h1>
               
               <div className="mt-6">
@@ -93,13 +93,17 @@ const TodayQuizzes = () => {
                       </div>
                     </CardContent>
                     <CardFooter className="pt-0">
-                      <Button 
-                        className="w-full" 
-                        disabled={schedule.status === "completed"}
-                        onClick={() => handleStartQuiz(schedule.quiz.id, schedule.quizSet.id)}
-                      >
-                        {schedule.status === "completed" ? "Already Completed" : "Start Quiz"}
-                      </Button>
+                      {schedule.status === "completed" ? (
+                        <Button className="w-full" disabled>
+                          Already Completed
+                        </Button>
+                      ) : (
+                        <Link href={`/dashboard/take-quiz/${schedule.id}`}>
+                          <Button className="w-full">
+                            Start Quiz
+                          </Button>
+                        </Link>
+                      )}
                     </CardFooter>
                   </Card>
                 ))}

@@ -527,6 +527,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get individual quiz schedule with questions
+  app.get("/api/quiz-schedule/:scheduleId", isAuthenticated, async (req, res) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      const userId = req.session.userId!;
+      
+      // First get the schedule
+      const schedules = await storage.getQuizSchedulesByUser(userId);
+      const schedule = schedules.find(s => s.id === scheduleId);
+      
+      if (!schedule) {
+        return res.status(404).json({ message: "Quiz schedule not found" });
+      }
+      
+      // Get quiz details
+      const quiz = await storage.getQuizById(schedule.quizId);
+      const quizSet = await storage.getQuizSetById(schedule.quizSetId);
+      
+      if (!quiz || !quizSet) {
+        return res.status(404).json({ message: "Quiz or quiz set not found" });
+      }
+      
+      res.json({
+        id: schedule.id,
+        quizId: schedule.quizId,
+        quizSetId: schedule.quizSetId,
+        quiz: {
+          id: quiz.id,
+          title: quiz.title,
+          subjectId: quiz.subjectId,
+          chapterId: quiz.chapterId
+        },
+        quizSet: {
+          id: quizSet.id,
+          setNumber: quizSet.setNumber,
+          questions: quizSet.questions
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching quiz schedule:", error);
+      res.status(500).json({ message: "Failed to fetch quiz schedule" });
+    }
+  });
+
   app.get("/api/quizzes/today", isAuthenticated, async (req, res) => {
     try {
       const schedules = await storage.getTodayQuizSchedules(req.session.userId!);

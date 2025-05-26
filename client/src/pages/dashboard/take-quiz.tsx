@@ -1,609 +1,301 @@
 import { useState, useEffect } from "react";
-import { useParams, useLocation, useRoute } from "wouter";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import Sidebar from "@/components/dashboard/Sidebar";
+import { useParams, useLocation } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, HelpCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Clock, CheckCircle } from "lucide-react";
+import Sidebar from "@/components/dashboard/Sidebar";
 
 interface Question {
+  id: string;
   question: string;
-  options: string[];
+  type: "mcq" | "fill-blank" | "true-false";
+  options?: string[];
   correctAnswer: string;
-  explanation: string;
 }
 
 interface QuizSet {
   id: number;
-  quizId: number;
   setNumber: number;
   questions: Question[];
 }
 
-interface Quiz {
+interface QuizSchedule {
   id: number;
-  title: string;
-  subjectId: number;
-  chapterId: number;
-  quizSets: QuizSet[];
+  quizId: number;
+  quizSetId: number;
+  quiz: {
+    id: number;
+    title: string;
+    subjectId: number;
+    chapterId: number;
+  };
+  quizSet: QuizSet;
 }
 
-const TakeQuiz = () => {
-  const params = useParams<{ id: string }>();
-  const [, navigate] = useLocation();
-  const [match, params2] = useRoute<{ scheduleId: string }>("/dashboard/take-quiz/:id?scheduleId=:scheduleId");
+export default function TakeQuiz() {
+  const params = useParams();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  const scheduleId = parseInt(params.scheduleId || "0");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const quizId = parseInt(params.id);
-  const scheduleId = match ? parseInt(params2.scheduleId) : undefined;
-  
-  // Fetch quiz data
-  const { data: quizData, isLoading, error } = useQuery<{ quiz: Quiz, quizSets: QuizSet[] }>({
-    queryKey: [`/api/quizzes/${quizId}`],
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  // Fetch quiz schedule and questions
+  const { data: schedule, isLoading } = useQuery<QuizSchedule>({
+    queryKey: [`/api/quiz-schedule/${scheduleId}`],
+    enabled: !!scheduleId,
   });
-  
-  const quiz = quizData?.quiz;
-  const quizSet = quizData?.quizSets && quizData.quizSets.length > 0 
-    ? quizData.quizSets[0] // For simplicity, we're using the first quiz set. In a real app, you'd select the proper set based on the schedule.
-    : null;
-  
-  const questions = quizSet?.questions || [];
-  
-  useEffect(() => {
-    // Initialize selected answers array with empty values
-    if (questions.length > 0 && selectedAnswers.length === 0) {
-      setSelectedAnswers(Array(questions.length).fill(""));
-    }
-  }, [questions, selectedAnswers]);
 
-  const handleAnswerChange = (answer: string) => {
-    const newAnswers = [...selectedAnswers];
-    newAnswers[currentQuestionIndex] = answer;
-    setSelectedAnswers(newAnswers);
-  };
-  
-  const calculateScore = () => {
-    let correctCount = 0;
-    selectedAnswers.forEach((selectedAnswer, index) => {
-      if (questions[index] && selectedAnswer === questions[index].correctAnswer) {
-        correctCount++;
-      }
-    });
-    return Math.round((correctCount / questions.length) * 100);
-  };
-
-  const handleQuizCompletion = async () => {
-    const score = calculateScore();
-    try {
-      await apiRequest("POST", `/api/quizzes/complete/${quiz.id}/${quizSet.id}`, {
-        score,
-        answers: selectedAnswers
-      });
-      setShowResults(true);
+  // Submit quiz mutation
+  const submitQuizMutation = useMutation({
+    mutationFn: async ({ score }: { score: number }) => {
+      return await apiRequest("POST", `/api/quizzes/${scheduleId}/complete`, { score });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quizzes/today"] });
       toast({
-        title: "Quiz Completed",
-        description: `You scored ${score}% on this quiz set!`,
-        variant: "default",
+        title: "Quiz Completed!",
+        description: "Your answers have been submitted successfully.",
       });
-    } catch (error) {
-      console.error("Error completing quiz:", error);
+      setIsCompleted(true);
+    },
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to submit quiz. Please try again.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Timer effect
+  useEffect(() => {
+    if (timeLeft > 0 && !isCompleted) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0) {
+      handleSubmitQuiz();
     }
+  }, [timeLeft, isCompleted]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleAnswerChange = (questionId: string, answer: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const calculateScore = () => {
+    if (!schedule?.quizSet.questions) return 0;
+    
+    let correct = 0;
+    schedule.quizSet.questions.forEach(question => {
+      if (answers[question.id] === question.correctAnswer) {
+        correct++;
+      }
+    });
+    
+    return Math.round((correct / schedule.quizSet.questions.length) * 100);
+  };
+
+  const handleSubmitQuiz = () => {
+    const score = calculateScore();
+    submitQuizMutation.mutate({ score });
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
+    if (schedule && currentQuestionIndex < schedule.quizSet.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      handleQuizCompletion();
     }
   };
-  
+
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
-  
-  const handleSubmitQuiz = async () => {
-    if (!quiz || !quizSet) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Calculate score (percentage of correct answers)
-      const correctCount = selectedAnswers.reduce((count, answer, index) => {
-        const question = questions[index];
-        return answer === question.correctAnswer ? count + 1 : count;
-      }, 0);
-      
-      const score = Math.round((correctCount / questions.length) * 100);
-      
-      // Submit the quiz completion
-      if (scheduleId) {
-        await apiRequest("POST", `/api/quizzes/${scheduleId}/complete`, { score });
-        
-        toast({
-          title: "Quiz completed!",
-          description: `You scored ${score}%. This will help with your spaced repetition learning.`,
-        });
-        
-        // Invalidate related queries
-        queryClient.invalidateQueries({ queryKey: ["/api/quizzes"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/quizzes/today"] });
-        
-        // Navigate back to dashboard
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Quiz practice completed",
-          description: `You scored ${score}%. This was a practice run.`,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error submitting quiz",
-        description: "There was a problem saving your quiz results. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
+
   if (isLoading) {
     return (
-      <div className="flex h-screen overflow-hidden">
-        <div className="hidden md:flex md:flex-shrink-0 md:w-64">
-          <Sidebar />
-        </div>
-        
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-            <div className="py-6">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                <Skeleton className="h-8 w-72 mb-6" />
-                <Skeleton className="h-[400px] w-full rounded-lg" />
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-  
-  if (error || !quiz || !quizSet) {
-    return (
-      <div className="flex h-screen overflow-hidden">
-        <div className="hidden md:flex md:flex-shrink-0 md:w-64">
-          <Sidebar />
-        </div>
-        
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-            <div className="py-6">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md">
-                  <div className="flex">
-                    <AlertTriangle className="h-5 w-5 text-red-400 mr-3" />
-                    <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
-                      Error loading quiz
-                    </h3>
-                  </div>
-                  <div className="mt-2 text-sm text-red-700 dark:text-red-400">
-                    There was a problem loading this quiz. Please try again or return to dashboard.
-                  </div>
-                  <div className="mt-4">
-                    <Button 
-                      onClick={() => navigate("/dashboard")}
-                      variant="outline"
-                    >
-                      Return to Dashboard
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
-  
-  const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-  
-  return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="hidden md:flex md:flex-shrink-0 md:w-64">
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
       </div>
+    );
+  }
+
+  if (!schedule) {
+    return (
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Quiz Not Found</h2>
+            <Button onClick={() => setLocation("/dashboard/today")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Today's Quizzes
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCompleted) {
+    return (
+      <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <CardTitle>Quiz Completed!</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-lg">Your Score: <span className="font-bold text-primary">{calculateScore()}%</span></p>
+              <Button onClick={() => setLocation("/dashboard/today")} className="w-full">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Today's Quizzes
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = schedule.quizSet.questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / schedule.quizSet.questions.length) * 100;
+
+  return (
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <Sidebar />
       
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
           <div className="py-6">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6 md:px-8">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{quiz.title}</h1>
-                <div className="bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 px-3 py-1 rounded-full text-sm">
-                  Set {quizSet.setNumber}
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {schedule.quiz.title}
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Quiz Set #{schedule.quizSet.setNumber}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center text-orange-600 dark:text-orange-400">
+                    <Clock className="h-4 w-4 mr-2" />
+                    <span className="font-mono">{formatTime(timeLeft)}</span>
+                  </div>
                 </div>
               </div>
-              
-              {showResults ? (
-                <Card>
-                  <CardHeader>
-                    <h2 className="text-xl font-semibold text-center">Quiz Results</h2>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="text-center">
-                      <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-                        <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-                      </div>
-                      <h3 className="text-lg font-medium">Quiz Complete!</h3>
-                      <p className="text-gray-500 dark:text-gray-400 mt-1">
-                        You've answered all {questions.length} questions.
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h4 className="font-medium">Your Performance:</h4>
-                      {questions.map((question, index) => {
-                        const isCorrect = selectedAnswers[index] === question.correctAnswer;
-                        return (
-                          <div 
-                            key={index}
-                            className={`p-4 rounded-md ${
-                              isCorrect 
-                                ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900" 
-                                : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900"
-                            }`}
-                          >
-                            <div className="flex items-start">
-                              <div className={`mt-0.5 mr-2 h-5 w-5 ${
-                                isCorrect 
-                                  ? "text-green-500 dark:text-green-400" 
-                                  : "text-red-500 dark:text-red-400"
-                              }`}>
-                                {isCorrect ? <CheckCircle className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
-                              </div>
-                              <div>
-                                <p className="font-medium">{question.question}</p>
-                                <p className="text-sm mt-1">
-                                  Your answer: {selectedAnswers[index] || "Not answered"}
-                                </p>
-                                {!isCorrect && (
-                                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                                    Correct answer: {question.correctAnswer}
-                                  </p>
-                                )}
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                                  {question.explanation}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowResults(false);
-                        setCurrentQuestionIndex(0);
-                      }}
+
+              {/* Progress */}
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span>Question {currentQuestionIndex + 1} of {schedule.quizSet.questions.length}</span>
+                  <span>{Math.round(progress)}% Complete</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+
+              {/* Question Card */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    {currentQuestion.question}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {currentQuestion.type === "mcq" && currentQuestion.options && (
+                    <RadioGroup
+                      value={answers[currentQuestion.id] || ""}
+                      onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
-                      Review Questions
-                    </Button>
-                    <Button 
-                      onClick={handleSubmitQuiz}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Submitting..." : "Submit Results"}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Question {currentQuestionIndex + 1} of {questions.length}
-                      </div>
-                    </div>
-                    <Progress value={progress} className="h-2 mt-2" />
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="text-lg font-medium">{currentQuestion.question}</div>
-                    
-                    <RadioGroup 
-                      value={selectedAnswers[currentQuestionIndex]} 
-                      onValueChange={handleAnswerChange}
-                      className="space-y-3"
-                    >
-                      {/* Dynamic options that change based on the current question */}
-                      {currentQuestionIndex === 0 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Office Supplies, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Office Supplies, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Debit Expenses, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              Debit Assets, Credit Liabilities
-                            </Label>
-                          </div>
-                        </>
-                      )}
-                      
-                      {currentQuestionIndex === 1 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Office Supplies, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Office Supplies, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Debit Drawings, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              Debit Assets, Credit Liabilities
-                            </Label>
-                          </div>
-                        </>
-                      )}
-                      
-                      {currentQuestionIndex === 2 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Office Supplies, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Office Supplies, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Debit Rent Expense, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              Debit Assets, Credit Liabilities
-                            </Label>
-                          </div>
-                        </>
-                      )}
-                      
-                      {currentQuestionIndex === 3 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Accounts Receivable, Credit Revenue
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Revenue, Credit Accounts Receivable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Debit Cash, Credit Revenue
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              No journal entry is needed until cash is received
-                            </Label>
-                          </div>
-                        </>
-                      )}
-                      
-                      {currentQuestionIndex === 4 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Equipment, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Equipment, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Debit Assets, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              Debit Cash, Credit Equipment
-                            </Label>
-                          </div>
-                        </>
-                      )}
-                      
-                      {currentQuestionIndex === 5 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Accounts Payable, Credit Cash
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Office Furniture, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Reverse the original entry and record: Debit Office Furniture, Credit Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              No correction needed, the original entry is correct
-                            </Label>
-                          </div>
-                        </>
-                      )}
-                      
-                      {currentQuestionIndex > 5 && (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A" id="option-0" />
-                            <Label htmlFor="option-0" className="flex-1">
-                              <span className="font-medium mr-2">A.</span>
-                              Debit Asset Account, Credit Cash/Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="B" id="option-1" />
-                            <Label htmlFor="option-1" className="flex-1">
-                              <span className="font-medium mr-2">B.</span>
-                              Debit Expense Account, Credit Cash/Accounts Payable
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="C" id="option-2" />
-                            <Label htmlFor="option-2" className="flex-1">
-                              <span className="font-medium mr-2">C.</span>
-                              Debit Cash/Accounts Receivable, Credit Revenue Account
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="D" id="option-3" />
-                            <Label htmlFor="option-3" className="flex-1">
-                              <span className="font-medium mr-2">D.</span>
-                              Debit Liability Account, Credit Asset Account
-                            </Label>
-                          </div>
-                        </>
-                      )}
+                      {currentQuestion.options.map((option, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <RadioGroupItem value={option} id={`option-${index}`} />
+                          <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                            {option}
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
-                    
-                    {!selectedAnswers[currentQuestionIndex] && (
-                      <div className="flex items-center text-amber-600 dark:text-amber-400 text-sm">
-                        <HelpCircle className="h-4 w-4 mr-1" />
-                        <span>Please select an answer to continue</span>
+                  )}
+
+                  {currentQuestion.type === "fill-blank" && (
+                    <Input
+                      placeholder="Type your answer here..."
+                      value={answers[currentQuestion.id] || ""}
+                      onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                    />
+                  )}
+
+                  {currentQuestion.type === "true-false" && (
+                    <RadioGroup
+                      value={answers[currentQuestion.id] || ""}
+                      onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="true" id="true" />
+                        <Label htmlFor="true" className="cursor-pointer">True</Label>
                       </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={handlePreviousQuestion}
-                      disabled={currentQuestionIndex === 0}
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Previous
-                    </Button>
-                    <Button
-                      onClick={handleNextQuestion}
-                      disabled={!selectedAnswers[currentQuestionIndex]}
-                    >
-                      {currentQuestionIndex === questions.length - 1 ? "Finish Quiz" : "Next"}
-                      {currentQuestionIndex !== questions.length - 1 && <ArrowRight className="ml-2 h-4 w-4" />}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              )}
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="false" id="false" />
+                        <Label htmlFor="false" className="cursor-pointer">False</Label>
+                      </div>
+                    </RadioGroup>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Navigation */}
+              <div className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handlePreviousQuestion}
+                  disabled={currentQuestionIndex === 0}
+                >
+                  Previous
+                </Button>
+                
+                {currentQuestionIndex === schedule.quizSet.questions.length - 1 ? (
+                  <Button
+                    onClick={handleSubmitQuiz}
+                    disabled={submitQuizMutation.isPending}
+                  >
+                    {submitQuizMutation.isPending ? "Submitting..." : "Submit Quiz"}
+                  </Button>
+                ) : (
+                  <Button onClick={handleNextQuestion}>
+                    Next
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </main>
       </div>
     </div>
   );
-};
-
-export default TakeQuiz;
+}
