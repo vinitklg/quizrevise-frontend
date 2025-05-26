@@ -578,9 +578,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const schedules = await storage.getTodayQuizSchedules(req.session.userId!);
       
-      // Get the quiz and quiz set details
+      // Get the quiz and quiz set details, only for pending quizzes
       const enrichedSchedules = await Promise.all(
-        schedules.map(async (schedule) => {
+        schedules
+          .filter(schedule => schedule.status === "pending")  // ✅ Only show pending quizzes
+          .map(async (schedule) => {
           const quiz = await storage.getQuizById(schedule.quizId);
           const quizSet = await storage.getQuizSetById(schedule.quizSetId);
           
