@@ -148,11 +148,51 @@ const Header = () => {
                 <div className="mx-3 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
               ) : isAuthenticated ? (
                 <>
-                  <Link href="/dashboard" className="block px-4 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                  {/* Dashboard navigation for mobile */}
+                  <Link href="/dashboard" className={`${
+                    isActive('/dashboard') 
+                      ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
                     Dashboard
                   </Link>
-                  <form action="/api/auth/logout" method="post">
-                    <button type="submit" className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <Link href="/dashboard/create-quiz" className={`${
+                    isActive('/dashboard/create-quiz') 
+                      ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                    Create Quiz
+                  </Link>
+                  <Link href="/dashboard/today" className={`${
+                    isActive('/dashboard/today') 
+                      ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                    Today's Quizzes
+                  </Link>
+                  <Link href="/dashboard/performance" className={`${
+                    isActive('/dashboard/performance') 
+                      ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                    Performance
+                  </Link>
+                  <Link href="/dashboard/doubts" className={`${
+                    isActive('/dashboard/doubts') 
+                      ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                    Ask Doubts
+                  </Link>
+                  <Link href="/dashboard/settings" className={`${
+                    isActive('/dashboard/settings') 
+                      ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                      : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                    Settings
+                  </Link>
+                  <form action="/api/auth/logout" method="post" className="mt-4">
+                    <button type="submit" className="block w-full text-left px-4 py-2 text-base font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20">
                       Logout
                     </button>
                   </form>
