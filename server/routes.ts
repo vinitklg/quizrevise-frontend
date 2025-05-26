@@ -279,11 +279,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: reqData.chapter
         });
       }
+
+      // Find or create the specific topic for better targeting
+      const topics = await storage.getTopicsByChapter(selectedChapter.id);
+      let selectedTopic = topics.find(t => t.name.toLowerCase() === reqData.topic.toLowerCase());
       
-      // Process the data with correct IDs
+      // If topic doesn't exist, create it
+      if (!selectedTopic) {
+        selectedTopic = await storage.createTopic({
+          chapterId: selectedChapter.id,
+          subjectId: selectedSubject.id,
+          name: reqData.topic,
+          description: `Topic: ${reqData.topic} in ${selectedChapter.name}`
+        });
+      }
+      
+      // Process the data with correct IDs including topic ID for better targeting
       const validatedData = {
         subjectId: selectedSubject.id,
         chapterId: selectedChapter.id,
+        topicId: selectedTopic.id, // Using topic ID for precise targeting
         title: reqData.title,
         topic: reqData.topic,
         questionTypes: reqData.questionTypes || ["mcq"],
@@ -327,11 +342,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create a new quiz with correct subject and chapter IDs
+      // Create a new quiz with topic ID for precise targeting
       const quiz = await storage.createQuiz({
         userId: user.id,
         chapterId: validatedData.chapterId,
         subjectId: validatedData.subjectId,
+        topicId: validatedData.topicId, // Using topic ID for better targeting
         title: validatedData.title,
         topic: validatedData.topic,
         questionTypes: validatedData.questionTypes,
@@ -344,12 +360,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate all 8 sets of questions for spaced repetition with proper isolation
       const quizSets = [];
       for (let setNumber = 1; setNumber <= 8; setNumber++) {
-        console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, chapter: ${selectedChapter.name}`);
+        console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
         
+        // Use the specific topic for much better targeted question generation
         const questions = await generateQuizQuestions(
           selectedSubject.name,
           selectedChapter.name,
-          validatedData.topic,
+          selectedTopic.name, // Using the specific topic for precise targeting
           user.grade || 10,
           user.board || "CBSE",
           validatedData.questionTypes,

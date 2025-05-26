@@ -50,7 +50,7 @@ export const quizzes = pgTable("quizzes", {
   userId: integer("user_id").notNull(),
   chapterId: integer("chapter_id").notNull(),
   subjectId: integer("subject_id").notNull(),
-  topicId: integer("topic_id").notNull(), // Using topic ID for better targeting
+  topicId: integer("topic_id"), // Using topic ID for better targeting (optional for backward compatibility)
   title: text("title").notNull(),
   topic: text("topic").notNull(), // Keep topic name for display
   questionTypes: text("question_types").array().notNull(), // mcq, assertion-reasoning, fill-in-blanks, true-false
