@@ -35,14 +35,24 @@ export const chapters = pgTable("chapters", {
   description: text("description"),
 });
 
+// Topics table for more granular quiz targeting
+export const topics = pgTable("topics", {
+  id: serial("id").primaryKey(),
+  chapterId: integer("chapter_id").notNull(),
+  subjectId: integer("subject_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+});
+
 // Quizzes table
 export const quizzes = pgTable("quizzes", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   chapterId: integer("chapter_id").notNull(),
   subjectId: integer("subject_id").notNull(),
+  topicId: integer("topic_id").notNull(), // Using topic ID for better targeting
   title: text("title").notNull(),
-  topic: text("topic").notNull(),
+  topic: text("topic").notNull(), // Keep topic name for display
   questionTypes: text("question_types").array().notNull(), // mcq, assertion-reasoning, fill-in-blanks, true-false
   bloomTaxonomy: text("bloom_taxonomy").array().notNull(), // knowledge, comprehension, application, analysis, synthesis, evaluation
   difficultyLevels: text("difficulty_levels").array().notNull(), // basic, standard, challenging, most-challenging
@@ -93,6 +103,7 @@ export const doubtQueries = pgTable("doubt_queries", {
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertSubjectSchema = createInsertSchema(subjects).omit({ id: true });
 export const insertChapterSchema = createInsertSchema(chapters).omit({ id: true });
+export const insertTopicSchema = createInsertSchema(topics).omit({ id: true });
 export const insertQuizSchema = createInsertSchema(quizzes).omit({ id: true, createdAt: true });
 export const insertQuizSetSchema = createInsertSchema(quizSets).omit({ id: true, createdAt: true });
 export const insertQuizScheduleSchema = createInsertSchema(quizSchedules).omit({ id: true, completedDate: true, score: true });
@@ -115,6 +126,9 @@ export type InsertSubject = z.infer<typeof insertSubjectSchema>;
 
 export type Chapter = typeof chapters.$inferSelect;
 export type InsertChapter = z.infer<typeof insertChapterSchema>;
+
+export type Topic = typeof topics.$inferSelect;
+export type InsertTopic = z.infer<typeof insertTopicSchema>;
 
 export type Quiz = typeof quizzes.$inferSelect;
 export type InsertQuiz = z.infer<typeof insertQuizSchema>;

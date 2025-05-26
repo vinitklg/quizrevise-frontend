@@ -2,6 +2,7 @@ import {
   users,
   subjects,
   chapters,
+  topics,
   quizzes,
   quizSets,
   quizSchedules,
@@ -12,6 +13,8 @@ import {
   type InsertSubject,
   type Chapter,
   type InsertChapter,
+  type Topic,
+  type InsertTopic,
   type Quiz,
   type InsertQuiz,
   type QuizSet,
@@ -45,6 +48,12 @@ export interface IStorage {
   // Chapter operations
   getChaptersBySubject(subjectId: number): Promise<Chapter[]>;
   createChapter(chapter: InsertChapter): Promise<Chapter>;
+
+  // Topic operations
+  getTopicsByChapter(chapterId: number): Promise<Topic[]>;
+  getTopicsBySubject(subjectId: number): Promise<Topic[]>;
+  createTopic(topic: InsertTopic): Promise<Topic>;
+  getTopicById(id: number): Promise<Topic | undefined>;
 
   // Quiz operations
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
@@ -172,6 +181,25 @@ export class DatabaseStorage implements IStorage {
   async createChapter(chapter: InsertChapter): Promise<Chapter> {
     const [createdChapter] = await db.insert(chapters).values(chapter).returning();
     return createdChapter;
+  }
+
+  // Topic operations
+  async getTopicsByChapter(chapterId: number): Promise<Topic[]> {
+    return await db.select().from(topics).where(eq(topics.chapterId, chapterId));
+  }
+
+  async getTopicsBySubject(subjectId: number): Promise<Topic[]> {
+    return await db.select().from(topics).where(eq(topics.subjectId, subjectId));
+  }
+
+  async createTopic(topic: InsertTopic): Promise<Topic> {
+    const [createdTopic] = await db.insert(topics).values(topic).returning();
+    return createdTopic;
+  }
+
+  async getTopicById(id: number): Promise<Topic | undefined> {
+    const [topic] = await db.select().from(topics).where(eq(topics.id, id));
+    return topic;
   }
 
   // Quiz operations
