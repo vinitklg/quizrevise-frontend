@@ -22,7 +22,7 @@ import {
   type QuizSchedule,
   type InsertQuizSchedule,
   type DoubtQuery,
-  type InsertDoubtQuery
+  type InsertDoubtQuery,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lt, gt, lte, asc, desc, isNull, sql } from "drizzle-orm";
@@ -34,7 +34,11 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined>;
-  updateSubscription(id: number, tier: string, subjectIds: string[]): Promise<User | undefined>;
+  updateSubscription(
+    id: number,
+    tier: string,
+    subjectIds: string[],
+  ): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
 
   // Subject operations
@@ -71,9 +75,21 @@ export interface IStorage {
   getQuizSchedulesByUser(userId: number): Promise<QuizSchedule[]>;
   getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]>;
   getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]>;
-  getQuizSchedulesByQuizAndSet(quizId: number, quizSetId: number, userId: number): Promise<QuizSchedule[]>;
-  updateQuizSchedule(id: number, data: Partial<QuizSchedule>): Promise<QuizSchedule | undefined>;
-  getQuizPerformance(userId: number, subjectId?: number, startDate?: Date, endDate?: Date): Promise<{ date: string; score: number; quizSet: number }[]>;
+  getQuizSchedulesByQuizAndSet(
+    quizId: number,
+    quizSetId: number,
+    userId: number,
+  ): Promise<QuizSchedule[]>;
+  updateQuizSchedule(
+    id: number,
+    data: Partial<QuizSchedule>,
+  ): Promise<QuizSchedule | undefined>;
+  getQuizPerformance(
+    userId: number,
+    subjectId?: number,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{ date: string; score: number; quizSet: number }[]>;
 
   // Doubt Query operations
   createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
@@ -98,27 +114,30 @@ export class DatabaseStorage implements IStorage {
   async createUser(userData: InsertUser): Promise<User> {
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    
+
     // Ensure subscribedSubjects is an array if not provided
     const subscribedSubjects = userData.subscribedSubjects || [];
-    
+
     const [user] = await db
       .insert(users)
       .values({
         ...userData,
         password: hashedPassword,
-        subscribedSubjects
+        subscribedSubjects,
       })
       .returning();
     return user;
   }
 
-  async updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(
+    id: number,
+    data: Partial<InsertUser>,
+  ): Promise<User | undefined> {
     // If password is being updated, hash it
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
-    
+
     const [user] = await db
       .update(users)
       .set(data)
@@ -127,12 +146,16 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateSubscription(id: number, tier: string, subjectIds: string[]): Promise<User | undefined> {
+  async updateSubscription(
+    id: number,
+    tier: string,
+    subjectIds: string[],
+  ): Promise<User | undefined> {
     const [user] = await db
       .update(users)
-      .set({ 
+      .set({
         subscriptionTier: tier,
-        subscribedSubjects: subjectIds
+        subscribedSubjects: subjectIds,
       })
       .where(eq(users.id, id))
       .returning();
@@ -149,7 +172,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSubjectById(id: number): Promise<Subject | undefined> {
-    const [subject] = await db.select().from(subjects).where(eq(subjects.id, id));
+    const [subject] = await db
+      .select()
+      .from(subjects)
+      .where(eq(subjects.id, id));
     return subject;
   }
 
@@ -158,10 +184,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSubjectsByGrade(grade: number): Promise<Subject[]> {
-    return await db.select().from(subjects).where(eq(subjects.gradeLevel, grade));
+    return await db
+      .select()
+      .from(subjects)
+      .where(eq(subjects.gradeLevel, grade));
   }
 
-  async getSubjectsByBoardAndGrade(board: string, grade: number): Promise<Subject[]> {
+  async getSubjectsByBoardAndGrade(
+    board: string,
+    grade: number,
+  ): Promise<Subject[]> {
     return await db
       .select()
       .from(subjects)
@@ -169,27 +201,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSubject(subject: InsertSubject): Promise<Subject> {
-    const [createdSubject] = await db.insert(subjects).values(subject).returning();
+    const [createdSubject] = await db
+      .insert(subjects)
+      .values(subject)
+      .returning();
     return createdSubject;
   }
 
   // Chapter operations
   async getChaptersBySubject(subjectId: number): Promise<Chapter[]> {
-    return await db.select().from(chapters).where(eq(chapters.subjectId, subjectId));
+    return await db
+      .select()
+      .from(chapters)
+      .where(eq(chapters.subjectId, subjectId));
   }
 
   async createChapter(chapter: InsertChapter): Promise<Chapter> {
-    const [createdChapter] = await db.insert(chapters).values(chapter).returning();
+    const [createdChapter] = await db
+      .insert(chapters)
+      .values(chapter)
+      .returning();
     return createdChapter;
   }
 
   // Topic operations
   async getTopicsByChapter(chapterId: number): Promise<Topic[]> {
-    return await db.select().from(topics).where(eq(topics.chapterId, chapterId));
+    return await db
+      .select()
+      .from(topics)
+      .where(eq(topics.chapterId, chapterId));
   }
 
   async getTopicsBySubject(subjectId: number): Promise<Topic[]> {
-    return await db.select().from(topics).where(eq(topics.subjectId, subjectId));
+    return await db
+      .select()
+      .from(topics)
+      .where(eq(topics.subjectId, subjectId));
   }
 
   async createTopic(topic: InsertTopic): Promise<Topic> {
@@ -215,7 +262,11 @@ export class DatabaseStorage implements IStorage {
 
   async getQuizzesByUser(userId: number): Promise<Quiz[]> {
     // Ensure we only return quizzes for the specific user
-    return await db.select().from(quizzes).where(eq(quizzes.userId, userId)).orderBy(quizzes.createdAt);
+    return await db
+      .select()
+      .from(quizzes)
+      .where(eq(quizzes.userId, userId))
+      .orderBy(quizzes.createdAt);
   }
 
   async getActiveQuizzesByUser(userId: number): Promise<Quiz[]> {
@@ -227,39 +278,55 @@ export class DatabaseStorage implements IStorage {
 
   // QuizSet operations
   async createQuizSet(quizSet: InsertQuizSet): Promise<QuizSet> {
-    const [createdQuizSet] = await db.insert(quizSets).values(quizSet).returning();
+    const [createdQuizSet] = await db
+      .insert(quizSets)
+      .values(quizSet)
+      .returning();
     return createdQuizSet;
   }
 
   async getQuizSetsByQuiz(quizId: number): Promise<QuizSet[]> {
     // Ensure quiz sets are returned in correct order for spaced repetition
-    return await db.select().from(quizSets)
+    return await db
+      .select()
+      .from(quizSets)
       .where(eq(quizSets.quizId, quizId))
       .orderBy(quizSets.setNumber);
   }
 
   async getQuizSetById(id: number): Promise<QuizSet | undefined> {
-    const [quizSet] = await db.select().from(quizSets).where(eq(quizSets.id, id));
+    const [quizSet] = await db
+      .select()
+      .from(quizSets)
+      .where(eq(quizSets.id, id));
     return quizSet;
   }
 
   // QuizSchedule operations
-  async createQuizSchedule(schedule: InsertQuizSchedule): Promise<QuizSchedule> {
-    const [createdSchedule] = await db.insert(quizSchedules).values(schedule).returning();
+  async createQuizSchedule(
+    schedule: InsertQuizSchedule,
+  ): Promise<QuizSchedule> {
+    const [createdSchedule] = await db
+      .insert(quizSchedules)
+      .values(schedule)
+      .returning();
     return createdSchedule;
   }
 
   async getQuizSchedulesByUser(userId: number): Promise<QuizSchedule[]> {
-    return await db.select().from(quizSchedules).where(eq(quizSchedules.userId, userId));
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(eq(quizSchedules.userId, userId));
   }
 
   async getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     return await db
       .select()
       .from(quizSchedules)
@@ -268,16 +335,16 @@ export class DatabaseStorage implements IStorage {
           eq(quizSchedules.userId, userId),
           gte(quizSchedules.scheduledDate, today),
           lt(quizSchedules.scheduledDate, tomorrow),
-          eq(quizSchedules.status, "pending")
-        )
+          eq(quizSchedules.status, "pending"),
+        ),
       );
   }
-  
+
   async getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]> {
     const tomorrow = new Date();
     tomorrow.setHours(0, 0, 0, 0);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     return await db
       .select()
       .from(quizSchedules)
@@ -285,12 +352,15 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(quizSchedules.userId, userId),
           gte(quizSchedules.scheduledDate, tomorrow),
-          eq(quizSchedules.status, "pending")
-        )
+          eq(quizSchedules.status, "pending"),
+        ),
       );
   }
 
-  async updateQuizSchedule(id: number, data: Partial<QuizSchedule>): Promise<QuizSchedule | undefined> {
+  async updateQuizSchedule(
+    id: number,
+    data: Partial<QuizSchedule>,
+  ): Promise<QuizSchedule | undefined> {
     const [schedule] = await db
       .update(quizSchedules)
       .set(data)
@@ -298,8 +368,12 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return schedule;
   }
-  
-  async getQuizSchedulesByQuizAndSet(quizId: number, quizSetId: number, userId: number): Promise<QuizSchedule[]> {
+
+  async getQuizSchedulesByQuizAndSet(
+    quizId: number,
+    quizSetId: number,
+    userId: number,
+  ): Promise<QuizSchedule[]> {
     return await db
       .select()
       .from(quizSchedules)
@@ -307,35 +381,35 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(quizSchedules.quizId, quizId),
           eq(quizSchedules.quizSetId, quizSetId),
-          eq(quizSchedules.userId, userId)
-        )
+          eq(quizSchedules.userId, userId),
+        ),
       );
   }
-  
+
   async getQuizPerformance(
-    userId: number, 
-    subjectId?: number, 
-    startDate?: Date, 
-    endDate?: Date
+    userId: number,
+    subjectId?: number,
+    startDate?: Date,
+    endDate?: Date,
   ): Promise<{ date: string; score: number; quizSet: number }[]> {
     // Build the condition for filtering
     const whereConditions = [
       eq(quizSchedules.userId, userId),
       eq(quizSchedules.status, "completed"),
       sql`${quizSchedules.completedDate} IS NOT NULL`,
-      sql`${quizSchedules.score} IS NOT NULL`
+      sql`${quizSchedules.score} IS NOT NULL`,
     ];
-    
+
     // Add subject filter if provided
     let queryBuilder = db
       .select({
         date: quizSchedules.completedDate,
         score: quizSchedules.score,
         quizSet: quizSchedules.quizSetId,
-        quizId: quizSchedules.quizId
+        quizId: quizSchedules.quizId,
       })
       .from(quizSchedules);
-    
+
     if (subjectId) {
       queryBuilder = queryBuilder
         .innerJoin(quizzes, eq(quizzes.id, quizSchedules.quizId))
@@ -343,22 +417,28 @@ export class DatabaseStorage implements IStorage {
     } else {
       queryBuilder = queryBuilder.where(and(...whereConditions));
     }
-    
+
     // Add date range filters if provided
     if (startDate) {
-      queryBuilder = queryBuilder.where(gte(quizSchedules.completedDate, startDate));
+      queryBuilder = queryBuilder.where(
+        gte(quizSchedules.completedDate, startDate),
+      );
     }
-    
+
     if (endDate) {
-      queryBuilder = queryBuilder.where(lte(quizSchedules.completedDate, endDate));
+      queryBuilder = queryBuilder.where(
+        lte(quizSchedules.completedDate, endDate),
+      );
     }
-    
-    const results = await queryBuilder.orderBy(asc(quizSchedules.completedDate));
-    
-    return results.map(result => ({
-      date: result.date?.toISOString().split('T')[0] || '',
+
+    const results = await queryBuilder.orderBy(
+      asc(quizSchedules.completedDate),
+    );
+
+    return results.map((result) => ({
+      date: result.date?.toISOString().split("T")[0] || "",
       score: result.score || 0,
-      quizSet: result.quizSet
+      quizSet: result.quizSet,
     }));
   }
 
@@ -377,23 +457,29 @@ export class DatabaseStorage implements IStorage {
         fileUrl: doubt.fileUrl,
         fileType: doubt.fileType,
         status: "pending",
-        createdAt: new Date()
+        createdAt: new Date(),
       })
       .returning();
     return createdDoubt;
   }
 
   async getDoubtQueriesByUser(userId: number): Promise<DoubtQuery[]> {
-    return await db.select().from(doubtQueries).where(eq(doubtQueries.userId, userId));
+    return await db
+      .select()
+      .from(doubtQueries)
+      .where(eq(doubtQueries.userId, userId));
   }
 
-  async answerDoubtQuery(id: number, answer: string): Promise<DoubtQuery | undefined> {
+  async answerDoubtQuery(
+    id: number,
+    answer: string,
+  ): Promise<DoubtQuery | undefined> {
     const [doubt] = await db
       .update(doubtQueries)
       .set({
         answer,
         status: "answered",
-        answeredAt: new Date()
+        answeredAt: new Date(),
       })
       .where(eq(doubtQueries.id, id))
       .returning();

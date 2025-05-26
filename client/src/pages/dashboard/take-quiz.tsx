@@ -227,7 +227,10 @@ export default function TakeQuiz() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {currentQuestion.type === "mcq" && currentQuestion.options && (
+                  {/* Debug: Let's see the question structure */}
+                  {console.log("Current Question:", currentQuestion)}
+                  
+                  {(currentQuestion.questionType === "mcq" || currentQuestion.type === "mcq") && currentQuestion.options && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
@@ -243,7 +246,7 @@ export default function TakeQuiz() {
                     </RadioGroup>
                   )}
 
-                  {currentQuestion.type === "fill-blank" && (
+                  {currentQuestion.questionType === "fill-blank" && (
                     <Input
                       placeholder="Type your answer here..."
                       value={answers[currentQuestion.id] || ""}

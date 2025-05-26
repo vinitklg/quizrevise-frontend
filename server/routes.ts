@@ -516,7 +516,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedDate: new Date(),
         score: score
       });
-      
+
+      // ✅ NEW: If all sets of this quiz are completed, mark quiz as completed
+      const allSchedules = await storage.getQuizSchedulesByQuiz(userId, parseInt(quizId));
+      const allCompleted = allSchedules.every(s => s.status === "completed");
+
+      if (allCompleted) {
+        await storage.updateQuizStatus(parseInt(quizId), "completed");
+
       res.json({
         success: true,
         schedule: updatedSchedule
@@ -637,7 +644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the quiz and quiz set details
       const enrichedSchedules = await Promise.all(
-        schedules.map(async (schedule) => {
+          schedules.filter(schedule => schedule.status === "pending").map(async (schedule) => {
+
           const quiz = await storage.getQuizById(schedule.quizId);
           const quizSet = await storage.getQuizSetById(schedule.quizSetId);
           
