@@ -46,7 +46,7 @@ const TodayQuizzes = () => {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-          <div className="py-6">
+          <div className="pt-4 pb-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Today's Quizzes</h1>
               
