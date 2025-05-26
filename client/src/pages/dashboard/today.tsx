@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate } from "@/lib/utils";
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -36,9 +36,7 @@ const TodayQuizzes = () => {
     retry: 1,
   });
 
-  const handleStartQuiz = (quizId: number, quizSetId: number) => {
-    navigate(`/dashboard/take-quiz/${quizId}?setId=${quizSetId}`);
-  };
+
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">

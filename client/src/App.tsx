@@ -37,7 +37,7 @@ function Router() {
       {/* Dashboard pages */}
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/create-quiz" component={CreateQuiz} />
-      <Route path="/dashboard/take-quiz/:id" component={TakeQuiz} />
+      <Route path="/dashboard/take-quiz/:scheduleId" component={TakeQuiz} />
       <Route path="/dashboard/today" component={TodayQuizzes} />
       <Route path="/dashboard/doubts" component={AskDoubts} />
       <Route path="/dashboard/performance" component={Performance} />
