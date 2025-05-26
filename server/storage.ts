@@ -186,7 +186,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuizzesByUser(userId: number): Promise<Quiz[]> {
-    return await db.select().from(quizzes).where(eq(quizzes.userId, userId));
+    // Ensure we only return quizzes for the specific user
+    return await db.select().from(quizzes).where(eq(quizzes.userId, userId)).orderBy(quizzes.createdAt);
   }
 
   async getActiveQuizzesByUser(userId: number): Promise<Quiz[]> {
@@ -203,7 +204,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQuizSetsByQuiz(quizId: number): Promise<QuizSet[]> {
-    return await db.select().from(quizSets).where(eq(quizSets.quizId, quizId));
+    // Ensure quiz sets are returned in correct order for spaced repetition
+    return await db.select().from(quizSets)
+      .where(eq(quizSets.quizId, quizId))
+      .orderBy(quizSets.setNumber);
   }
 
   async getQuizSetById(id: number): Promise<QuizSet | undefined> {

@@ -261,10 +261,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Process the data
+      // Find the actual subject and chapter in the database
+      const subjects = await storage.getAllSubjects();
+      const selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
+      
+      if (!selectedSubject) {
+        return res.status(400).json({ message: `Subject "${reqData.subject}" not found` });
+      }
+      
+      const chapters = await storage.getChaptersBySubject(selectedSubject.id);
+      let selectedChapter = chapters.find(c => c.name.toLowerCase() === reqData.chapter.toLowerCase());
+      
+      // If chapter doesn't exist, create it
+      if (!selectedChapter) {
+        selectedChapter = await storage.createChapter({
+          subjectId: selectedSubject.id,
+          name: reqData.chapter
+        });
+      }
+      
+      // Process the data with correct IDs
       const validatedData = {
-        subjectId: 1, // Using default ID as we're using subject name directly
-        chapterId: 1, // Using default ID as we're using chapter name directly
+        subjectId: selectedSubject.id,
+        chapterId: selectedChapter.id,
         title: reqData.title,
         topic: reqData.topic,
         questionTypes: reqData.questionTypes || ["mcq"],
@@ -305,12 +324,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create a new quiz with text inputs for subject and chapter
+      // Create a new quiz with correct subject and chapter IDs
       const quiz = await storage.createQuiz({
         userId: user.id,
-        // Use default values for IDs since we're now using text inputs
-        chapterId: 1,
-        subjectId: 1,
+        chapterId: validatedData.chapterId,
+        subjectId: validatedData.subjectId,
         title: validatedData.title,
         topic: validatedData.topic,
         questionTypes: validatedData.questionTypes,
@@ -320,16 +338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Use the subject and chapter text directly from the form data
-      const subject = { name: reqData.subject };
-      const chapter = { name: reqData.chapter };
-      
-      // Generate 8 sets of questions with the new parameters
+      // Generate 8 sets of questions with correct subject and chapter names
       const quizSets = [];
       for (let i = 1; i <= 8; i++) {
         const questions = await generateQuizQuestions(
-          subject.name,
-          chapter.name,
+          selectedSubject.name,
+          selectedChapter.name,
           validatedData.topic,
           user.grade || 10,
           user.board || "CBSE",
