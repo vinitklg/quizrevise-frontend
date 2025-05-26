@@ -551,6 +551,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Debug: Log the quiz set to see what's in it
       console.log("Quiz set data:", JSON.stringify(quizSet, null, 2));
+      console.log("Questions array:", quizSet.questions);
+      console.log("Questions length:", quizSet.questions ? quizSet.questions.length : "null");
       
       res.json({
         id: schedule.id,
