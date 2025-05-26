@@ -79,6 +79,7 @@ export const quizSchedules = pgTable("quiz_schedules", {
   scheduledDate: timestamp("scheduled_date").notNull(),
   completedDate: timestamp("completed_date"),
   score: integer("score"),
+  userAnswers: jsonb("user_answers"), // Store the user's answers as JSON
   status: text("status").default("pending").notNull(), // pending, completed, missed
 });
 

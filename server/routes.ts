@@ -514,7 +514,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedSchedule = await storage.updateQuizSchedule(schedules[0].id, {
         status: "completed",
         completedDate: new Date(),
-        score: score
+        score: score,
+        userAnswers: answers
       });
 
       // ✅ NEW: If all sets of this quiz are completed, mark quiz as completed
