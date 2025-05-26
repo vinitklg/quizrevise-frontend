@@ -267,36 +267,14 @@ const CreateQuiz = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Subject</FormLabel>
-                                  <Select 
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select a subject" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {/* Only show subjects the user has actually subscribed to */}
-                                      {isLoadingSubjects ? (
-                                        <SelectItem value="loading" disabled>
-                                          Loading subjects...
-                                        </SelectItem>
-                                      ) : subscribedSubjects.length > 0 ? (
-                                        subscribedSubjects.map((subject) => (
-                                          <SelectItem key={subject.id} value={subject.name}>
-                                            {subject.name}
-                                          </SelectItem>
-                                        ))
-                                      ) : (
-                                        <SelectItem value="none" disabled>
-                                          No subscribed subjects found. Please subscribe to subjects first.
-                                        </SelectItem>
-                                      )}
-                                    </SelectContent>
-                                  </Select>
+                                  <FormControl>
+                                    <Input 
+                                      placeholder="e.g., Mathematics, Physics, Chemistry, Biology" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
                                   <FormDescription>
-                                    Only subjects you have subscribed to are available
+                                    Enter the subject name (will be created if it doesn't exist)
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>

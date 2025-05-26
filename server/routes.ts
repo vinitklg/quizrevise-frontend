@@ -261,12 +261,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Find the actual subject and chapter in the database
-      const subjects = await storage.getAllSubjects();
-      const selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
+      // Find or create the subject dynamically based on user input
+      const subjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
+      let selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
       
+      // If subject doesn't exist, create it dynamically
       if (!selectedSubject) {
-        return res.status(400).json({ message: `Subject "${reqData.subject}" not found` });
+        selectedSubject = await storage.createSubject({
+          name: reqData.subject,
+          gradeLevel: user.grade || 10,
+          board: user.board || "CBSE"
+        });
+        console.log(`Created new subject: ${reqData.subject} for ${user.board || "CBSE"} Grade ${user.grade || 10}`);
       }
       
       const chapters = await storage.getChaptersBySubject(selectedSubject.id);
