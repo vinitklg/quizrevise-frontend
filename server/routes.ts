@@ -850,6 +850,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seed curriculum data endpoint
+  app.post("/api/seed-curriculum", async (req, res) => {
+    try {
+      const { seedCurriculumData } = await import("./seedData");
+      await seedCurriculumData();
+      res.json({ message: "Curriculum data seeded successfully!" });
+    } catch (error) {
+      console.error("Seeding error:", error);
+      res.status(500).json({ message: "Failed to seed curriculum data", error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
