@@ -46,16 +46,10 @@ const calculateSpacedRepetitionDates = (startDate: Date): Date[] => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Configure session middleware
+  // Set up session middleware
   app.use(session({
     secret: process.env.SESSION_SECRET || 'quiz-revise-secret',
     resave: false,
-    saveUninitialized: false,
-    cookie: { 
-      secure: false, // Set to true in production with HTTPS
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  }));
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
@@ -555,7 +549,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Quiz or quiz set not found" });
       }
       
-
+      // Debug: Log the quiz set to see what's in it
+      console.log("Quiz set data:", JSON.stringify(quizSet, null, 2));
       
       res.json({
         id: schedule.id,
