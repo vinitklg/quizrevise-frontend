@@ -219,7 +219,7 @@ const AskDoubts = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
           <div className="pt-2 pb-6">
-            <div className="max-w-4xl px-4 sm:px-6 md:px-8">
+            <div className="px-4 sm:px-6 md:px-8">
               <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Ask Doubts</h1>
               
               <div className="mt-6">
