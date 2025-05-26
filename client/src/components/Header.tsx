@@ -10,49 +10,53 @@ const Header = () => {
   const { user, isLoading, isAuthenticated } = useAuth();
 
   const isActive = (path: string) => location === path;
+  const isDashboardRoute = location.startsWith('/dashboard');
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center">
+            <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex-shrink-0 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary h-8 w-8 mr-2">
                 <path d="M6 4v6a6 6 0 0 0 12 0V4"></path>
                 <line x1="4" y1="20" x2="20" y2="20"></line>
               </svg>
               <span className="font-bold text-xl text-gray-900 dark:text-white">QuizRevise</span>
             </Link>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link href="/" className={`${
-                isActive('/') 
-                  ? 'border-primary text-gray-900 dark:text-white' 
-                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                Home
-              </Link>
-              <Link href="/services" className={`${
-                isActive('/services') 
-                  ? 'border-primary text-gray-900 dark:text-white' 
-                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                Services
-              </Link>
-              <Link href="/about" className={`${
-                isActive('/about') 
-                  ? 'border-primary text-gray-900 dark:text-white' 
-                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                About
-              </Link>
-              <Link href="/pricing" className={`${
-                isActive('/pricing') 
-                  ? 'border-primary text-gray-900 dark:text-white' 
-                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                Pricing
-              </Link>
-            </div>
+            {/* Only show marketing navigation if user is not authenticated or not on dashboard routes */}
+            {!isAuthenticated && !isDashboardRoute && (
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link href="/" className={`${
+                  isActive('/') 
+                    ? 'border-primary text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  Home
+                </Link>
+                <Link href="/services" className={`${
+                  isActive('/services') 
+                    ? 'border-primary text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  Services
+                </Link>
+                <Link href="/about" className={`${
+                  isActive('/about') 
+                    ? 'border-primary text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  About
+                </Link>
+                <Link href="/pricing" className={`${
+                  isActive('/pricing') 
+                    ? 'border-primary text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-200'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  Pricing
+                </Link>
+              </div>
+            )}
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-2">
             <ThemeToggle />
@@ -105,36 +109,39 @@ const Header = () => {
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            <Link href="/" className={`${
-              isActive('/') 
-                ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
-                : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Home
-            </Link>
-            <Link href="/services" className={`${
-              isActive('/services') 
-                ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
-                : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Services
-            </Link>
-            <Link href="/about" className={`${
-              isActive('/about') 
-                ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
-                : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              About
-            </Link>
-            <Link href="/pricing" className={`${
-              isActive('/pricing') 
-                ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
-                : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
-              Pricing
-            </Link>
-          </div>
+          {/* Only show marketing navigation if user is not authenticated or not on dashboard routes */}
+          {!isAuthenticated && !isDashboardRoute && (
+            <div className="pt-2 pb-3 space-y-1">
+              <Link href="/" className={`${
+                isActive('/') 
+                  ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                Home
+              </Link>
+              <Link href="/services" className={`${
+                isActive('/services') 
+                  ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                Services
+              </Link>
+              <Link href="/about" className={`${
+                isActive('/about') 
+                  ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                About
+              </Link>
+              <Link href="/pricing" className={`${
+                isActive('/pricing') 
+                  ? 'bg-primary-50 dark:bg-gray-700 border-primary text-primary dark:text-white' 
+                  : 'border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}>
+                Pricing
+              </Link>
+            </div>
+          )}
           <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">
             <div className="space-y-1">
               {isLoading ? (
