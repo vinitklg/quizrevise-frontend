@@ -76,13 +76,11 @@ const CreateQuiz = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Parse the user's preferred subjects into an array
-  const preferredSubjects = user?.preferredSubject 
-    ? user.preferredSubject.split(',').map(subject => subject.trim())
-    : [];
-  
-  // Get user's subscribed subjects
-  const subscribedSubjects = user?.subscribedSubjects || [];
+  // Fetch only subjects the user has actually subscribed to (paid for)
+  const { data: subscribedSubjects = [], isLoading: isLoadingSubjects } = useQuery<Subject[]>({
+    queryKey: ["/api/subjects/subscribed"],
+    enabled: !!user,
+  });
   
   // Define board options
   const boardOptions = [
@@ -279,22 +277,26 @@ const CreateQuiz = () => {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {/* Only show subjects from the user's profile */}
-                                      {preferredSubjects.length > 0 ? (
-                                        preferredSubjects.map((subject, index) => (
-                                          <SelectItem key={`preferred-${index}`} value={subject}>
-                                            {subject}
+                                      {/* Only show subjects the user has actually subscribed to */}
+                                      {isLoadingSubjects ? (
+                                        <SelectItem value="loading" disabled>
+                                          Loading subjects...
+                                        </SelectItem>
+                                      ) : subscribedSubjects.length > 0 ? (
+                                        subscribedSubjects.map((subject) => (
+                                          <SelectItem key={subject.id} value={subject.name}>
+                                            {subject.name}
                                           </SelectItem>
                                         ))
                                       ) : (
                                         <SelectItem value="none" disabled>
-                                          No subjects available in your profile
+                                          No subscribed subjects found. Please subscribe to subjects first.
                                         </SelectItem>
                                       )}
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    Only subjects from your profile settings are available
+                                    Only subjects you have subscribed to are available
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
