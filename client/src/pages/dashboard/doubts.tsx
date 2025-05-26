@@ -217,9 +217,10 @@ const AskDoubts = () => {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Ask Doubts</h1>
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+          <div className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Ask Doubts</h1>
             
             <Tabs defaultValue="ask">
               <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -464,6 +465,7 @@ const AskDoubts = () => {
                 </Card>
               </TabsContent>
             </Tabs>
+            </div>
           </div>
         </main>
       </div>
