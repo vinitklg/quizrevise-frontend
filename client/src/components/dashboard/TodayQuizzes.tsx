@@ -3,7 +3,9 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { formatDate, calculateTimeRemaining } from "@/lib/utils";
-import { ChevronRight, Clock, BarChart2 } from "lucide-react";
+import { ChevronRight, Clock, BarChart2, Eye } from "lucide-react";
+import { useState } from "react";
+import QuizResultsModal from "./QuizResultsModal";
 
 interface TodayQuizProps {
   userId: number;
@@ -15,6 +17,8 @@ interface QuizSchedule {
   quizSetId: number;
   scheduledDate: string;
   status: string;
+  score?: number;
+  userAnswers?: Record<string, string>;
   quiz: {
     id: number;
     title: string;
@@ -29,8 +33,16 @@ interface QuizSchedule {
 }
 
 const TodayQuizzes = ({ userId }: TodayQuizProps) => {
+  const [selectedQuizResults, setSelectedQuizResults] = useState<QuizSchedule | null>(null);
+  const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
+
   const { data: todayQuizzes, isLoading, error } = useQuery<QuizSchedule[]>({
     queryKey: ["/api/quizzes/today"],
+  });
+
+  // Also fetch completed quizzes for results viewing
+  const { data: completedQuizzes } = useQuery<QuizSchedule[]>({
+    queryKey: ["/api/quizzes/completed"],
   });
 
   if (isLoading) {

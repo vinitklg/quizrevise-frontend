@@ -609,6 +609,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get completed quizzes for results viewing
+  app.get("/api/quizzes/completed", isAuthenticated, async (req, res) => {
+    try {
+      const schedules = await storage.getQuizSchedulesByUser(req.session.userId!);
+      const completedSchedules = schedules.filter(s => s.status === "completed");
+      
+      // Get quiz and quiz set details for completed quizzes
+      const enrichedSchedules = await Promise.all(
+        completedSchedules
+          .filter(schedule => schedule.quizId && schedule.quizSetId) // Filter out invalid IDs
+          .map(async (schedule) => {
+            try {
+              const quiz = await storage.getQuizById(schedule.quizId);
+              const quizSet = await storage.getQuizSetById(schedule.quizSetId);
+              
+              return {
+                ...schedule,
+                quiz,
+                quizSet
+              };
+            } catch (error) {
+              console.error("Error fetching quiz details:", error);
+              return null;
+            }
+          })
+      );
+      
+      // Filter out any null results
+      const validSchedules = enrichedSchedules.filter(Boolean);
+      
+      res.json(validSchedules);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to get completed quizzes" });
+    }
+  });
+
   // Get quiz results
   app.get("/api/quiz-results/:scheduleId", isAuthenticated, async (req, res) => {
     try {
