@@ -549,6 +549,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Quiz or quiz set not found" });
       }
       
+      // Debug: Log the quiz set to see what's in it
+      console.log("Quiz set data:", JSON.stringify(quizSet, null, 2));
+      
       res.json({
         id: schedule.id,
         quizId: schedule.quizId,
