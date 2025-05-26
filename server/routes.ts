@@ -314,9 +314,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quizLimit = 20;
       }
       
-      // Only apply limit if there are many active quizzes already (for testing)
-      const subjectQuizzes = activeQuizzes.filter(quiz => quiz.subjectId === validatedData.subjectId);
-      if (subjectQuizzes.length >= quizLimit) {
+      // Filter quizzes by the actual subject ID to ensure proper isolation
+      const userSubjectQuizzes = activeQuizzes.filter(quiz => 
+        quiz.subjectId === validatedData.subjectId && quiz.userId === user.id
+      );
+      
+      if (userSubjectQuizzes.length >= quizLimit) {
         return res.status(403).json({ 
           message: "Quiz limit reached for your subscription tier",
           currentTier: user.subscriptionTier,
@@ -338,9 +341,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Generate 8 sets of questions with correct subject and chapter names
+      // Generate all 8 sets of questions for spaced repetition with proper isolation
       const quizSets = [];
-      for (let i = 1; i <= 8; i++) {
+      for (let setNumber = 1; setNumber <= 8; setNumber++) {
+        console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, chapter: ${selectedChapter.name}`);
+        
         const questions = await generateQuizQuestions(
           selectedSubject.name,
           selectedChapter.name,
@@ -351,12 +356,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           validatedData.bloomTaxonomy,
           validatedData.difficultyLevels,
           validatedData.numberOfQuestions,
-          i
+          setNumber
         );
         
         const quizSet = await storage.createQuizSet({
           quizId: quiz.id,
-          setNumber: i,
+          setNumber: setNumber,
           questions: questions.questions
         });
         
@@ -368,9 +373,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schedules = [];
       
       for (let i = 0; i < quizSets.length; i++) {
+        console.log(`Scheduling quiz set ${i + 1}/8 for user ${user.id} on ${dates[i]}`);
+        
         const schedule = await storage.createQuizSchedule({
           quizId: quiz.id,
-          userId: user.id,
+          userId: user.id, // Ensure proper user isolation
           quizSetId: quizSets[i].id,
           scheduledDate: dates[i],
           status: "pending"
@@ -379,10 +386,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         schedules.push(schedule);
       }
       
+      console.log(`Successfully created quiz for user ${user.id} with ${quizSets.length} sets and ${schedules.length} schedules`);
+      
       res.status(201).json({
         quiz,
         quizSets,
-        schedules
+        schedules,
+        message: `Created quiz with ${quizSets.length} sets for spaced repetition`
       });
     } catch (error) {
       if (error instanceof ZodError) {
