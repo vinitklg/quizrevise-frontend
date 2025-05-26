@@ -45,11 +45,12 @@ const TodayQuizzes = () => {
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Today's Quizzes</h1>
-            
-            {isLoading ? (
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+          <div className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Today's Quizzes</h1>
+              
+              {isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
               </div>
@@ -116,6 +117,7 @@ const TodayQuizzes = () => {
                 </CardContent>
               </Card>
             )}
+            </div>
           </div>
         </main>
       </div>
