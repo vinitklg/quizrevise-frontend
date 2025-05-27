@@ -51,6 +51,8 @@ export default function TakeQuiz() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [quizResults, setQuizResults] = useState<any>(null);
 
   // Fetch quiz schedule and questions
   const { data: schedule, isLoading } = useQuery<QuizSchedule>({
@@ -65,11 +67,8 @@ export default function TakeQuiz() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes/today"] });
-      toast({
-        title: "Quiz Completed!",
-        description: "Your answers have been submitted successfully.",
-      });
       setIsCompleted(true);
+      setShowResults(true);
     },
     onError: () => {
       toast({
@@ -115,6 +114,29 @@ export default function TakeQuiz() {
 
   const handleSubmitQuiz = () => {
     const score = calculateScore();
+    
+    // Calculate detailed results
+    const results = schedule?.quizSet.questions.map(question => {
+      const userAnswer = answers[question.id];
+      const isCorrect = userAnswer === question.correctAnswer;
+      
+      return {
+        question: question.question,
+        userAnswer: userAnswer || "Not answered",
+        correctAnswer: question.correctAnswer,
+        isCorrect,
+        explanation: question.explanation || "No explanation available",
+        options: question.options || []
+      };
+    }) || [];
+    
+    setQuizResults({
+      score,
+      totalQuestions: schedule?.quizSet.questions.length || 0,
+      correctAnswers: results.filter(r => r.isCorrect).length,
+      results
+    });
+    
     submitQuizMutation.mutate({ score });
   };
 
@@ -158,24 +180,93 @@ export default function TakeQuiz() {
     );
   }
 
-  if (isCompleted) {
+  if (isCompleted && showResults && quizResults) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <CardTitle>Quiz Completed!</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-lg">Your Score: <span className="font-bold text-primary">{calculateScore()}%</span></p>
-              <Button onClick={() => setLocation("/dashboard/today")} className="w-full">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Today's Quizzes
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto p-6">
+            {/* Results Header */}
+            <Card className="mb-6">
+              <CardHeader className="text-center">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <CardTitle className="text-2xl">Quiz Completed!</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{quizResults.score}%</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Final Score</p>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{quizResults.correctAnswers}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Correct</p>
+                  </div>
+                  <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{quizResults.totalQuestions - quizResults.correctAnswers}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Incorrect</p>
+                  </div>
+                </div>
+                <Button onClick={() => setLocation("/dashboard/today")} className="w-full">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Today's Quizzes
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Detailed Results */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Detailed Results</h3>
+              {quizResults.results.map((result: any, index: number) => (
+                <Card key={index} className={`border-l-4 ${result.isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center">
+                        Question {index + 1}
+                        {result.isCorrect ? (
+                          <CheckCircle className="h-5 w-5 text-green-500 ml-2" />
+                        ) : (
+                          <div className="h-5 w-5 bg-red-500 rounded-full flex items-center justify-center ml-2">
+                            <span className="text-white text-xs">✕</span>
+                          </div>
+                        )}
+                      </CardTitle>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        result.isCorrect ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                                         : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                      }`}>
+                        {result.isCorrect ? 'Correct' : 'Incorrect'}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="font-medium text-gray-900 dark:text-white">{result.question}</p>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your Answer:</p>
+                        <p className={`p-2 rounded ${result.isCorrect ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                                                                      : 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400'}`}>
+                          {result.userAnswer}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correct Answer:</p>
+                        <p className="p-2 rounded bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                          {result.correctAnswer}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                      <p className="text-sm font-medium text-blue-800 dark:text-blue-400 mb-1">Explanation:</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">{result.explanation}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
