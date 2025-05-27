@@ -275,9 +275,9 @@ const CreateQuiz = () => {
                                     </FormControl>
                                     <SelectContent>
                                       {isLoadingSubjects ? (
-                                        <SelectItem value="" disabled>Loading subjects...</SelectItem>
+                                        <SelectItem value="loading" disabled>Loading subjects...</SelectItem>
                                       ) : subscribedSubjects.length === 0 ? (
-                                        <SelectItem value="" disabled>No subjects available. Please subscribe to subjects in your Profile.</SelectItem>
+                                        <SelectItem value="no-subjects" disabled>No subjects available. Please subscribe to subjects in your Profile.</SelectItem>
                                       ) : (
                                         subscribedSubjects.map((subject) => (
                                           <SelectItem key={subject.id} value={subject.name}>
