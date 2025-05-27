@@ -235,14 +235,31 @@ export default function TakeQuiz() {
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
-                      {currentQuestion.options.map((option, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <RadioGroupItem value={option} id={`option-${index}`} />
-                          <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
+                      {(() => {
+                        const options = currentQuestion.options;
+                        
+                        // Handle both array format ["A) ...", "B) ..."] and object format {"A": "...", "B": "..."}
+                        if (Array.isArray(options)) {
+                          return options.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <RadioGroupItem value={String.fromCharCode(65 + index)} id={`option-${index}`} />
+                              <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                                {option}
+                              </Label>
+                            </div>
+                          ));
+                        } else if (typeof options === 'object') {
+                          return Object.entries(options).map(([key, value], index) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <RadioGroupItem value={key} id={`option-${key}`} />
+                              <Label htmlFor={`option-${key}`} className="cursor-pointer">
+                                {key}) {value}
+                              </Label>
+                            </div>
+                          ));
+                        }
+                        return null;
+                      })()}
                     </RadioGroup>
                   )}
 
