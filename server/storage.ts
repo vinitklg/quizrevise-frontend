@@ -47,6 +47,8 @@ export interface IStorage {
   getSubjectsByBoard(board: string): Promise<Subject[]>;
   getSubjectsByGrade(grade: number): Promise<Subject[]>;
   getSubjectsByBoardAndGrade(board: string, grade: number): Promise<Subject[]>;
+  getSubjectsByBoardGradeStream(board: string, grade: number, stream?: string): Promise<Subject[]>;
+  getAvailableStreams(board: string, grade: number): Promise<string[]>;
   createSubject(subject: InsertSubject): Promise<Subject>;
 
   // Chapter operations
@@ -198,6 +200,47 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(subjects)
       .where(and(eq(subjects.board, board), eq(subjects.gradeLevel, grade)));
+  }
+
+  async getSubjectsByBoardGradeStream(
+    board: string, 
+    grade: number, 
+    stream?: string
+  ): Promise<Subject[]> {
+    const conditions = [
+      eq(subjects.board, board),
+      eq(subjects.gradeLevel, grade)
+    ];
+
+    // For grades 6-10, stream should be null
+    // For grades 11-12, filter by stream
+    if (grade <= 10) {
+      conditions.push(eq(subjects.stream, null));
+    } else if (stream) {
+      conditions.push(eq(subjects.stream, stream));
+    }
+
+    return await db
+      .select()
+      .from(subjects)
+      .where(and(...conditions));
+  }
+
+  async getAvailableStreams(board: string, grade: number): Promise<string[]> {
+    if (grade <= 10) return [];
+
+    const result = await db
+      .selectDistinct({ stream: subjects.stream })
+      .from(subjects)
+      .where(
+        and(
+          eq(subjects.board, board),
+          eq(subjects.gradeLevel, grade),
+          ne(subjects.stream, null)
+        )
+      );
+
+    return result.map(r => r.stream).filter(Boolean) as string[];
   }
 
   async createSubject(subject: InsertSubject): Promise<Subject> {

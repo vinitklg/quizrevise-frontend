@@ -1,0 +1,47 @@
+You are assisting in the development of an AI-based education platform that generates quizzes. Currently, the quiz subject selection system is based on free-text input, where students manually type subjects during registration or in their profile. This system is facing critical issues:
+
+🧠 Current Problems:
+No standardization – Students enter subjects like Accounts, Accountancy, Acc, Comm., Commerce which makes it difficult for the AI to map prompts correctly.
+
+Different subject names for different boards –
+
+CBSE Class 6–10 has fixed subjects, but in Class 11–12 they are divided into Science, Commerce, and Humanities.
+
+ICSE starts offering Commerce stream subjects from Class 9.
+
+ISC (Class 11–12) has different elective structures.
+
+No stream detection – There’s no way to know if a student is from Science, Commerce, or Arts just from free text.
+
+Prompt Mismatch – Since prompts are subject-specific, the AI often generates the wrong question format because of inconsistent naming.
+
+Future Scalability Issues – As more subjects are added, it will become impossible to manage free-text variations and create matching prompts reliably.
+
+✅ Our Planned Solution:
+We want to replace the free-text subject input with a checkbox-based subject selection system that follows these rules:
+
+During registration and profile update, students will select subjects using checkboxes, not free text.
+
+Subject checkboxes will be board-specific and class-specific:
+
+📘 CBSE:
+
+Class 6–10: Fixed subjects like Math, Science, English, Social Science.
+
+Class 11–12: Stream selection (Science, Commerce, Humanities) first, then subject selection within the stream.
+
+📗 ICSE:
+
+From Class 9: Include electives like Commercial Studies, Economics, etc.
+
+📕 ISC:
+
+Class 11–12: Stream and subject-wise checkbox mapping.
+
+These selected subjects will be:
+
+Saved in the student's profile
+
+Used directly in the quiz creation page via a filtered list (matching board + grade + stream)
+
+Used in GPT prompts for subject-specific instructions without confusion

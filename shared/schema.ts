@@ -11,20 +11,24 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   phoneNumber: text("phone_number"),
-  preferredSubject: text("preferred_subject"), // Primary subjects of interest (comma-separated)
   grade: integer("grade"),
   board: text("board"), // CBSE, ICSE, or ISC
-  subscribedSubjects: text("subscribed_subjects").array(), // Array of subject IDs the user has subscribed to
+  stream: text("stream"), // Science, Commerce, Humanities (for classes 11-12)
+  subscribedSubjects: text("subscribed_subjects").array(), // Array of standardized subject codes
   subscriptionTier: text("subscription_tier").default("free").notNull(), // free, standard, premium
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Subjects table
+// Standardized subjects table
 export const subjects = pgTable("subjects", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  gradeLevel: integer("grade_level").notNull(),
-  board: text("board").notNull(), // CBSE, ICSE, or ISC
+  code: text("code").notNull().unique(), // Standardized code like "CBSE_10_MATH", "CBSE_11_SCIENCE_PHYSICS"
+  name: text("name").notNull(), // Display name like "Mathematics", "Physics"
+  board: text("board").notNull(), // CBSE, ICSE, ISC
+  gradeLevel: integer("grade_level").notNull(), // 6-12
+  stream: text("stream"), // Science, Commerce, Humanities (null for grades 6-10)
+  isCore: boolean("is_core").default(false), // Core subjects vs electives
+  description: text("description"),
 });
 
 // Chapters table
