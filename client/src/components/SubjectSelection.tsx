@@ -3,6 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 interface Subject {
   code: string;
@@ -22,7 +23,7 @@ interface SubjectSelectionProps {
   onStreamChange?: (stream: string) => void;
 }
 
-// Mock data - this will be replaced with API calls
+// Using the standardized subjects from server
 const mockSubjects: Subject[] = [
   // CBSE Class 10
   { code: "CBSE_10_MATH", name: "Mathematics", board: "CBSE", gradeLevel: 10, stream: null, isCore: true },
@@ -57,34 +58,42 @@ export default function SubjectSelection({
   const [availableStreams, setAvailableStreams] = useState<string[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
 
+  // Fetch subjects from the database
+  const { data: subjects = [] } = useQuery<Subject[]>({
+    queryKey: ["/api/subjects"],
+    enabled: !!board && !!grade,
+  });
+
   useEffect(() => {
     // Get available streams for grades 11-12
-    if (grade >= 11) {
-      const streams = [...new Set(
-        mockSubjects
+    if (grade >= 11 && subjects.length > 0) {
+      const streams = Array.from(new Set(
+        subjects
           .filter(s => s.board === board && s.gradeLevel === grade && s.stream)
           .map(s => s.stream)
-      )].filter(Boolean) as string[];
+      )).filter(Boolean) as string[];
       setAvailableStreams(streams);
     } else {
       setAvailableStreams([]);
     }
-  }, [board, grade]);
+  }, [board, grade, subjects]);
 
   useEffect(() => {
     // Filter subjects based on board, grade, and stream
-    let subjects = mockSubjects.filter(s => 
-      s.board === board && s.gradeLevel === grade
-    );
+    if (subjects.length > 0) {
+      let filteredSubs = subjects.filter(s => 
+        s.board === board && s.gradeLevel === grade
+      );
 
-    if (grade <= 10) {
-      subjects = subjects.filter(s => s.stream === null);
-    } else if (stream) {
-      subjects = subjects.filter(s => s.stream === stream);
+      if (grade <= 10) {
+        filteredSubs = filteredSubs.filter(s => s.stream === null);
+      } else if (stream) {
+        filteredSubs = filteredSubs.filter(s => s.stream === stream);
+      }
+
+      setFilteredSubjects(filteredSubs);
     }
-
-    setFilteredSubjects(subjects);
-  }, [board, grade, stream]);
+  }, [board, grade, stream, subjects]);
 
   const handleSubjectToggle = (subjectCode: string) => {
     const newSelected = selectedSubjects.includes(subjectCode)
