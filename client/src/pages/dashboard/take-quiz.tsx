@@ -227,51 +227,74 @@ export default function TakeQuiz() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* Debug: Let's see the question structure */}
-                  {console.log("Current Question:", currentQuestion)}
-                  
-                  {(currentQuestion.questionType === "mcq" || currentQuestion.type === "mcq") && currentQuestion.options && (
+                  {/* MCQ Questions */}
+                  {currentQuestion.questionType === "mcq" && currentQuestion.options && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
-                      {(() => {
-                        const options = currentQuestion.options;
-                        
-                        // Handle both array format ["A) ...", "B) ..."] and object format {"A": "...", "B": "..."}
-                        if (Array.isArray(options)) {
-                          return options.map((option, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <RadioGroupItem value={String.fromCharCode(65 + index)} id={`option-${index}`} />
-                              <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                                {option}
-                              </Label>
-                            </div>
-                          ));
-                        } else if (typeof options === 'object') {
-                          return Object.entries(options).map(([key, value], index) => (
-                            <div key={key} className="flex items-center space-x-2">
-                              <RadioGroupItem value={key} id={`option-${key}`} />
-                              <Label htmlFor={`option-${key}`} className="cursor-pointer">
-                                {key}) {value}
-                              </Label>
-                            </div>
-                          ));
-                        }
-                        return null;
-                      })()}
+                      {currentQuestion.options.map((option, index) => {
+                        // Extract just the letter (A, B, C, D) from options like "A. Text"
+                        const optionLetter = option.charAt(0);
+                        return (
+                          <div key={index} className="flex items-center space-x-2">
+                            <RadioGroupItem value={optionLetter} id={`option-${index}`} />
+                            <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                              {option}
+                            </Label>
+                          </div>
+                        );
+                      })}
                     </RadioGroup>
                   )}
 
-                  {currentQuestion.questionType === "fill-blank" && (
-                    <Input
-                      placeholder="Type your answer here..."
-                      value={answers[currentQuestion.id] || ""}
-                      onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                    />
+                  {/* Fill in the Blanks */}
+                  {currentQuestion.questionType === "fill-in-blanks" && (
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="Type your answer here..."
+                        value={answers[currentQuestion.id] || ""}
+                        onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
+                        className="text-lg p-4"
+                      />
+                    </div>
                   )}
 
-                  {currentQuestion.type === "true-false" && (
+                  {/* Assertion and Reasoning */}
+                  {currentQuestion.questionType === "assertion-reasoning" && (
+                    <RadioGroup
+                      value={answers[currentQuestion.id] || ""}
+                      onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="A" id="assertion-a" />
+                        <Label htmlFor="assertion-a" className="cursor-pointer">
+                          A. Both Assertion and Reason are correct and Reason is the correct explanation for Assertion.
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="B" id="assertion-b" />
+                        <Label htmlFor="assertion-b" className="cursor-pointer">
+                          B. Both Assertion and Reason are correct but Reason is not the correct explanation for Assertion.
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="C" id="assertion-c" />
+                        <Label htmlFor="assertion-c" className="cursor-pointer">
+                          C. Assertion is correct but Reason is incorrect.
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="D" id="assertion-d" />
+                        <Label htmlFor="assertion-d" className="cursor-pointer">
+                          D. Assertion is incorrect but Reason is correct.
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  )}
+
+                  {/* True/False Questions */}
+                  {currentQuestion.questionType === "true-false" && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
