@@ -524,6 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (allCompleted) {
         await storage.updateQuizStatus(parseInt(quizId), "completed");
+      }
 
       res.json({
         success: true,
