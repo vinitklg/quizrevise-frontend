@@ -36,9 +36,14 @@ const calculateSpacedRepetitionDates = (startDate: Date): Date[] => {
   const dates: Date[] = [];
   const intervals = [0, 1, 5, 15, 30, 60, 120, 180]; // Days
   
-  for (const interval of intervals) {
+  for (let i = 0; i < intervals.length; i++) {
     const date = new Date(startDate);
-    date.setDate(date.getDate() + interval);
+    if (i === 0) {
+      // Make first quiz available immediately
+      date.setTime(startDate.getTime() - 1000); // 1 second ago to ensure it's available
+    } else {
+      date.setDate(date.getDate() + intervals[i]);
+    }
     dates.push(date);
   }
   
