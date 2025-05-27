@@ -188,35 +188,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // For this user, only include subjects they've taken quizzes for
-      // Get all quizzes created by the user
-      const userQuizzes = await storage.getQuizzesByUser(req.session.userId!);
+      // Get subjects from user's preferred subjects in profile
+      const preferredSubjects = user.preferredSubjects || "";
       
-      // Get unique subject IDs from user's quizzes
-      const subjectIds = new Set();
-      userQuizzes.forEach(quiz => {
-        subjectIds.add(quiz.subjectId);
-      });
+      if (!preferredSubjects.trim()) {
+        return res.json([]);
+      }
       
-      // Convert to array and get subjects
-      const subjectObjects = await Promise.all(
-        Array.from(subjectIds).map(async (subjectId) => {
-          return await storage.getSubjectById(subjectId as number);
-        })
-      );
+      // Split preferred subjects by comma and clean them up
+      const subjectNames = preferredSubjects
+        .split(',')
+        .map(subject => subject.trim())
+        .filter(subject => subject.length > 0);
       
-      // Filter out any undefined subjects
-      const validSubjects = subjectObjects.filter(subject => subject !== undefined);
-      
-      // If no subjects found from quizzes, return a default subject (Mathematics)
-      if (validSubjects.length === 0) {
-        const mathSubject = await storage.getSubjectById(1); // Assuming Mathematics has ID 1
-        if (mathSubject) {
-          validSubjects.push(mathSubject);
+      // For each subject name, find or create the subject
+      const subjects = [];
+      for (const subjectName of subjectNames) {
+        // First try to find existing subject
+        const existingSubjects = await storage.getAllSubjects();
+        let subject = existingSubjects.find(s => 
+          s.name.toLowerCase() === subjectName.toLowerCase()
+        );
+        
+        // If subject doesn't exist, create it
+        if (!subject) {
+          subject = await storage.createSubject({
+            name: subjectName,
+            gradeLevel: user.grade || 10,
+            board: user.board || "CBSE"
+          });
+        }
+        
+        if (subject) {
+          subjects.push(subject);
         }
       }
       
-      res.json(validSubjects);
+      res.json(subjects);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to get subscribed subjects" });
