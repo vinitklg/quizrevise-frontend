@@ -267,14 +267,28 @@ const CreateQuiz = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Subject</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      placeholder="e.g., Mathematics, Physics, Chemistry, Biology" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a subject" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {isLoadingSubjects ? (
+                                        <SelectItem value="" disabled>Loading subjects...</SelectItem>
+                                      ) : subscribedSubjects.length === 0 ? (
+                                        <SelectItem value="" disabled>No subjects available. Please subscribe to subjects in your Profile.</SelectItem>
+                                      ) : (
+                                        subscribedSubjects.map((subject) => (
+                                          <SelectItem key={subject.id} value={subject.name}>
+                                            {subject.name}
+                                          </SelectItem>
+                                        ))
+                                      )}
+                                    </SelectContent>
+                                  </Select>
                                   <FormDescription>
-                                    Enter the subject name (will be created if it doesn't exist)
+                                    Only subjects you've subscribed to are available
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>

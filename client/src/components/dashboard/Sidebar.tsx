@@ -23,7 +23,7 @@ const Sidebar = () => {
     { name: "Today's Quizzes", href: "/dashboard/today", icon: BookOpen },
     { name: "Performance", href: "/dashboard/performance", icon: BarChart2 },
     { name: "Ask Doubts", href: "/dashboard/doubts", icon: MessageSquare },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Profile", href: "/dashboard/settings", icon: Settings },
   ];
 
   return (
