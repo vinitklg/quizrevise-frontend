@@ -29,7 +29,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Brain, BookOpen, Sparkles } from "lucide-react";
 
 interface Subject {
@@ -55,10 +61,13 @@ const createQuizSchema = z.object({
   subject: z.string({
     required_error: "Please select a subject",
   }),
-  chapter: z.string({
-    required_error: "Please enter a chapter",
-  }).min(2, "Chapter must be at least 2 characters"),
-  title: z.string()
+  chapter: z
+    .string({
+      required_error: "Please enter a chapter",
+    })
+    .min(2, "Chapter must be at least 2 characters"),
+  title: z
+    .string()
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title must be less than 100 characters"),
   topic: z.string().optional(),
@@ -75,20 +84,24 @@ const CreateQuiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Fetch only subjects the user has actually subscribed to (paid for)
-  const { data: subscribedSubjects = [], isLoading: isLoadingSubjects } = useQuery<Subject[]>({
-    queryKey: ["/api/subjects/subscribed"],
-    enabled: !!user,
-  });
-  
+  const preferredSubjects =
+    user?.preferredSubject?.split(",").map((s) => s.trim()) || [];
+
+  const { data: subscribedSubjects = [], isLoading: isLoadingSubjects } =
+    useQuery<Subject[]>({
+      queryKey: ["/api/subjects/subscribed"],
+      enabled: !!user && user.subscriptionTier !== "free",
+    });
+
   // Define board options
   const boardOptions = [
     { value: "CBSE", label: "CBSE" },
     { value: "ICSE", label: "ICSE" },
-    { value: "ISC", label: "ISC" }
+    { value: "ISC", label: "ISC" },
   ];
-  
+
   // Define class options (grades 6-12)
   const classOptions = [
     { value: "6", label: "Class 6" },
@@ -119,6 +132,13 @@ const CreateQuiz = () => {
 
   const onSubmit = async (data: CreateQuizFormValues) => {
     setIsSubmitting(true);
+    
+    // Show loading message
+    toast({
+      title: "Creating Quiz...",
+      description: "Please wait while we generate your quiz questions.",
+    });
+    
     try {
       // Include all form data
       const formattedData = {
@@ -128,31 +148,42 @@ const CreateQuiz = () => {
         chapter: data.chapter,
         title: data.title,
         topic: data.topic || data.title,
-        questionTypes: data.questionTypes && data.questionTypes.length ? data.questionTypes : ["mcq"],
-        bloomTaxonomy: data.bloomTaxonomy && data.bloomTaxonomy.length ? data.bloomTaxonomy : ["knowledge", "comprehension"],
-        difficultyLevels: data.difficultyLevels && data.difficultyLevels.length ? data.difficultyLevels : ["standard"],
+        questionTypes:
+          data.questionTypes && data.questionTypes.length
+            ? data.questionTypes
+            : ["mcq"],
+        bloomTaxonomy:
+          data.bloomTaxonomy && data.bloomTaxonomy.length
+            ? data.bloomTaxonomy
+            : ["knowledge", "comprehension"],
+        difficultyLevels:
+          data.difficultyLevels && data.difficultyLevels.length
+            ? data.difficultyLevels
+            : ["standard"],
         numberOfQuestions: data.numberOfQuestions || 10,
       };
 
       const response = await apiRequest("POST", "/api/quizzes", formattedData);
       const responseData = await response.json();
-      
+
       toast({
         title: "Quiz created successfully!",
-        description: "Your quiz has been created and scheduled for spaced repetition.",
+        description: "Please go to Today's Quizzes to take your test.",
       });
-      
-      // Navigate to the dashboard after successful quiz creation
-      // Don't navigate to take-quiz since it should be scheduled for later
-      navigate(`/dashboard`);
+
+      // Navigate to today's quizzes after successful quiz creation
+      navigate(`/dashboard/today`);
     } catch (error) {
       let errorMessage = "Failed to create quiz. Please try again.";
-      
+
       // Check if it's a subscription limit error
-      if (error instanceof Error && error.message.includes("Quiz limit reached")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Quiz limit reached")
+      ) {
         errorMessage = `You've reached your quiz limit for the ${user?.subscriptionTier} plan. Please upgrade to create more quizzes.`;
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -170,23 +201,30 @@ const CreateQuiz = () => {
       <div className="hidden md:flex md:flex-shrink-0 md:w-64">
         <Sidebar />
       </div>
-      
+
       <div className="flex flex-col flex-1 overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Create Quiz</h1>
-              
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Create Quiz
+              </h1>
+
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                   <Card>
                     <CardHeader>
                       <CardTitle>Quiz Details</CardTitle>
-                      <CardDescription>Create a new quiz for spaced repetition learning</CardDescription>
+                      <CardDescription>
+                        Create a new quiz for spaced repetition learning
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form
+                          onSubmit={form.handleSubmit(onSubmit)}
+                          className="space-y-6"
+                        >
                           <FormField
                             control={form.control}
                             name="title"
@@ -194,16 +232,16 @@ const CreateQuiz = () => {
                               <FormItem>
                                 <FormLabel>Quiz Title</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    placeholder="e.g., Newton's Laws of Motion" 
-                                    {...field} 
+                                  <Input
+                                    placeholder="e.g., Newton's Laws of Motion"
+                                    {...field}
                                   />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                          
+
                           <FormField
                             control={form.control}
                             name="topic"
@@ -211,13 +249,14 @@ const CreateQuiz = () => {
                               <FormItem>
                                 <FormLabel>Topic</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    placeholder="e.g., Force and Acceleration" 
-                                    {...field} 
+                                  <Input
+                                    placeholder="e.g., Force and Acceleration"
+                                    {...field}
                                   />
                                 </FormControl>
                                 <FormDescription>
-                                  Specify the particular topic within the chapter you want to focus on
+                                  Specify the particular topic within the
+                                  chapter you want to focus on
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
@@ -231,10 +270,7 @@ const CreateQuiz = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Board</FormLabel>
-                                  <Input 
-                                    {...field}
-                                    disabled
-                                  />
+                                  <Input {...field} disabled />
                                   <FormDescription>
                                     Using board from your profile settings
                                   </FormDescription>
@@ -242,17 +278,14 @@ const CreateQuiz = () => {
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={form.control}
                               name="class"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Class</FormLabel>
-                                  <Input 
-                                    {...field}
-                                    disabled
-                                  />
+                                  <Input {...field} disabled />
                                   <FormDescription>
                                     Using class/grade from your profile settings
                                   </FormDescription>
@@ -260,27 +293,59 @@ const CreateQuiz = () => {
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={form.control}
                               name="subject"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Subject</FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    value={field.value}
+                                  >
                                     <FormControl>
                                       <SelectTrigger>
                                         <SelectValue placeholder="Select a subject" />
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {isLoadingSubjects ? (
-                                        <SelectItem value="loading" disabled>Loading subjects...</SelectItem>
+                                      {user?.subscriptionTier === "free" ? (
+                                        preferredSubjects.length === 0 ? (
+                                          <SelectItem
+                                            value="no-subjects"
+                                            disabled
+                                          >
+                                            No preferred subjects found. Update
+                                            your profile.
+                                          </SelectItem>
+                                        ) : (
+                                          preferredSubjects.map((subject) => (
+                                            <SelectItem
+                                              key={subject}
+                                              value={subject}
+                                            >
+                                              {subject}
+                                            </SelectItem>
+                                          ))
+                                        )
+                                      ) : isLoadingSubjects ? (
+                                        <SelectItem value="loading" disabled>
+                                          Loading subjects...
+                                        </SelectItem>
                                       ) : subscribedSubjects.length === 0 ? (
-                                        <SelectItem value="no-subjects" disabled>No subjects available. Please subscribe to subjects in your Profile.</SelectItem>
+                                        <SelectItem
+                                          value="no-subjects"
+                                          disabled
+                                        >
+                                          No subscribed subjects found.
+                                        </SelectItem>
                                       ) : (
                                         subscribedSubjects.map((subject) => (
-                                          <SelectItem key={subject.id} value={subject.name}>
+                                          <SelectItem
+                                            key={subject.id}
+                                            value={subject.name}
+                                          >
                                             {subject.name}
                                           </SelectItem>
                                         ))
@@ -288,13 +353,14 @@ const CreateQuiz = () => {
                                     </SelectContent>
                                   </Select>
                                   <FormDescription>
-                                    Only subjects you've subscribed to are available
+                                    Showing preferred subjects (free tier) or
+                                    subscribed subjects (paid plans) available
                                   </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={form.control}
                               name="chapter"
@@ -302,9 +368,9 @@ const CreateQuiz = () => {
                                 <FormItem>
                                   <FormLabel>Chapter</FormLabel>
                                   <FormControl>
-                                    <Input 
-                                      placeholder="e.g., Mechanics, Organic Chemistry" 
-                                      {...field} 
+                                    <Input
+                                      placeholder="e.g., Mechanics, Organic Chemistry"
+                                      {...field}
                                     />
                                   </FormControl>
                                   <FormDescription>
@@ -315,87 +381,147 @@ const CreateQuiz = () => {
                               )}
                             />
                           </div>
-                          
+
                           <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                             <h3 className="font-medium">Question Types</h3>
                             <div className="grid grid-cols-2 gap-2">
                               {[
-                                { id: 'mcq', label: 'Multiple Choice' },
-                                { id: 'assertion-reasoning', label: 'Assertion & Reasoning' },
-                                { id: 'fill-in-blanks', label: 'Fill in the Blanks' },
-                                { id: 'true-false', label: 'True/False' }
+                                { id: "mcq", label: "Multiple Choice" },
+                                {
+                                  id: "assertion-reasoning",
+                                  label: "Assertion & Reasoning",
+                                },
+                                {
+                                  id: "fill-in-blanks",
+                                  label: "Fill in the Blanks",
+                                },
+                                { id: "true-false", label: "True/False" },
                               ].map((type) => (
-                                <div key={type.id} className="flex items-center space-x-2">
-                                  <Checkbox id={type.id} 
+                                <div
+                                  key={type.id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={type.id}
                                     onCheckedChange={(checked) => {
-                                      const current = form.getValues('questionTypes') || [];
+                                      const current =
+                                        form.getValues("questionTypes") || [];
                                       if (checked) {
-                                        form.setValue('questionTypes', [...current, type.id]);
+                                        form.setValue("questionTypes", [
+                                          ...current,
+                                          type.id,
+                                        ]);
                                       } else {
-                                        form.setValue('questionTypes', current.filter(t => t !== type.id));
+                                        form.setValue(
+                                          "questionTypes",
+                                          current.filter((t) => t !== type.id),
+                                        );
                                       }
                                     }}
                                   />
-                                  <label htmlFor={type.id} className="text-sm font-normal">{type.label}</label>
+                                  <label
+                                    htmlFor={type.id}
+                                    className="text-sm font-normal"
+                                  >
+                                    {type.label}
+                                  </label>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          
+
                           <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                            <h3 className="font-medium">Bloom's Taxonomy Levels</h3>
+                            <h3 className="font-medium">
+                              Bloom's Taxonomy Levels
+                            </h3>
                             <div className="grid grid-cols-2 gap-2">
                               {[
-                                { id: 'knowledge', label: 'Knowledge' },
-                                { id: 'comprehension', label: 'Comprehension' },
-                                { id: 'application', label: 'Application' },
-                                { id: 'analysis', label: 'Analysis' },
-                                { id: 'synthesis', label: 'Synthesis' },
-                                { id: 'evaluation', label: 'Evaluation' }
+                                { id: "knowledge", label: "Knowledge" },
+                                { id: "comprehension", label: "Comprehension" },
+                                { id: "application", label: "Application" },
+                                { id: "analysis", label: "Analysis" },
+                                { id: "synthesis", label: "Synthesis" },
+                                { id: "evaluation", label: "Evaluation" },
                               ].map((level) => (
-                                <div key={level.id} className="flex items-center space-x-2">
-                                  <Checkbox id={level.id}
+                                <div
+                                  key={level.id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={level.id}
                                     onCheckedChange={(checked) => {
-                                      const current = form.getValues('bloomTaxonomy') || [];
+                                      const current =
+                                        form.getValues("bloomTaxonomy") || [];
                                       if (checked) {
-                                        form.setValue('bloomTaxonomy', [...current, level.id]);
+                                        form.setValue("bloomTaxonomy", [
+                                          ...current,
+                                          level.id,
+                                        ]);
                                       } else {
-                                        form.setValue('bloomTaxonomy', current.filter(t => t !== level.id));
+                                        form.setValue(
+                                          "bloomTaxonomy",
+                                          current.filter((t) => t !== level.id),
+                                        );
                                       }
                                     }}
                                   />
-                                  <label htmlFor={level.id} className="text-sm font-normal">{level.label}</label>
+                                  <label
+                                    htmlFor={level.id}
+                                    className="text-sm font-normal"
+                                  >
+                                    {level.label}
+                                  </label>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          
+
                           <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                             <h3 className="font-medium">Difficulty Levels</h3>
                             <div className="grid grid-cols-2 gap-2">
                               {[
-                                { id: 'basic', label: 'Basic' },
-                                { id: 'standard', label: 'Standard' },
-                                { id: 'challenging', label: 'Challenging' },
-                                { id: 'most-challenging', label: 'Most Challenging' }
+                                { id: "basic", label: "Basic" },
+                                { id: "standard", label: "Standard" },
+                                { id: "challenging", label: "Challenging" },
+                                {
+                                  id: "most-challenging",
+                                  label: "Most Challenging",
+                                },
                               ].map((level) => (
-                                <div key={level.id} className="flex items-center space-x-2">
-                                  <Checkbox id={level.id}
+                                <div
+                                  key={level.id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={level.id}
                                     onCheckedChange={(checked) => {
-                                      const current = form.getValues('difficultyLevels') || [];
+                                      const current =
+                                        form.getValues("difficultyLevels") ||
+                                        [];
                                       if (checked) {
-                                        form.setValue('difficultyLevels', [...current, level.id]);
+                                        form.setValue("difficultyLevels", [
+                                          ...current,
+                                          level.id,
+                                        ]);
                                       } else {
-                                        form.setValue('difficultyLevels', current.filter(t => t !== level.id));
+                                        form.setValue(
+                                          "difficultyLevels",
+                                          current.filter((t) => t !== level.id),
+                                        );
                                       }
                                     }}
                                   />
-                                  <label htmlFor={level.id} className="text-sm font-normal">{level.label}</label>
+                                  <label
+                                    htmlFor={level.id}
+                                    className="text-sm font-normal"
+                                  >
+                                    {level.label}
+                                  </label>
                                 </div>
                               ))}
                             </div>
                           </div>
-                          
+
                           <FormField
                             control={form.control}
                             name="numberOfQuestions"
@@ -403,13 +529,15 @@ const CreateQuiz = () => {
                               <FormItem>
                                 <FormLabel>Number of Questions</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number" 
+                                  <Input
+                                    type="number"
                                     min={5}
                                     max={50}
-                                    placeholder="10" 
+                                    placeholder="10"
                                     {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                    onChange={(e) =>
+                                      field.onChange(parseInt(e.target.value))
+                                    }
                                   />
                                 </FormControl>
                                 <FormDescription>
@@ -419,10 +547,10 @@ const CreateQuiz = () => {
                               </FormItem>
                             )}
                           />
-                          
-                          <Button 
-                            type="submit" 
-                            className="w-full" 
+
+                          <Button
+                            type="submit"
+                            className="w-full"
                             disabled={isSubmitting}
                           >
                             {isSubmitting ? "Creating Quiz..." : "Create Quiz"}
@@ -432,7 +560,7 @@ const CreateQuiz = () => {
                     </CardContent>
                   </Card>
                 </div>
-                
+
                 <div>
                   <Card>
                     <CardHeader>
@@ -443,29 +571,38 @@ const CreateQuiz = () => {
                         <div className="flex space-x-2">
                           <Brain className="h-5 w-5 text-primary mt-0.5" />
                           <div>
-                            <h3 className="font-medium">AI-Generated Questions</h3>
+                            <h3 className="font-medium">
+                              AI-Generated Questions
+                            </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Our AI will create 8 sets of questions tailored to your selected chapter.
+                              Our AI will create 8 sets of questions tailored to
+                              your selected chapter.
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="flex space-x-2">
                           <BookOpen className="h-5 w-5 text-primary mt-0.5" />
                           <div>
                             <h3 className="font-medium">Spaced Repetition</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              You'll be prompted to review the material at scientifically proven intervals (days 0, 1, 5, 15, 30, 60, 120, 180).
+                              You'll be prompted to review the material at
+                              scientifically proven intervals (days 0, 1, 5, 15,
+                              30, 60, 120, 180).
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="flex space-x-2">
                           <Sparkles className="h-5 w-5 text-primary mt-0.5" />
                           <div>
-                            <h3 className="font-medium">Optimized for Retention</h3>
+                            <h3 className="font-medium">
+                              Optimized for Retention
+                            </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              This method has been proven to increase knowledge retention by up to 80% compared to traditional studying.
+                              This method has been proven to increase knowledge
+                              retention by up to 80% compared to traditional
+                              studying.
                             </p>
                           </div>
                         </div>

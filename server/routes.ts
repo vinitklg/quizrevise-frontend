@@ -189,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get subjects from user's preferred subjects in profile
-      const preferredSubjects = user.preferredSubjects || "";
+      const preferredSubjects = user.preferredSubject || "";
       
       if (!preferredSubjects.trim()) {
         return res.json([]);
