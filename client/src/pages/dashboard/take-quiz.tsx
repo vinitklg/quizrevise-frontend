@@ -318,6 +318,25 @@ export default function TakeQuiz() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* Display diagram if available */}
+                  {currentQuestion.diagramUrl && (
+                    <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Diagram:</h4>
+                      <div className="flex justify-center">
+                        <img 
+                          src={currentQuestion.diagramUrl} 
+                          alt="Question diagram" 
+                          className="max-w-full h-auto border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm"
+                          style={{ maxHeight: '400px' }}
+                        />
+                      </div>
+                      {currentQuestion.diagram_instruction && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center italic">
+                          {currentQuestion.diagram_instruction}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {/* MCQ Questions */}
                   {currentQuestion.questionType === "mcq" && currentQuestion.options && (
                     <RadioGroup

@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateQuizQuestions, answerDoubtQuery } from "./openai";
+import { renderDiagram } from "./diagramRenderer";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import { 
@@ -395,10 +396,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           setNumber
         );
         
+        // Process questions and render diagrams if they exist
+        const processedQuestions = await Promise.all(
+          questions.questions.map(async (question: any, index: number) => {
+            // Check if question has diagram instruction
+            if (question.diagram_instruction) {
+              try {
+                const diagramUrl = await renderDiagram({
+                  instruction: question.diagram_instruction,
+                  subject: selectedSubject.name,
+                  questionId: `${quiz.id}_${setNumber}_${index}`
+                });
+                
+                return {
+                  ...question,
+                  diagramUrl: diagramUrl
+                };
+              } catch (error) {
+                console.error('Error rendering diagram:', error);
+                // Continue without diagram if rendering fails
+                return question;
+              }
+            }
+            return question;
+          })
+        );
+        
         const quizSet = await storage.createQuizSet({
           quizId: quiz.id,
           setNumber: setNumber,
-          questions: questions.questions
+          questions: processedQuestions
         });
         
         quizSets.push(quizSet);

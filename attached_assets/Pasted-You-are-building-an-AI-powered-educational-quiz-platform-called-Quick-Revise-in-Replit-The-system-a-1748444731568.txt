@@ -1,0 +1,61 @@
+You are building an AI-powered educational quiz platform called Quick Revise in Replit. The system already uses GPT-4o for question generation. Now, you need to implement diagram rendering functionality based on a special field called "diagram_instruction" in the GPT response.
+
+🔧 Your Task:
+Detect if the GPT output includes "diagram_instruction" for a quiz question.
+
+Parse that instruction text.
+
+Use subject-specific tools to render the diagram visually.
+
+Display the generated diagram below the question in the quiz interface.
+
+🧰 Diagram Tool Mapping:
+Subject	Tools to Use
+Math	Manim, Matplotlib, GeoGebra
+Physics	Manim, draw.io, SVG generator
+Chemistry	Chemix.org, draw.io, SVG render
+Biology	BioRender, SVG, draw.io
+Economics	Plotly, draw.io, Chart.js
+Commerce	Mermaid.js, draw.io
+Business	Lucidchart, draw.io
+Social Science	draw.io, Mermaid.js
+
+🧪 Example Flow:
+When GPT returns:
+
+json
+Copy
+Edit
+{
+  "question": "Construct triangle ABC...",
+  "diagram_instruction": "Draw triangle ABC where AB = 5 cm, angle B = 90°, and AC = 7 cm"
+}
+You must:
+
+Identify "diagram_instruction" in the GPT response.
+
+Call the rendering function based on the subject.
+
+Save or return a .png or .svg diagram.
+
+In the frontend, show the diagram below the question.
+
+✅ Implementation Details:
+Add logic to check for diagram_instruction in the quiz API response.
+
+Create a renderDiagram(instruction: string, subject: string) function in the backend.
+
+Choose the correct rendering library/tool based on subject.
+
+Generate and store image in /public/diagrams/ or return a data URL.
+
+Modify frontend component (QuizPage.tsx or similar) to display diagram:
+
+tsx
+Copy
+Edit
+{diagramUrl && <img src={diagramUrl} alt="Diagram" />}
+🎯 Final Goal:
+Every GPT-generated quiz question that includes a diagram_instruction must automatically generate and display a subject-appropriate diagram using the correct tool or API.
+
+Start implementing now. Once done, test it with sample questions from Math, Physics, Chemistry, and Biology.
