@@ -45,7 +45,12 @@ export async function generateQuizQuestions(
     };
     
     // Substitute variables in the prompt
-    const customizedPrompt = substitutePromptVariables(basePrompt, promptVariables);
+    let customizedPrompt = substitutePromptVariables(basePrompt, promptVariables);
+    
+    // Add diagram support instruction if enabled
+    if (diagramSupport) {
+      customizedPrompt += `\n\n**FORCE DIAGRAM GENERATION: Since diagram support is enabled, you MUST include a "diagram_instruction" field for every question that involves visual concepts, geometric shapes, scientific apparatus, biological structures, or any content that can be represented visually. No exceptions.**`;
+    }
     
     // Add JSON formatting instruction
     const finalPrompt = `${customizedPrompt}

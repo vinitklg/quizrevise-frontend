@@ -394,7 +394,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           validatedData.bloomTaxonomy,
           validatedData.difficultyLevels,
           validatedData.numberOfQuestions,
-          setNumber
+          setNumber,
+          validatedData.diagramSupport
         );
         
         // Process questions and render diagrams if they exist
