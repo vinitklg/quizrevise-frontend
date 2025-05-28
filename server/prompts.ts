@@ -58,7 +58,21 @@ Return only:
 
 ❌ Do not include:
 - Any commentary, tips, or explanation
-- Any metadata or tags`,
+- Any metadata or tags
+
+🎯 DIAGRAM SUPPORT FOR MATHEMATICS:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw triangle ABC with AB = 6 cm, angle B = 90°, mark all angles and sides clearly')."
+
+Diagram Types: Geometry figures, angle construction, coordinate plots, function graphs
+Tool Support: Manim, GeoGebra, Matplotlib, SVG/Canvas rendering
+
+For geometry questions, be specific about:
+- Exact measurements and dimensions
+- Angle markings and labels
+- Point coordinates if applicable
+- Special geometric properties to highlight`,
 
   // Science (Classes 6-10) prompt
   "Science": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Science.
@@ -96,7 +110,21 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 ❌ Do not include:
 - Commentary
 - Metadata
-- Unnecessary formatting`,
+- Unnecessary formatting
+
+🎯 DIAGRAM SUPPORT FOR SCIENCE:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw and label the human respiratory system showing trachea, bronchi, lungs, and alveoli')."
+
+Diagram Types: Scientific apparatus, body systems, experimental setups, process diagrams
+Tool Support: BioRender, draw.io, SVG, Matplotlib
+
+For science diagrams, be specific about:
+- Accurate labeling of all parts
+- Clear experimental setup descriptions
+- Process flow directions and stages
+- Safety equipment and proper connections`,
 
   // Physics (Classes 11-12) prompt
   "Physics": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Physics.
@@ -140,7 +168,22 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 ❌ Strictly avoid:
 - Definitions, laws, theory-only answers
 - Explanations or hints
-- Any teaching tone or assistant-style output`,
+- Any teaching tone or assistant-style output
+
+🎯 DIAGRAM SUPPORT FOR PHYSICS:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw a ray diagram showing refraction through a glass prism with incident ray, emergent ray, and deviation angle marked')."
+
+Diagram Types: Ray diagrams, circuit diagrams, wave patterns, force diagrams, experimental setups
+Tool Support: Manim, TikZ, draw.io, GeoGebra, circuit simulators
+
+For physics diagrams, be specific about:
+- Exact component values and connections
+- Ray paths and angle measurements
+- Force vectors and directions
+- Proper circuit symbols and connections
+- Wave properties and measurements`,
 
   // Chemistry (Classes 11-12) prompt
   "Chemistry": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Chemistry.
@@ -185,7 +228,22 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 ❌ Strictly avoid:
 - Theory-only questions or definitions
 - Explanatory or assistant-style answers
-- Step skipping or informal responses`,
+- Step skipping or informal responses
+
+🎯 DIAGRAM SUPPORT FOR CHEMISTRY:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw a labeled setup for acid-base titration between HCl and NaOH showing burette, conical flask, indicator, and stand')."
+
+Diagram Types: Lab apparatus, reaction setups, molecular structures, experimental configurations
+Tool Support: Chemix.org, draw.io, matplotlib, chemical structure tools
+
+For chemistry diagrams, be specific about:
+- Accurate apparatus labeling and connections
+- Proper chemical symbols and formulas
+- Reaction mechanism arrows and intermediates
+- Safety equipment and proper setup procedures
+- Molecular geometry and bond representations`,
 
   // Biology (Classes 11-12) prompt
   "Biology": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Biology.
@@ -228,7 +286,22 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 ❌ Strictly avoid:
 - Definitions, theoretical descriptions
 - Any kind of assistant-style or casual answers
-- Extra tips or learning suggestions`,
+- Extra tips or learning suggestions
+
+🎯 DIAGRAM SUPPORT FOR BIOLOGY:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw and label the structure of nephron showing glomerulus, Bowman's capsule, proximal tubule, loop of Henle, and collecting duct')."
+
+Diagram Types: Organs, cells, biological structures, anatomical systems, process flowcharts
+Tool Support: BioRender, draw.io, SVG, Manim
+
+For biology diagrams, be specific about:
+- Accurate anatomical labeling of all parts
+- Clear process flow directions and stages
+- Cellular organelles and their functions
+- System interconnections and relationships
+- Proper biological terminology and structures`,
 
   // Accountancy (Classes 11-12) prompt
   "Accountancy": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Accountancy.
@@ -307,7 +380,27 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 
 ❌ Do not include:
 - Commentary or explanations
-- Metadata or unnecessary formatting`;
+- Metadata or unnecessary formatting
+
+🎯 GENERAL DIAGRAM SUPPORT:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw relevant to the subject (e.g., 'Draw a flowchart showing the democratic election process' for Social Science)."
+
+Subject-Specific Diagram Guidelines:
+- Economics: Demand/supply curves, graphs, schedules
+- Commerce: Flowcharts, transaction cycles, business processes
+- Business Studies: Organizational charts, business process diagrams
+- Social Science: Timeline diagrams, flowcharts, maps, historical processes
+- Geography: Maps, climate diagrams, geographical features
+
+Tool Support: Plotly.js, Matplotlib, draw.io, GeoGebra, Mermaid.js, Lucidchart
+
+For general diagrams, be specific about:
+- Clear labeling and proper terminology
+- Logical flow and connections
+- Appropriate scales and measurements
+- Subject-specific conventions and symbols`;
 
 // Function to get the appropriate prompt for a subject
 export function getPromptForSubject(subject: string): string {

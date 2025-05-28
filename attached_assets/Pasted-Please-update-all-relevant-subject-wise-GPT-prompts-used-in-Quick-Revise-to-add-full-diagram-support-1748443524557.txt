@@ -1,0 +1,38 @@
+Please update all relevant subject-wise GPT prompts used in Quick Revise to add full diagram support.
+
+📌 Add the following block **at the end** of each prompt based on the subject:
+
+---
+
+🎯 GENERAL FORMAT FOR DIAGRAM SUPPORT:
+If the question involves a diagram, include a special field:
+
+"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw triangle ABC with AB = 6 cm, angle B = 90°')."
+
+Then parse the diagram_instruction and render using the appropriate tool.
+
+---
+
+📌 SUBJECT-WISE DIAGRAM SUPPORT RULES:
+
+| Subject           | Diagram Types                             | Tool Suggestions                                  |
+|------------------|--------------------------------------------|---------------------------------------------------|
+| Math             | Geometry figures, angle construction       | Manim, GeoGebra, Matplotlib, SVG/Canvas           |
+| Physics          | Ray diagrams, circuit diagrams             | Manim, TikZ, draw.io, GeoGebra                    |
+| Chemistry        | Lab apparatus, reaction setups             | Chemix.org, draw.io, matplotlib                   |
+| Biology          | Organs, cells, biological structures       | BioRender, draw.io, SVG, Manim                    |
+| Economics        | Demand/supply curves, graphs, schedules    | Plotly.js, Matplotlib, draw.io, GeoGebra          |
+| Commerce         | Flowcharts, transaction cycle, ledgers     | draw.io, Mermaid.js, Lucidchart                   |
+| Business Studies | Org. structure charts, business process    | draw.io, Lucidchart, Mermaid.js                   |
+| Social Science   | Timeline diagrams, flowcharts, maps        | draw.io, SVG, map plotting tools (static)         |
+
+🛠️ Developer Tip:
+- Parse the `diagram_instruction` field in the response and render using subject-specific tools.
+- Use SVG/Canvas rendering engines or plug into external APIs like Chemix for Chemistry, or GeoGebra for Math/Physics.
+
+❌ Do NOT include diagrams or this instruction for:
+- English
+- Accountancy (unless later specified)
+- General theory-only subjects
+
+✅ Keep formatting consistent. Don't change the rest of the subject prompts. Just append this diagram logic at the end.
