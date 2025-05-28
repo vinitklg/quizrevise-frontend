@@ -72,7 +72,14 @@ For geometry questions, be specific about:
 - Exact measurements and dimensions
 - Angle markings and labels
 - Point coordinates if applicable
-- Special geometric properties to highlight`,
+- Special geometric properties to highlight
+
+**MANDATORY: For ANY geometry question involving circles, triangles, quadrilaterals, angles, or shapes, you MUST include diagram_instruction field.**
+
+Examples of required diagram instructions:
+- Circle questions: "Draw a circle with center O and radius 7 cm, mark points A and B on circumference, show tangents PA and PB from external point P"
+- Triangle questions: "Draw triangle ABC with angle B = 90°, mark all vertices clearly, show the given measurements"
+- Quadrilateral questions: "Draw cyclic quadrilateral ABCD inscribed in a circle, mark angles D = 70° and B = 110°, extend side CD to point E"`,
 
   // Science (Classes 6-10) prompt
   "Science": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Science.

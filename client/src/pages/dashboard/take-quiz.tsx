@@ -337,20 +337,20 @@ export default function TakeQuiz() {
                       )}
                     </div>
                   )}
-                  {/* MCQ Questions */}
-                  {(currentQuestion.questionType === "mcq" || currentQuestion.questionType === "numerical") && currentQuestion.options && (
+                  {/* MCQ Questions - Show for any question that has options */}
+                  {currentQuestion.options && currentQuestion.options.length > 0 && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
                       {currentQuestion.options.map((option, index) => {
-                        // Extract just the letter (A, B, C, D) from options like "A. Text"
-                        const optionLetter = option.charAt(0);
+                        // Generate option letter (A, B, C, D) and use the full option text as value
+                        const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
                         return (
                           <div key={index} className="flex items-center space-x-2">
-                            <RadioGroupItem value={optionLetter} id={`option-${index}`} />
+                            <RadioGroupItem value={option} id={`option-${index}`} />
                             <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                              {option}
+                              {optionLetter}. {option}
                             </Label>
                           </div>
                         );
