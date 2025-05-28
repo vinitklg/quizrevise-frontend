@@ -37,13 +37,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Brain, BookOpen, Sparkles } from "lucide-react";
-
-interface Subject {
-  id: number;
-  name: string;
-  gradeLevel: number;
-  board: string;
-}
+import { Subject } from "@shared/schema";
 
 interface Chapter {
   id: number;
@@ -124,7 +118,7 @@ const CreateQuiz = () => {
     defaultValues: {
       board: user?.board || "CBSE",
       class: user?.grade?.toString() || "",
-      subject: user?.preferredSubject?.split(",")[0]?.trim() || "",
+      subject: subscribedSubjects[0]?.name || "",
       chapter: "",
       title: "",
       topic: "",
@@ -316,7 +310,7 @@ const CreateQuiz = () => {
                                     </FormControl>
                                     <SelectContent>
                                       {user?.subscriptionTier === "free" ? (
-                                        preferredSubjects.length === 0 ? (
+                                        subscribedSubjects.length === 0 ? (
                                           <SelectItem
                                             value="no-subjects"
                                             disabled
@@ -325,12 +319,12 @@ const CreateQuiz = () => {
                                             your profile.
                                           </SelectItem>
                                         ) : (
-                                          preferredSubjects.map((subject) => (
+                                          subscribedSubjects.map((subject) => (
                                             <SelectItem
-                                              key={subject}
-                                              value={subject}
+                                              key={subject.code}
+                                              value={subject.name}
                                             >
-                                              {subject}
+                                              {subject.name}
                                             </SelectItem>
                                           ))
                                         )
