@@ -86,9 +86,17 @@ export default function SubjectSelection({
       );
 
       if (grade <= 10) {
+        // For grades 6-10, show subjects with no stream
         filteredSubs = filteredSubs.filter(s => s.stream === null);
       } else if (stream) {
-        filteredSubs = filteredSubs.filter(s => s.stream === stream);
+        // For grades 11-12 with stream selected:
+        // Show core subjects (no stream) + elective subjects for the selected stream
+        filteredSubs = filteredSubs.filter(s => 
+          s.stream === null || s.stream === stream
+        );
+      } else {
+        // For grades 11-12 with no stream selected, show only core subjects
+        filteredSubs = filteredSubs.filter(s => s.stream === null);
       }
 
       setFilteredSubjects(filteredSubs);
