@@ -7,6 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/dashboard/Sidebar";
+import SubjectSelection from "@/components/SubjectSelection";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -46,7 +47,7 @@ const profileSchema = z.object({
     .min(10, "Phone number must be at least 10 digits")
     .max(15, "Phone number must not exceed 15 digits")
     .optional(),
-  preferredSubject: z.string().optional(),
+  subscribedSubjects: z.array(z.string()).default([]),
 });
 
 const educationSchema = z.object({
