@@ -390,10 +390,6 @@ const CreateQuiz = () => {
                                   id: "assertion-reasoning",
                                   label: "Assertion & Reasoning",
                                 },
-                                {
-                                  id: "fill-in-blanks",
-                                  label: "Fill in the Blanks",
-                                },
                                 { id: "true-false", label: "True/False" },
                               ].map((type) => (
                                 <div
@@ -441,6 +437,7 @@ const CreateQuiz = () => {
                                 { id: "analysis", label: "Analysis" },
                                 { id: "synthesis", label: "Synthesis" },
                                 { id: "evaluation", label: "Evaluation" },
+                                { id: "diagram", label: "Diagram/Image" },
                               ].map((level) => (
                                 <div
                                   key={level.id}
