@@ -69,6 +69,7 @@ const createQuizSchema = z.object({
   bloomTaxonomy: z.array(z.string()).optional(),
   difficultyLevels: z.array(z.string()).optional(),
   numberOfQuestions: z.number().optional(),
+  diagramSupport: z.boolean().optional(),
 });
 
 type CreateQuizFormValues = z.infer<typeof createQuizSchema>;
@@ -160,6 +161,7 @@ const CreateQuiz = () => {
             ? data.difficultyLevels
             : ["standard"],
         numberOfQuestions: data.numberOfQuestions || 10,
+        diagramSupport: data.diagramSupport || false,
       };
 
       const response = await apiRequest("POST", "/api/quizzes", formattedData);
@@ -437,7 +439,6 @@ const CreateQuiz = () => {
                                 { id: "analysis", label: "Analysis" },
                                 { id: "synthesis", label: "Synthesis" },
                                 { id: "evaluation", label: "Evaluation" },
-                                { id: "diagram", label: "Diagram/Image" },
                               ].map((level) => (
                                 <div
                                   key={level.id}
@@ -471,6 +472,35 @@ const CreateQuiz = () => {
                               ))}
                             </div>
                           </div>
+
+                          {/* Diagram Support Section */}
+                          <FormField
+                            control={form.control}
+                            name="diagramSupport"
+                            render={({ field }) => (
+                              <FormItem className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                                <div>
+                                  <h3 className="font-medium mb-2">📊 Diagram Support</h3>
+                                  <FormDescription className="text-sm text-gray-600 dark:text-gray-400">
+                                    Force diagram generation for visual concepts (Geometry, Physics, Chemistry, Biology)
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id="diagramSupport"
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                    <label htmlFor="diagramSupport" className="text-sm font-normal">
+                                      Force Diagram Generation
+                                    </label>
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
                           <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                             <h3 className="font-medium">Difficulty Levels</h3>

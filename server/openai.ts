@@ -15,7 +15,8 @@ export async function generateQuizQuestions(
   bloomTaxonomyLevels: string[],
   difficultyLevels: string[],
   numberOfQuestions: number,
-  setNumber: number
+  setNumber: number,
+  diagramSupport: boolean = false
 ): Promise<{
   questions: Array<{
     question: string;

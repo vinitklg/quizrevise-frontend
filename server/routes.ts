@@ -324,7 +324,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         questionTypes: reqData.questionTypes || ["mcq"],
         bloomTaxonomy: reqData.bloomTaxonomy || ["knowledge", "comprehension"],
         difficultyLevels: reqData.difficultyLevels || ["standard"],
-        numberOfQuestions: reqData.numberOfQuestions || 10
+        numberOfQuestions: reqData.numberOfQuestions || 10,
+        diagramSupport: reqData.diagramSupport || false
       };
       
       // Check if user has reached their quiz limit
