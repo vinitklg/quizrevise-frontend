@@ -274,7 +274,7 @@ const Settings = () => {
                                   <FormItem>
                                     <FormLabel>Last name</FormLabel>
                                     <FormControl>
-                                      <Input {...field} />
+                                      <Input {...field} disabled />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -289,7 +289,7 @@ const Settings = () => {
                                 <FormItem>
                                   <FormLabel>Phone Number</FormLabel>
                                   <FormControl>
-                                    <Input {...field} />
+                                    <Input {...field} disabled />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -303,7 +303,7 @@ const Settings = () => {
                                 <FormItem>
                                   <FormLabel>Email</FormLabel>
                                   <FormControl>
-                                    <Input {...field} type="email" />
+                                    <Input {...field} type="email" disabled />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
