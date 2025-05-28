@@ -268,7 +268,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify subject is in the user's subscribed subjects if they're on a paid plan
       if (user.subscriptionTier !== "free" && user.subscribedSubjects && user.subscribedSubjects.length > 0) {
-        if (!user.subscribedSubjects.includes(reqData.subject)) {
+        // Check if any subscribed subject matches the requested subject name
+        const hasAccess = user.subscribedSubjects.some(subscribedSubject => {
+          // Extract subject name from subscribed subject code (e.g., ICSE_10_MATHEMATICS -> Mathematics)
+          const subjectName = subscribedSubject.split('_').pop()?.toLowerCase();
+          return subjectName === reqData.subject.toLowerCase() || 
+                 subscribedSubject.toLowerCase().includes(reqData.subject.toLowerCase());
+        });
+        
+        if (!hasAccess) {
           return res.status(403).json({ 
             message: "You don't have access to this subject. Please subscribe to it first."
           });
