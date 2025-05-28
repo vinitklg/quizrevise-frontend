@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -73,10 +73,18 @@ const Settings = () => {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUpdatingEducation, setIsUpdatingEducation] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [selectedStream, setSelectedStream] = useState<string>("");
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.subscribedSubjects || []);
+  const [selectedStream, setSelectedStream] = useState<string>(user?.stream || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update state when user data loads
+  useEffect(() => {
+    if (user) {
+      setSelectedSubjects(user.subscribedSubjects || []);
+      setSelectedStream(user.stream || "");
+    }
+  }, [user]);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -252,7 +260,7 @@ const Settings = () => {
                                   <FormItem>
                                     <FormLabel>First name</FormLabel>
                                     <FormControl>
-                                      <Input {...field} />
+                                      <Input {...field} disabled />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -320,8 +328,15 @@ const Settings = () => {
                             )}
                             
                             <Button 
-                              type="submit" 
-                              disabled={isUpdatingProfile || !profileForm.formState.isDirty}
+                              type="button"
+                              onClick={() => {
+                                const updateData = {
+                                  subscribedSubjects: selectedSubjects,
+                                  stream: selectedStream || user?.stream,
+                                };
+                                onSubmitProfile(updateData as any);
+                              }}
+                              disabled={isUpdatingProfile || (selectedSubjects.length === 0 && !selectedStream)}
                             >
                               {isUpdatingProfile ? "Saving..." : "Save Changes"}
                             </Button>
