@@ -54,17 +54,26 @@ IMPORTANT: Format your response as a valid JSON object with the following struct
   "questions": [
     {
       "id": 1,
-      "type": "mcq|assertion-reasoning|fill-in-blank|true-false",
+      "questionType": "mcq",
       "question": "Question text here",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswer": "Answer here",
+      "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
+      "correctAnswer": "A",
       "explanation": "Detailed step-by-step solution",
-      "diagram_instruction": "Diagram description if applicable"
+      "bloomTaxonomy": "Application",
+      "difficultyLevel": "Moderate",
+      "diagram_instruction": "Draw triangle ABC with AB = 6 cm, angle B = 90°, mark all angles and sides clearly"
     }
   ]
 }
 
-Generate exactly ${numberOfQuestions} questions following the subject-specific guidelines above. This is set ${setNumber} of 8 for spaced repetition learning.`;
+CRITICAL REQUIREMENTS:
+1. questionType must be exactly one of: "mcq", "assertion-reasoning", "true-false"
+2. For MCQ questions, options must be formatted as ["A. Text", "B. Text", "C. Text", "D. Text"]
+3. correctAnswer must be just the letter: "A", "B", "C", or "D"
+4. For geometry, physics diagrams, chemistry apparatus, or biology structures, ALWAYS include diagram_instruction
+5. Generate exactly ${numberOfQuestions} questions following the subject-specific guidelines above.
+
+This is set ${setNumber} of 8 for spaced repetition learning.`;
 
     const response = await openai.chat.completions.create({
       // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user

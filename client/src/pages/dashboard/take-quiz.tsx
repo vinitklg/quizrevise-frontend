@@ -338,7 +338,7 @@ export default function TakeQuiz() {
                     </div>
                   )}
                   {/* MCQ Questions */}
-                  {currentQuestion.questionType === "mcq" && currentQuestion.options && (
+                  {(currentQuestion.questionType === "mcq" || currentQuestion.questionType === "numerical") && currentQuestion.options && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
