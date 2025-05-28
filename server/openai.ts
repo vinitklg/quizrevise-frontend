@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getPromptForSubject, substitutePromptVariables, type PromptVariables } from "./prompts";
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -27,46 +28,61 @@ export async function generateQuizQuestions(
   }>;
 }> {
   try {
+    // Get the appropriate prompt for the subject
+    const basePrompt = getPromptForSubject(subject);
+    
+    // Prepare variables for prompt substitution
+    const promptVariables: PromptVariables = {
+      board,
+      class: grade.toString(),
+      subject,
+      chapter,
+      topic,
+      number_of_questions: numberOfQuestions,
+      question_type: questionTypes.join(", "),
+      blooms_level: difficultyLevels.join(", ")
+    };
+    
+    // Substitute variables in the prompt
+    const customizedPrompt = substitutePromptVariables(basePrompt, promptVariables);
+    
+    // Add JSON formatting instruction
+    const finalPrompt = `${customizedPrompt}
+
+IMPORTANT: Format your response as a valid JSON object with the following structure:
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "mcq|assertion-reasoning|fill-in-blank|true-false",
+      "question": "Question text here",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "Answer here",
+      "explanation": "Detailed step-by-step solution",
+      "diagram_instruction": "Diagram description if applicable"
+    }
+  ]
+}
+
+Generate exactly ${numberOfQuestions} questions following the subject-specific guidelines above. This is set ${setNumber} of 8 for spaced repetition learning.`;
+
     const response = await openai.chat.completions.create({
       // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       model: "gpt-4o",
       messages: [
         {
-          role: "system",
-          content: `You are an experienced Examination Head and Senior Board Paper Setter for the ${board} Board, Class ${grade}, Subject: ${subject}.
-
-Use your intelligence and years of experience to generate exam-level questions aligned with the latest syllabus and the **National Education Policy (NEP)**. Your goal is to create **competency-based questions**, not direct rote-learning questions. The focus must be on **application, logic, real-life problem-solving, and deep understanding**.
-
-Generate ${numberOfQuestions} ${questionTypes.join(', ')} questions from the topic '${topic}' in the chapter '${chapter}'.
-
-Each question must reflect the ${bloomTaxonomyLevels.join(', ')} level of Bloom's Taxonomy.
-
-Based on the selected level, adjust your tone and depth:
-- If the level is **'Most Challenging' or 'Challenge'**, act like the strictest board examiner. Use your expertise to create **maximum tricky adjustments**, **multi-step problems**, **twists**, and **conceptual traps**. Confuse even toppers. Use realistic or cross-topic logic wherever possible.
-- If the level is **'Application' or 'Moderate'**, use relatable life-like data and situations that require thinking and analysis.
-- If the level is **'Basic' or 'Understanding'**, keep structure clean and simple for students to build confidence and grasp core ideas.
-
-Use subject-specific formatting and logic:
-
-- For **Accountancy**: Use Indian format for journal entries, ledger, narration, and rounding. Include: Date, Particulars, L.F., Dr./Cr. columns. Format currency as ₹1,00,000.
-- For **Math**: **Only generate numerical problems. Do not give definitions, meanings, characteristics, or theory-based questions.** Use full board-style step-by-step solutions. Problems must test understanding through calculations, interpretation, and reasoning.
-- For **Science**: Ask concept-based or competency-based questions (avoid definition recall). If needed, include experiment setup, analysis, or labeling instructions.
-- For **English**: Create grammar, comprehension, or literature-based application questions. Do not explain answers unless asked.
-- For **Social Science**: Use timeline reasoning, cause-effect, case-based, or map-based tasks with clear, context-rich framing.
-
-This is set ${setNumber} of 8 for a spaced repetition learning system. Your responses must reflect real exam logic and academic excellence.
-
-Format your response as a JSON object with an array of questions. Each question should have fields: question, options, correctAnswer, explanation, questionType, bloomTaxonomy, and difficultyLevel.`
+          role: "user",
+          content: finalPrompt
         }
       ],
       response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(response.choices[0].message.content || "{}");
     return result;
   } catch (error) {
     console.error("Error generating quiz questions:", error);
-    throw new Error(`Failed to generate quiz questions: ${error.message}`);
+    throw new Error(`Failed to generate quiz questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -96,9 +112,9 @@ export async function answerDoubtQuery(
       max_tokens: 500
     });
 
-    return response.choices[0].message.content;
+    return response.choices[0].message.content || "";
   } catch (error) {
     console.error("Error answering doubt query:", error);
-    throw new Error(`Failed to answer doubt query: ${error.message}`);
+    throw new Error(`Failed to answer doubt query: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
