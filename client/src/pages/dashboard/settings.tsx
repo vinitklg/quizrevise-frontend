@@ -310,11 +310,41 @@ const Settings = () => {
                               )}
                             />
                             
-                            {/* Structured Subject Selection */}
-                            {user?.board && user?.grade && (
-                              <div className="space-y-4">
+                            {/* Current Preferred Subjects Display */}
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium leading-none">
+                                Preferred Subjects
+                              </label>
+                              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md border">
+                                {selectedSubjects.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {selectedSubjects.map((subjectCode) => {
+                                      const subjectName = subjectCode.split('_').pop()?.replace(/_/g, ' ');
+                                      return (
+                                        <span key={subjectCode} className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md text-sm">
+                                          {subjectName}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">No subjects selected</p>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setIsUpdatingProfile(!isUpdatingProfile)}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                              >
+                                {isUpdatingProfile ? "Cancel" : "Update Subjects"}
+                              </button>
+                            </div>
+
+                            {/* Structured Subject Selection - Show only when updating */}
+                            {isUpdatingProfile && user?.board && user?.grade && (
+                              <div className="space-y-4 border-t pt-4">
                                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                  Update Your Subjects
+                                  Select New Subjects
                                 </label>
                                 <SubjectSelection
                                   board={user.board}
@@ -327,19 +357,22 @@ const Settings = () => {
                               </div>
                             )}
                             
-                            <Button 
-                              type="button"
-                              onClick={() => {
-                                const updateData = {
-                                  subscribedSubjects: selectedSubjects,
-                                  stream: selectedStream || user?.stream,
-                                };
-                                onSubmitProfile(updateData as any);
-                              }}
-                              disabled={isUpdatingProfile || (selectedSubjects.length === 0 && !selectedStream)}
-                            >
-                              {isUpdatingProfile ? "Saving..." : "Save Changes"}
-                            </Button>
+                            {isUpdatingProfile && (
+                              <Button 
+                                type="button"
+                                onClick={async () => {
+                                  const updateData = {
+                                    subscribedSubjects: selectedSubjects,
+                                    stream: selectedStream || user?.stream,
+                                  };
+                                  await onSubmitProfile(updateData as any);
+                                  setIsUpdatingProfile(false); // Close the subject selection UI
+                                }}
+                                disabled={selectedSubjects.length === 0}
+                              >
+                                Save Changes
+                              </Button>
+                            )}
                           </form>
                         </Form>
                       </CardContent>

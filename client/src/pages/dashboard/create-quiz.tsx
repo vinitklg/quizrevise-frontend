@@ -85,15 +85,20 @@ const CreateQuiz = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch only subjects the user has actually subscribed to (paid for)
-  const preferredSubjects =
-    user?.preferredSubject?.split(",").map((s) => s.trim()) || [];
+  // Get user's subscribed subjects
+  const userSubjects = user?.subscribedSubjects || [];
 
-  const { data: subscribedSubjects = [], isLoading: isLoadingSubjects } =
+  // Fetch all subjects to match with user's subscribed subject codes
+  const { data: allSubjects = [], isLoading: isLoadingSubjects } =
     useQuery<Subject[]>({
-      queryKey: ["/api/subjects/subscribed"],
-      enabled: !!user && user.subscriptionTier !== "free",
+      queryKey: ["/api/subjects"],
+      enabled: !!user,
     });
+
+  // Filter subjects based on user's subscribed subject codes
+  const subscribedSubjects = allSubjects.filter(subject => 
+    userSubjects.includes(subject.code)
+  );
 
   // Define board options
   const boardOptions = [
