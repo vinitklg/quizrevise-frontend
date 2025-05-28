@@ -73,13 +73,10 @@ const Settings = () => {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUpdatingEducation, setIsUpdatingEducation] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedStream, setSelectedStream] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Fetch subjects for the dropdown
-  const { data: subjects = [] } = useQuery<{id: number, name: string}[]>({
-    queryKey: ["/api/subjects"],
-  });
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -88,7 +85,7 @@ const Settings = () => {
       lastName: user?.lastName || "",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
-      preferredSubject: user?.preferredSubject?.toString() || "",
+      subscribedSubjects: user?.subscribedSubjects || [],
     },
   });
 
@@ -114,7 +111,14 @@ const Settings = () => {
     
     setIsUpdatingProfile(true);
     try {
-      await apiRequest("PATCH", `/api/users/${user.id}`, data);
+      // Include selected subjects in the update
+      const updateData = {
+        ...data,
+        subscribedSubjects: selectedSubjects,
+        stream: selectedStream || user.stream,
+      };
+      
+      await apiRequest("PATCH", `/api/users/${user.id}`, updateData);
       
       toast({
         title: "Profile updated",
@@ -298,22 +302,22 @@ const Settings = () => {
                               )}
                             />
                             
-                            <FormField
-                              control={profileForm.control}
-                              name="preferredSubject"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Preferred Subjects</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Physics, Chemistry, Mathematics" {...field} />
-                                  </FormControl>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    Enter multiple subjects separated by commas (e.g., Physics, Mathematics)
-                                  </p>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            {/* Structured Subject Selection */}
+                            {user?.board && user?.grade && (
+                              <div className="space-y-4">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                  Update Your Subjects
+                                </label>
+                                <SubjectSelection
+                                  board={user.board}
+                                  grade={user.grade}
+                                  stream={user.stream || selectedStream}
+                                  selectedSubjects={selectedSubjects}
+                                  onSubjectsChange={setSelectedSubjects}
+                                  onStreamChange={setSelectedStream}
+                                />
+                              </div>
+                            )}
                             
                             <Button 
                               type="submit" 
