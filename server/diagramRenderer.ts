@@ -50,22 +50,68 @@ async function renderMathDiagram(instruction: string, questionId: string): Promi
   const fileName = `math_${questionId}_${Date.now()}.svg`;
   const filePath = path.join(process.cwd(), 'public', 'diagrams', fileName);
   
-  // Parse instruction for common geometry shapes
+  // Parse instruction based on CBSE/ICSE Class 9-10 curriculum topics
   let svg = '';
+  const lower = instruction.toLowerCase();
   
-  if (instruction.toLowerCase().includes('cyclic quadrilateral')) {
+  // GEOMETRY - Class 9-10 Core Topics
+  if (lower.includes('cyclic quadrilateral') || lower.includes('exterior angle')) {
     svg = generateCyclicQuadrilateralSVG(instruction);
-  } else if (instruction.toLowerCase().includes('cylinder')) {
-    svg = generateCylinderSVG(instruction);
-  } else if (instruction.toLowerCase().includes('chord') || instruction.toLowerCase().includes('subtend')) {
-    svg = generateCircleSVG(instruction);
-  } else if (instruction.toLowerCase().includes('triangle')) {
+  } else if (lower.includes('parallelogram') || lower.includes('rhombus')) {
+    svg = generateParallelogramSVG(instruction);
+  } else if (lower.includes('congruent') || lower.includes('congruency')) {
+    svg = generateCongruentTrianglesSVG(instruction);
+  } else if (lower.includes('midpoint theorem') || lower.includes('mid-point')) {
+    svg = generateMidpointTheoremSVG(instruction);
+  } else if (lower.includes('pythagoras') || lower.includes('right triangle')) {
+    svg = generatePythagorasTheoremSVG(instruction);
+  } else if (lower.includes('chord') && lower.includes('circle')) {
+    svg = generateChordPropertiesSVG(instruction);
+  } else if (lower.includes('triangle')) {
     svg = generateTriangleSVG(instruction);
-  } else if (instruction.toLowerCase().includes('circle')) {
+  } else if (lower.includes('circle')) {
     svg = generateCircleSVG(instruction);
-  } else if (instruction.toLowerCase().includes('rectangle') || instruction.toLowerCase().includes('square')) {
+  } else if (lower.includes('quadrilateral')) {
+    svg = generateQuadrilateralSVG(instruction);
+  
+  // MENSURATION - 3D Solids
+  } else if (lower.includes('cylinder')) {
+    svg = generateCylinderSVG(instruction);
+  } else if (lower.includes('cube') || lower.includes('cuboid')) {
+    svg = generateCuboidSVG(instruction);
+  
+  // COORDINATE GEOMETRY
+  } else if (lower.includes('coordinate') || lower.includes('cartesian')) {
+    svg = generateCoordinateGeometrySVG(instruction);
+  } else if (lower.includes('linear equation') || lower.includes('graph')) {
+    svg = generateLinearEquationSVG(instruction);
+  
+  // ALGEBRA & NUMBER SYSTEMS
+  } else if (lower.includes('number line') || lower.includes('rational')) {
+    svg = generateNumberLineSVG(instruction);
+  } else if (lower.includes('polynomial') || lower.includes('factorization')) {
+    svg = generatePolynomialSVG(instruction);
+  
+  // STATISTICS
+  } else if (lower.includes('bar graph') || lower.includes('histogram')) {
+    svg = generateBarGraphSVG(instruction);
+  } else if (lower.includes('pie chart')) {
+    svg = generatePieChartSVG(instruction);
+  
+  // CONSTRUCTIONS
+  } else if (lower.includes('construction') || lower.includes('compass')) {
+    svg = generateConstructionSVG(instruction);
+  } else if (lower.includes('hexagon')) {
+    svg = generateHexagonSVG(instruction);
+  
+  // TRIGONOMETRY
+  } else if (lower.includes('trigonometry') || lower.includes('height and distance')) {
+    svg = generateTrigonometrySVG(instruction);
+  
+  // GENERIC FALLBACKS
+  } else if (lower.includes('rectangle') || lower.includes('square')) {
     svg = generateRectangleSVG(instruction);
-  } else if (instruction.toLowerCase().includes('angle')) {
+  } else if (lower.includes('angle')) {
     svg = generateAngleSVG(instruction);
   } else {
     svg = generateGenericMathSVG(instruction);
@@ -749,6 +795,511 @@ function generateCylinderSVG(instruction: string): string {
       </svg>
     `;
   }
+}
+
+// CURRICULUM-SPECIFIC DIAGRAM GENERATORS
+
+function generateParallelogramSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .shape { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+          .property { font-family: Arial, sans-serif; font-size: 10px; fill: #059669; }
+        </style>
+      </defs>
+      
+      <!-- Parallelogram ABCD -->
+      <polygon points="80,200 220,200 300,80 160,80" class="shape" />
+      
+      <!-- Vertices -->
+      <circle cx="80" cy="200" r="3" fill="#dc2626" />
+      <circle cx="220" cy="200" r="3" fill="#dc2626" />
+      <circle cx="300" cy="80" r="3" fill="#dc2626" />
+      <circle cx="160" cy="80" r="3" fill="#dc2626" />
+      
+      <!-- Labels -->
+      <text x="70" y="215" class="label">A</text>
+      <text x="230" y="215" class="label">B</text>
+      <text x="310" y="75" class="label">C</text>
+      <text x="150" y="75" class="label">D</text>
+      
+      <!-- Properties -->
+      <text x="150" y="140" class="property">AB ∥ DC</text>
+      <text x="120" y="160" class="property">AD ∥ BC</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateCongruentTrianglesSVG(instruction: string): string {
+  return `
+    <svg width="500" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .triangle1 { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+          .triangle2 { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+          .congruent { font-family: Arial, sans-serif; font-size: 10px; fill: #dc2626; }
+        </style>
+      </defs>
+      
+      <!-- Triangle ABC -->
+      <polygon points="100,200 180,80 200,200" class="triangle1" />
+      <text x="90" y="215" class="label">A</text>
+      <text x="175" y="75" class="label">B</text>
+      <text x="210" y="215" class="label">C</text>
+      
+      <!-- Triangle DEF -->
+      <polygon points="320,200 400,80 420,200" class="triangle2" />
+      <text x="310" y="215" class="label">D</text>
+      <text x="395" y="75" class="label">E</text>
+      <text x="430" y="215" class="label">F</text>
+      
+      <!-- Congruency symbol -->
+      <text x="250" y="150" class="congruent">≅</text>
+      <text x="220" y="170" class="congruent">△ABC ≅ △DEF</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateMidpointTheoremSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .triangle { fill: none; stroke: #0277bd; stroke-width: 2; }
+          .midline { stroke: #dc2626; stroke-width: 2; stroke-dasharray: 5,5; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+          .theorem { font-family: Arial, sans-serif; font-size: 10px; fill: #059669; }
+        </style>
+      </defs>
+      
+      <!-- Triangle ABC -->
+      <polygon points="200,60 120,220 280,220" class="triangle" />
+      
+      <!-- Midpoints -->
+      <circle cx="160" cy="140" r="3" fill="#dc2626" />
+      <circle cx="240" cy="140" r="3" fill="#dc2626" />
+      
+      <!-- Midline DE -->
+      <line x1="160" y1="140" x2="240" y2="140" class="midline" />
+      
+      <!-- Labels -->
+      <text x="195" y="55" class="label">A</text>
+      <text x="110" y="235" class="label">B</text>
+      <text x="290" y="235" class="label">C</text>
+      <text x="150" y="135" class="label">D</text>
+      <text x="250" y="135" class="label">E</text>
+      
+      <!-- Theorem statement -->
+      <text x="120" y="260" class="theorem">DE ∥ BC and DE = ½BC</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generatePythagorasTheoremSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .triangle { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+          .square1 { fill: #fecaca; stroke: #dc2626; stroke-width: 1; }
+          .square2 { fill: #dbeafe; stroke: #3b82f6; stroke-width: 1; }
+          .square3 { fill: #dcfce7; stroke: #16a34a; stroke-width: 1; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+          .formula { font-family: Arial, sans-serif; font-size: 14px; fill: #dc2626; font-weight: bold; }
+        </style>
+      </defs>
+      
+      <!-- Right triangle -->
+      <polygon points="150,200 150,120 230,200" class="triangle" />
+      
+      <!-- Square on hypotenuse -->
+      <rect x="150" y="40" width="80" height="80" class="square1" />
+      
+      <!-- Square on side a -->
+      <rect x="70" y="120" width="80" height="80" class="square2" />
+      
+      <!-- Square on side b -->
+      <rect x="230" y="120" width="80" height="80" class="square3" />
+      
+      <!-- Labels -->
+      <text x="140" y="215" class="label">A</text>
+      <text x="140" y="115" class="label">B</text>
+      <text x="240" y="215" class="label">C</text>
+      
+      <!-- Side labels -->
+      <text x="110" y="165" class="label">a</text>
+      <text x="270" y="165" class="label">b</text>
+      <text x="185" y="105" class="label">c</text>
+      
+      <!-- Pythagoras formula -->
+      <text x="120" y="260" class="formula">a² + b² = c²</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="25" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateChordPropertiesSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .circle { fill: none; stroke: #0277bd; stroke-width: 2; }
+          .chord { stroke: #dc2626; stroke-width: 2; }
+          .perpendicular { stroke: #059669; stroke-width: 2; stroke-dasharray: 3,3; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- Circle -->
+      <circle cx="200" cy="150" r="80" class="circle" />
+      
+      <!-- Chord AB -->
+      <line x1="150" y1="100" x2="250" y2="200" class="chord" />
+      
+      <!-- Perpendicular from center -->
+      <line x1="200" y1="150" x2="200" y2="150" class="perpendicular" />
+      
+      <!-- Center -->
+      <circle cx="200" cy="150" r="3" fill="#666" />
+      
+      <!-- Labels -->
+      <text x="140" y="95" class="label">A</text>
+      <text x="260" y="205" class="label">B</text>
+      <text x="205" y="145" class="label">O</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateQuadrilateralSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .quad { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- Quadrilateral ABCD -->
+      <polygon points="100,80 280,100 260,220 120,200" class="quad" />
+      
+      <!-- Vertices -->
+      <text x="90" y="75" class="label">A</text>
+      <text x="290" y="95" class="label">B</text>
+      <text x="270" y="235" class="label">C</text>
+      <text x="110" y="215" class="label">D</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateCuboidSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .face { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
+          .hidden { stroke-dasharray: 5,5; opacity: 0.6; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- Front face -->
+      <rect x="100" y="120" width="120" height="80" class="face" />
+      
+      <!-- Back face (offset) -->
+      <rect x="150" y="80" width="120" height="80" class="face hidden" />
+      
+      <!-- Connecting edges -->
+      <line x1="100" y1="120" x2="150" y2="80" stroke="#0277bd" stroke-width="2" />
+      <line x1="220" y1="120" x2="270" y2="80" stroke="#0277bd" stroke-width="2" />
+      <line x1="220" y1="200" x2="270" y2="160" stroke="#0277bd" stroke-width="2" />
+      <line x1="100" y1="200" x2="150" y2="160" stroke="#0277bd" stroke-width="2" />
+      
+      <!-- Dimension labels -->
+      <text x="160" y="215" class="label">length</text>
+      <text x="75" y="165" class="label">height</text>
+      <text x="285" y="125" class="label">width</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateCoordinateGeometrySVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .axis { stroke: #6b7280; stroke-width: 1; }
+          .point { fill: #dc2626; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- X-axis -->
+      <line x1="50" y1="150" x2="350" y2="150" class="axis" />
+      <text x="355" y="155" class="label">X</text>
+      
+      <!-- Y-axis -->
+      <line x1="200" y1="50" x2="200" y2="250" class="axis" />
+      <text x="205" y="45" class="label">Y</text>
+      
+      <!-- Grid marks -->
+      <line x1="150" y1="145" x2="150" y2="155" class="axis" />
+      <line x1="250" y1="145" x2="250" y2="155" class="axis" />
+      <line x1="195" y1="100" x2="205" y2="100" class="axis" />
+      <line x1="195" y1="200" x2="205" y2="200" class="axis" />
+      
+      <!-- Sample points -->
+      <circle cx="250" cy="100" r="3" class="point" />
+      <text x="255" y="95" class="label">A(2, 2)</text>
+      
+      <!-- Origin -->
+      <text x="185" y="165" class="label">O</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateLinearEquationSVG(instruction: string): string {
+  return generateCoordinateGeometrySVG(instruction);
+}
+
+function generateNumberLineSVG(instruction: string): string {
+  return `
+    <svg width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .line { stroke: #6b7280; stroke-width: 2; }
+          .tick { stroke: #6b7280; stroke-width: 1; }
+          .point { fill: #dc2626; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; text-anchor: middle; }
+        </style>
+      </defs>
+      
+      <!-- Number line -->
+      <line x1="50" y1="75" x2="350" y2="75" class="line" />
+      
+      <!-- Tick marks and labels -->
+      <line x1="100" y1="70" x2="100" y2="80" class="tick" />
+      <text x="100" y="95" class="label">-2</text>
+      
+      <line x1="150" y1="70" x2="150" y2="80" class="tick" />
+      <text x="150" y="95" class="label">-1</text>
+      
+      <line x1="200" y1="70" x2="200" y2="80" class="tick" />
+      <text x="200" y="95" class="label">0</text>
+      
+      <line x1="250" y1="70" x2="250" y2="80" class="tick" />
+      <text x="250" y="95" class="label">1</text>
+      
+      <line x1="300" y1="70" x2="300" y2="80" class="tick" />
+      <text x="300" y="95" class="label">2</text>
+      
+      <!-- Sample rational/irrational points -->
+      <circle cx="175" cy="75" r="3" class="point" />
+      <text x="175" y="60" class="label">√2</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generatePolynomialSVG(instruction: string): string {
+  return generateCoordinateGeometrySVG(instruction);
+}
+
+function generateBarGraphSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .bar { fill: #3b82f6; stroke: #1e40af; stroke-width: 1; }
+          .axis { stroke: #6b7280; stroke-width: 1; }
+          .label { font-family: Arial, sans-serif; font-size: 10px; fill: #1f2937; text-anchor: middle; }
+        </style>
+      </defs>
+      
+      <!-- Axes -->
+      <line x1="60" y1="60" x2="60" y2="240" class="axis" />
+      <line x1="60" y1="240" x2="340" y2="240" class="axis" />
+      
+      <!-- Sample bars -->
+      <rect x="80" y="180" width="40" height="60" class="bar" />
+      <rect x="140" y="140" width="40" height="100" class="bar" />
+      <rect x="200" y="160" width="40" height="80" class="bar" />
+      <rect x="260" y="120" width="40" height="120" class="bar" />
+      
+      <!-- Labels -->
+      <text x="100" y="255" class="label">A</text>
+      <text x="160" y="255" class="label">B</text>
+      <text x="220" y="255" class="label">C</text>
+      <text x="280" y="255" class="label">D</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generatePieChartSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .slice1 { fill: #3b82f6; stroke: white; stroke-width: 2; }
+          .slice2 { fill: #ef4444; stroke: white; stroke-width: 2; }
+          .slice3 { fill: #10b981; stroke: white; stroke-width: 2; }
+          .slice4 { fill: #f59e0b; stroke: white; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- Pie chart circle -->
+      <circle cx="200" cy="150" r="80" fill="none" stroke="#ddd" stroke-width="1" />
+      
+      <!-- Sample pie slices -->
+      <path d="M 200,150 L 280,150 A 80,80 0 0,1 240,220 Z" class="slice1" />
+      <path d="M 200,150 L 240,220 A 80,80 0 0,1 160,220 Z" class="slice2" />
+      <path d="M 200,150 L 160,220 A 80,80 0 0,1 120,150 Z" class="slice3" />
+      <path d="M 200,150 L 120,150 A 80,80 0 1,1 280,150 Z" class="slice4" />
+      
+      <!-- Labels -->
+      <text x="250" y="180" class="label">25%</text>
+      <text x="190" y="210" class="label">20%</text>
+      <text x="140" y="180" class="label">15%</text>
+      <text x="180" y="120" class="label">40%</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateConstructionSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .construction { stroke: #0277bd; stroke-width: 2; fill: none; }
+          .compass { stroke: #dc2626; stroke-width: 1; stroke-dasharray: 3,3; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- Base line -->
+      <line x1="80" y1="200" x2="320" y2="200" class="construction" />
+      
+      <!-- Compass arcs -->
+      <circle cx="150" cy="200" r="60" class="compass" />
+      <circle cx="250" cy="200" r="60" class="compass" />
+      
+      <!-- Construction lines -->
+      <line x1="200" y1="80" x2="200" y2="200" class="construction" />
+      
+      <!-- Labels -->
+      <text x="75" y="215" class="label">A</text>
+      <text x="325" y="215" class="label">B</text>
+      <text x="205" y="75" class="label">P</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateHexagonSVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .hexagon { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+        </style>
+      </defs>
+      
+      <!-- Regular hexagon -->
+      <polygon points="200,80 250,115 250,185 200,220 150,185 150,115" class="hexagon" />
+      
+      <!-- Center -->
+      <circle cx="200" cy="150" r="3" fill="#dc2626" />
+      <text x="205" y="155" class="label">O</text>
+      
+      <!-- Vertices -->
+      <text x="195" y="75" class="label">A</text>
+      <text x="255" y="110" class="label">B</text>
+      <text x="255" y="190" class="label">C</text>
+      <text x="195" y="235" class="label">D</text>
+      <text x="135" y="190" class="label">E</text>
+      <text x="135" y="110" class="label">F</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
+}
+
+function generateTrigonometrySVG(instruction: string): string {
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .triangle { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+          .right-angle { stroke: #dc2626; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; }
+          .ratio { font-family: Arial, sans-serif; font-size: 10px; fill: #059669; }
+        </style>
+      </defs>
+      
+      <!-- Right triangle -->
+      <polygon points="150,200 150,100 250,200" class="triangle" />
+      
+      <!-- Right angle indicator -->
+      <rect x="150" y="180" width="20" height="20" fill="none" class="right-angle" />
+      
+      <!-- Labels -->
+      <text x="140" y="215" class="label">A</text>
+      <text x="140" y="95" class="label">B</text>
+      <text x="260" y="215" class="label">C</text>
+      
+      <!-- Side labels -->
+      <text x="125" y="155" class="label">b</text>
+      <text x="200" y="215" class="label">a</text>
+      <text x="185" y="145" class="label">c</text>
+      
+      <!-- Trigonometric ratios -->
+      <text x="50" y="250" class="ratio">sin θ = opposite/hypotenuse = a/c</text>
+      <text x="50" y="265" class="ratio">cos θ = adjacent/hypotenuse = b/c</text>
+      <text x="50" y="280" class="ratio">tan θ = opposite/adjacent = a/b</text>
+      
+      <!-- Instruction -->
+      <text x="50" y="30" class="label">${instruction}</text>
+    </svg>
+  `;
 }
 
 // Generic fallback functions
