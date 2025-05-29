@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import Sidebar from "@/components/dashboard/Sidebar";
 import TodayQuizzes from "@/components/dashboard/TodayQuizzes";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import { Button } from "@/components/ui/button";
@@ -54,18 +53,11 @@ const Dashboard = () => {
     })) || [];
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="hidden md:flex md:flex-shrink-0 md:w-64">
-        <Sidebar />
-      </div>
-      
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-          <div className="pt-4 pb-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
-              
-              {isUserLoading || isQuizzesLoading || isSchedulesLoading ? (
+    <div className="pt-4 pb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+        
+        {isUserLoading || isQuizzesLoading || isSchedulesLoading ? (
                 <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
@@ -161,9 +153,6 @@ const Dashboard = () => {
                   </div>
                 </>
               )}
-            </div>
-          </div>
-        </main>
       </div>
     </div>
   );

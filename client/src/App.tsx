@@ -1,10 +1,12 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import NotFound from "@/pages/not-found";
 
 // Pages
@@ -32,6 +34,16 @@ import AdminDatabase from "@/pages/admin/database";
 import AdminSettings from "@/pages/admin/settings";
 
 function Router() {
+  const [location] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Define which routes should use dashboard layout (authenticated routes)
+  const isDashboardRoute = location.startsWith('/dashboard') || location.startsWith('/admin');
+  
+  // Define which routes are public (don't require authentication)
+  const isPublicRoute = ['/', '/about', '/services', '/pricing', '/login', '/signup'].includes(location) || 
+                       location.startsWith('/admin/login');
+
   return (
     <Switch>
       {/* Public pages */}
@@ -69,17 +81,39 @@ function Router() {
 }
 
 function App() {
+  const [location] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Define which routes should use dashboard layout (authenticated routes)
+  const isDashboardRoute = location.startsWith('/dashboard') || location.startsWith('/admin');
+  
+  // Define which routes are public (don't require authentication)
+  const isPublicRoute = ['/', '/about', '/services', '/pricing', '/login', '/signup'].includes(location) || 
+                       location.startsWith('/admin/login');
+
+  // Show dashboard layout for authenticated dashboard/admin routes
+  const shouldUseDashboardLayout = !isLoading && isAuthenticated && isDashboardRoute;
+  
+  // Show public layout for public routes or when not authenticated
+  const shouldUsePublicLayout = isPublicRoute || !isAuthenticated || isLoading;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow">
-            <Toaster />
+        <Toaster />
+        {shouldUseDashboardLayout ? (
+          <DashboardLayout>
             <Router />
-          </main>
-          <Footer />
-        </div>
+          </DashboardLayout>
+        ) : (
+          <div className="flex flex-col min-h-screen">
+            {shouldUsePublicLayout && <Header />}
+            <main className="flex-grow">
+              <Router />
+            </main>
+            {shouldUsePublicLayout && <Footer />}
+          </div>
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );
