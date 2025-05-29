@@ -24,6 +24,12 @@ import Settings from "@/pages/dashboard/settings";
 import Performance from "@/pages/dashboard/performance";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminLogin from "@/pages/admin/login";
+import AdminUsers from "@/pages/admin/users";
+import AdminSubjects from "@/pages/admin/subjects";
+import AdminQuizzes from "@/pages/admin/quizzes";
+import AdminActivity from "@/pages/admin/activity";
+import AdminDatabase from "@/pages/admin/database";
+import AdminSettings from "@/pages/admin/settings";
 
 function Router() {
   return (
@@ -48,6 +54,12 @@ function Router() {
       
       {/* Admin pages */}
       <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/subjects" component={AdminSubjects} />
+      <Route path="/admin/quizzes" component={AdminQuizzes} />
+      <Route path="/admin/activity" component={AdminActivity} />
+      <Route path="/admin/database" component={AdminDatabase} />
+      <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/admin" component={AdminDashboard} />
       
       {/* Fallback to 404 */}
