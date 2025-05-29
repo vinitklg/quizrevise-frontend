@@ -355,23 +355,32 @@ export default function TakeQuiz() {
                     </div>
                   )}
                   {/* MCQ Questions - Show for any question that has options */}
-                  {currentQuestion.options && currentQuestion.options.length > 0 && (
+                  {currentQuestion.options && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
-                      {currentQuestion.options.map((option, index) => {
-                        // Generate option letter (A, B, C, D) and use the full option text as value
-                        const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
-                        return (
-                          <div key={index} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option} id={`option-${index}`} />
-                            <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                              {optionLetter}. {option}
-                            </Label>
-                          </div>
-                        );
-                      })}
+                      {(() => {
+                        // Handle both array and object formats for options
+                        const options = Array.isArray(currentQuestion.options) 
+                          ? currentQuestion.options 
+                          : Object.entries(currentQuestion.options).map(([key, value]) => `${key}. ${value}`);
+                        
+                        return options.map((option, index) => {
+                          // Extract option letter and text
+                          const optionText = typeof option === 'string' ? option : `${String.fromCharCode(65 + index)}. ${option}`;
+                          const optionLetter = optionText.charAt(0);
+                          
+                          return (
+                            <div key={index} className="flex items-center space-x-2">
+                              <RadioGroupItem value={optionLetter} id={`option-${index}`} />
+                              <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                                {optionText}
+                              </Label>
+                            </div>
+                          );
+                        });
+                      })()}
                     </RadioGroup>
                   )}
 
