@@ -421,6 +421,14 @@ function generateCircleSVG(instruction: string): string {
       ${hasInscribedAngle ? `
       <line x1="${pointCx}" y1="${pointCy}" x2="${chordAx}" y2="${chordAy}" stroke="#f59e0b" stroke-width="2" />
       <line x1="${pointCx}" y1="${pointCy}" x2="${chordBx}" y2="${chordBy}" stroke="#f59e0b" stroke-width="2" />
+      
+      <!-- Inscribed angle arc indicator -->
+      <path d="M ${pointCx-20} ${pointCy-10} A 25 25 0 0 1 ${pointCx+20} ${pointCy-10}" fill="none" stroke="#f59e0b" stroke-width="2" />
+      ` : ''}
+      
+      <!-- Central angle arc indicator -->
+      ${isCentralAngle ? `
+      <path d="M ${centerX-25} ${centerY-15} A 30 30 0 0 1 ${centerX+25} ${centerY-15}" fill="none" stroke="#8b5cf6" stroke-width="2" />
       ` : ''}
       
       <!-- Points -->
