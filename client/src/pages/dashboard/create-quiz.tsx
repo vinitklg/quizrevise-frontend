@@ -630,9 +630,6 @@ const CreateQuiz = () => {
                   </Card>
                 </div>
               </div>
-            </div>
-          </div>
-        </main>
       </div>
     </div>
   );

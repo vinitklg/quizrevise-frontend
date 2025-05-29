@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide duplicate sidebars when using DashboardLayout */
+.dashboard-layout-wrapper .flex.h-screen.overflow-hidden > .hidden.md\\:flex.md\\:flex-shrink-0.md\\:w-64 {
+  display: none !important;
+}
+
 :root {
       --background: 0 0% 100%;
 --foreground: 20 14.3% 4.1%;
