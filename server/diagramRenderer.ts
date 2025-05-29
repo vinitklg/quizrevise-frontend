@@ -350,118 +350,101 @@ function generateTriangleSVG(instruction: string): string {
 }
 
 function generateCircleSVG(instruction: string): string {
-  // Enhanced parsing for board-level accuracy
-  const lowerInstruction = instruction.toLowerCase();
+  // Parse instruction for specific elements
+  const centerX = 250, centerY = 200, radius = 100;
   
-  // Extract chord information with better pattern matching
-  const chordMatch = lowerInstruction.match(/chord\s+([a-z]{2,3})/);
-  const chordName = chordMatch ? chordMatch[1].toUpperCase() : 'PQ';
+  // Extract chord letters (looking for two capital letters)
+  const chordMatch = instruction.match(/chord\s+([A-Z]{2})/);
+  const chord = chordMatch ? chordMatch[1] : 'AB';
   
-  // Extract all angle measurements
-  const angleMatches = instruction.match(/(\d+)°/g);
-  const angleValue = angleMatches && angleMatches.length > 0 ? angleMatches[0].replace('°', '') : '60';
+  // Extract angle value
+  const angleMatch = instruction.match(/(\d+)°/);
+  const angle = angleMatch ? parseInt(angleMatch[1]) : 70;
   
-  // Extract point names with better detection
-  const pointMatches = instruction.match(/point\s+([a-z])/gi);
-  const mainPoint = pointMatches && pointMatches.length > 0 ? pointMatches[0].replace(/point\s+/i, '').toUpperCase() : 'P';
+  // Extract point letter (single capital letter after "point")
+  const pointMatch = instruction.match(/point\s+([A-Z])/);
+  const point = pointMatch ? pointMatch[1] : 'C';
   
-  // Detect angle types
-  const isInscribedAngle = lowerInstruction.includes('inscribed') || lowerInstruction.includes('circumference');
-  const isCentralAngle = lowerInstruction.includes('central') || lowerInstruction.includes('center');
+  // Determine angle types based on keywords
+  const isCentralAngle = instruction.includes('center') || instruction.includes('central');
+  const hasInscribedAngle = instruction.includes('circumference') || instruction.includes('remaining part');
   
-  // Detect arc information
-  const onMajorArc = lowerInstruction.includes('major arc');
-  const onMinorArc = lowerInstruction.includes('minor arc');
+  // Calculate chord endpoints based on central angle
+  const angleRad = (angle * Math.PI) / 180;
+  const chordAx = centerX - radius * Math.cos(angleRad / 2);
+  const chordAy = centerY - radius * Math.sin(angleRad / 2);
+  const chordBx = centerX + radius * Math.cos(angleRad / 2);
+  const chordBy = centerY - radius * Math.sin(angleRad / 2);
   
-  // Calculate positions based on geometric constraints
-  const centerX = 200, centerY = 150, radius = 80;
-  
-  // Chord endpoints (PQ)
-  const chordP = { x: 140, y: 110 };
-  const chordQ = { x: 260, y: 190 };
-  
-  // Point on arc (major or minor)
-  const arcPoint = onMajorArc ? { x: 200, y: 70 } : { x: 200, y: 230 };
+  // Point on circumference for inscribed angle
+  const pointCx = centerX;
+  const pointCy = centerY + radius * 0.8;
   
   return `
-    <svg width="450" height="350" xmlns="http://www.w3.org/2000/svg">
+    <svg width="500" height="400" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <style>
-          .circle { fill: none; stroke: #2563eb; stroke-width: 2; }
-          .chord { stroke: #dc2626; stroke-width: 2.5; }
-          .radius { stroke: #059669; stroke-width: 1.5; stroke-dasharray: 3,2; }
-          .inscribed-angle { fill: none; stroke: #f59e0b; stroke-width: 2.5; }
-          .central-angle { fill: none; stroke: #8b5cf6; stroke-width: 2.5; }
-          .label { font-family: 'Arial', sans-serif; font-size: 14px; fill: #1f2937; font-weight: bold; }
-          .angle-label { font-family: 'Arial', sans-serif; font-size: 12px; fill: #dc2626; font-weight: bold; }
-          .point { fill: #dc2626; }
-          .center-point { fill: #2563eb; }
-          .arc-indicator { stroke: #10b981; stroke-width: 3; fill: none; stroke-dasharray: 5,3; }
-          .instruction { font-family: 'Arial', sans-serif; font-size: 10px; fill: #6b7280; }
+          .circle { fill: none; stroke: #1e40af; stroke-width: 3; }
+          .chord { stroke: #dc2626; stroke-width: 3; }
+          .radius { stroke: #059669; stroke-width: 2; stroke-dasharray: 4,2; }
+          .central-angle { fill: rgba(139, 92, 246, 0.1); stroke: #8b5cf6; stroke-width: 2; }
+          .inscribed-angle { fill: rgba(245, 158, 11, 0.1); stroke: #f59e0b; stroke-width: 2; }
+          .point { fill: #dc2626; stroke: #dc2626; stroke-width: 2; }
+          .center-point { fill: #1e40af; stroke: #1e40af; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 16px; fill: #1f2937; font-weight: bold; }
+          .angle-label { font-family: Arial, sans-serif; font-size: 14px; fill: #dc2626; font-weight: bold; }
+          .title { font-family: Arial, sans-serif; font-size: 12px; fill: #6b7280; }
         </style>
       </defs>
       
-      <!-- Circle with center O -->
+      <!-- Main circle -->
       <circle cx="${centerX}" cy="${centerY}" r="${radius}" class="circle" />
       
-      <!-- Major/Minor arc indicator -->
-      ${onMajorArc ? `
-      <path d="M ${chordP.x},${chordP.y} A ${radius},${radius} 0 1,0 ${chordQ.x},${chordQ.y}" class="arc-indicator" />
-      ` : ''}
+      <!-- Chord -->
+      <line x1="${chordAx}" y1="${chordAy}" x2="${chordBx}" y2="${chordBy}" class="chord" />
       
-      <!-- Chord ${chordName} -->
-      <line x1="${chordP.x}" y1="${chordP.y}" x2="${chordQ.x}" y2="${chordQ.y}" class="chord" />
-      
-      <!-- Point ${mainPoint} on circumference -->
-      <circle cx="${arcPoint.x}" cy="${arcPoint.y}" r="4" class="point" />
-      
-      <!-- Center point O -->
-      <circle cx="${centerX}" cy="${centerY}" r="3" class="center-point" />
-      
-      <!-- Chord endpoints -->
-      <circle cx="${chordP.x}" cy="${chordP.y}" r="3" class="point" />
-      <circle cx="${chordQ.x}" cy="${chordQ.y}" r="3" class="point" />
-      
-      <!-- Inscribed angle at point ${mainPoint} -->
-      <path d="M ${arcPoint.x-25},${arcPoint.y+15} A 25,25 0 0,1 ${arcPoint.x+25},${arcPoint.y+15}" class="inscribed-angle" />
-      <text x="${arcPoint.x-15}" y="${arcPoint.y+35}" class="angle-label">∠${mainPoint}${chordName[0]}${chordName[1]} = ${angleValue}°</text>
-      
-      <!-- Central angle at center O (always show for center/chord problems) -->
-      <path d="M ${centerX-35},${centerY-15} A 35,35 0 0,1 ${centerX+35},${centerY+15}" class="central-angle" />
-      
-      <!-- Radii OA and OB -->
-      <line x1="${centerX}" y1="${centerY}" x2="${chordP.x}" y2="${chordP.y}" class="radius" />
-      <line x1="${centerX}" y1="${centerY}" x2="${chordQ.x}" y2="${chordQ.y}" class="radius" />
-      
-      <!-- Radius labels -->
-      <text x="${centerX-30}" y="${centerY-20}" class="label" style="font-size: 10px; fill: #059669;">O${chordName[0]}</text>
-      <text x="${centerX+20}" y="${centerY+25}" class="label" style="font-size: 10px; fill: #059669;">O${chordName[1]}</text>
-      
-      <!-- Central angle label and measurement -->
-      <text x="${centerX-25}" y="${centerY+60}" class="angle-label">∠${chordName[0]}O${chordName[1]}</text>
-      <text x="${centerX-20}" y="${centerY-25}" class="angle-label" style="font-size: 12px; fill: #8b5cf6; font-weight: bold;">${parseInt(angleValue) * 2}°</text>
-      
-      <!-- Point labels with precise positioning -->
-      <text x="${centerX+8}" y="${centerY-8}" class="label">O</text>
-      <text x="${chordP.x-15}" y="${chordP.y-8}" class="label">${chordName[0]}</text>
-      <text x="${chordQ.x+8}" y="${chordQ.y+15}" class="label">${chordName[1]}</text>
-      <text x="${arcPoint.x-8}" y="${arcPoint.y-8}" class="label">${mainPoint}</text>
-      
-      <!-- Angle type indicator -->
-      ${isInscribedAngle ? `
-      <text x="10" y="280" class="angle-label" style="font-size: 10px; fill: #f59e0b;">Inscribed Angle</text>
-      ` : ''}
+      <!-- Central angle sector -->
       ${isCentralAngle ? `
-      <text x="10" y="270" class="angle-label" style="font-size: 10px; fill: #8b5cf6;">Central Angle</text>
+      <path d="M ${centerX} ${centerY} L ${chordAx} ${chordAy} A ${radius} ${radius} 0 0 1 ${chordBx} ${chordBy} Z" class="central-angle" />
       ` : ''}
       
-      <!-- Complete instruction text -->
-      <text x="10" y="15" class="instruction">${instruction}</text>
+      <!-- Inscribed angle sector -->
+      ${hasInscribedAngle ? `
+      <path d="M ${pointCx} ${pointCy} L ${chordAx} ${chordAy} L ${chordBx} ${chordBy} Z" class="inscribed-angle" />
+      ` : ''}
       
-      <!-- Legend -->
-      <text x="10" y="320" class="instruction" style="font-weight: bold;">Legend:</text>
-      <text x="10" y="335" class="instruction">• Inscribed angle (orange): ${angleValue}°</text>
-      <text x="200" y="335" class="instruction">• Central angle (purple): ${parseInt(angleValue) * 2}°</text>
+      <!-- Radii from center to chord endpoints -->
+      <line x1="${centerX}" y1="${centerY}" x2="${chordAx}" y2="${chordAy}" class="radius" />
+      <line x1="${centerX}" y1="${centerY}" x2="${chordBx}" y2="${chordBy}" class="radius" />
+      
+      <!-- Lines for inscribed angle -->
+      ${hasInscribedAngle ? `
+      <line x1="${pointCx}" y1="${pointCy}" x2="${chordAx}" y2="${chordAy}" stroke="#f59e0b" stroke-width="2" />
+      <line x1="${pointCx}" y1="${pointCy}" x2="${chordBx}" y2="${chordBy}" stroke="#f59e0b" stroke-width="2" />
+      ` : ''}
+      
+      <!-- Points -->
+      <circle cx="${centerX}" cy="${centerY}" r="4" class="center-point" />
+      <circle cx="${chordAx}" cy="${chordAy}" r="4" class="point" />
+      <circle cx="${chordBx}" cy="${chordBy}" r="4" class="point" />
+      ${hasInscribedAngle ? `<circle cx="${pointCx}" cy="${pointCy}" r="4" class="point" />` : ''}
+      
+      <!-- Labels -->
+      <text x="${centerX - 15}" y="${centerY - 10}" class="label">O</text>
+      <text x="${chordAx - 15}" y="${chordAy - 10}" class="label">${chord[0]}</text>
+      <text x="${chordBx + 10}" y="${chordBy - 10}" class="label">${chord[1]}</text>
+      ${hasInscribedAngle ? `<text x="${pointCx - 10}" y="${pointCy + 20}" class="label">${point}</text>` : ''}
+      
+      <!-- Angle measurements -->
+      ${isCentralAngle ? `
+      <text x="${centerX - 30}" y="${centerY - 40}" class="angle-label">∠${chord[0]}O${chord[1]} = ${angle}°</text>
+      ` : ''}
+      ${hasInscribedAngle ? `
+      <text x="${pointCx - 35}" y="${pointCy - 25}" class="angle-label">∠${chord[0]}${point}${chord[1]} = ${Math.round(angle/2)}°</text>
+      ` : ''}
+      
+      <!-- Title -->
+      <text x="250" y="25" class="title" text-anchor="middle">${instruction}</text>
     </svg>
   `;
 }
