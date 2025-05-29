@@ -51,14 +51,18 @@ export async function generateQuizQuestions(
     if (diagramSupport) {
       customizedPrompt += `\n\n**FORCE DIAGRAM GENERATION: Since diagram support is enabled, you MUST include a "diagram_instruction" field for every question that involves visual concepts, geometric shapes, scientific apparatus, biological structures, or any content that can be represented visually. 
 
-DIAGRAM INSTRUCTION REQUIREMENTS:
-- Be extremely specific about ALL geometric elements (points, lines, angles, measurements)
-- Include exact coordinates, labels, and measurements mentioned in the question
-- Specify which points, chords, angles, and measurements should be clearly marked
-- For circle problems: mention center, specific chords, points on circumference, angle measurements at specific locations
-- Example: "Draw circle with center O, chord PQ where P(120,100) and Q(280,100), point R at (200,70) on the same segment as PQ, mark angle PRQ = 70° and central angle POQ, label all points clearly"
+DIAGRAM INSTRUCTION REQUIREMENTS FOR BOARD-LEVEL ACCURACY:
+- Clearly mention all POINTS (use capital letters: A, B, C, P, Q, R, O)
+- Specify all CHORDS with exact names (e.g., chord PQ, chord AB)
+- Include precise ANGLE MEASUREMENTS (e.g., ∠PRQ = 70°, ∠POQ at center)
+- Define exact POSITIONS (e.g., "Point R lies on the major arc of PQ", "Point R is on the circumference between P and Q")
+- Specify CIRCLE CENTER (e.g., center O) and radius when applicable
+- Indicate TYPE OF ANGLE (inscribed angle, central angle, angle in alternate segment)
+- Ensure all points have LABELS (capital letters) and all segments are named
+- Add measurement values wherever applicable in the question
+- Example: "Draw a circle with center O. Chord PQ is drawn. Point R lies on the major arc of PQ. ∠PRQ = 70° (inscribed angle). Show angle ∠POQ at the center. Label all points clearly."
 
-No exceptions - every visual concept must be completely specified in the diagram_instruction.**`;
+STRICT COMPLIANCE: Every geometry question must follow this exact format for diagram instructions.**`;
     }
     
     // Add JSON formatting instruction
