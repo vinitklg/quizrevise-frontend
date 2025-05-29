@@ -386,10 +386,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Generate 1 set of questions for testing (instead of 8 for spaced repetition)
+      // Generate 8 sets of questions for spaced repetition learning
       const quizSets = [];
-      for (let setNumber = 1; setNumber <= 1; setNumber++) {
-        console.log(`Generating quiz set ${setNumber}/1 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+      for (let setNumber = 1; setNumber <= 8; setNumber++) {
+        console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
         
         // Use the specific topic for much better targeted question generation
         const questions = await generateQuizQuestions(
@@ -441,17 +441,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quizSets.push(quizSet);
       }
       
-      // Schedule quiz for immediate availability (testing mode)
+      // Create spaced repetition schedule for all 8 sets
       const schedules = [];
+      const spacedDates = calculateSpacedRepetitionDates(new Date());
       
       for (let i = 0; i < quizSets.length; i++) {
-        console.log(`Scheduling quiz set ${i + 1}/1 for user ${user.id} for immediate availability`);
+        console.log(`Scheduling quiz set ${i + 1}/8 for user ${user.id} on ${spacedDates[i].toDateString()}`);
         
         const schedule = await storage.createQuizSchedule({
           quizId: quiz.id,
-          userId: user.id, // Ensure proper user isolation
+          userId: user.id,
           quizSetId: quizSets[i].id,
-          scheduledDate: new Date(), // Available immediately for testing
+          scheduledDate: spacedDates[i],
           status: "pending"
         });
         
