@@ -1,0 +1,45 @@
+
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .circle { fill: none; stroke: #2563eb; stroke-width: 2; }
+          .quadrilateral { fill: none; stroke: #dc2626; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; }
+          .point { fill: #dc2626; r: 3; }
+          .angle-arc { fill: none; stroke: #059669; stroke-width: 1.5; }
+        </style>
+      </defs>
+      
+      <!-- Circle -->
+      <circle cx="200" cy="150" r="80" class="circle" />
+      
+      <!-- Cyclic Quadrilateral ABCD -->
+      <polygon points="200,70 260,120 220,230 140,200" class="quadrilateral" />
+      
+      <!-- Vertices -->
+      <circle cx="200" cy="70" class="point" />
+      <circle cx="260" cy="120" class="point" />
+      <circle cx="220" cy="230" class="point" />
+      <circle cx="140" cy="200" class="point" />
+      
+      <!-- Labels -->
+      <text x="195" y="60" class="label" style="font-weight: bold;">A</text>
+      <text x="270" y="115" class="label" style="font-weight: bold;">B</text>
+      <text x="225" y="245" class="label" style="font-weight: bold;">C</text>
+      <text x="125" y="195" class="label" style="font-weight: bold;">D</text>
+      
+      <!-- Angle markings -->
+      <path d="M 250,125 A 10,10 0 0,1 255,135" class="angle-arc" />
+      <text x="255" y="130" class="label" style="font-size: 12px;">110°</text>
+      
+      <path d="M 150,195 A 10,10 0 0,1 145,185" class="angle-arc" />
+      <text x="145" y="180" class="label" style="font-size: 12px;">70°</text>
+      
+      <!-- Center point -->
+      <circle cx="200" cy="150" r="2" fill="#666" />
+      <text x="205" y="155" class="label" style="font-size: 12px;">O</text>
+      
+      <!-- Instruction text -->
+      <text x="10" y="20" class="label" style="font-weight: bold; font-size: 12px;">Draw cyclic quadrilateral ABCD with circle center O, mark ∠DCA = 75° and ∠DBC as the exterior angle.</text>
+    </svg>
+  
