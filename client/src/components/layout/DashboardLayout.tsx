@@ -56,7 +56,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         {/* Main Content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-          {children}
+          <div className="dashboard-layout-wrapper">
+            {children}
+          </div>
         </main>
       </div>
     </div>
