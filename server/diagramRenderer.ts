@@ -686,6 +686,9 @@ function generateCylinderSVG(instruction: string): string {
   const baseRadius = radiusMatch ? parseFloat(radiusMatch[1]) : 3;
   const height = heightMatch ? parseFloat(heightMatch[1]) : 5;
   
+  // Check if instruction mentions surface area or painting
+  const isSurfaceArea = instruction.match(/surface\s+area|paint|label.*surface|curved.*surface|CSA|total.*area/i);
+  
   // Check if instruction mentions two cylinders (comparison)
   const twoTraderMatch = instruction.match(/then.*cylinder|second.*cylinder|another.*cylinder/i);
   const isTwoCylinders = !!twoTraderMatch;
@@ -752,17 +755,80 @@ function generateCylinderSVG(instruction: string): string {
         <text x="250" y="25" class="title" text-anchor="middle">${instruction}</text>
       </svg>
     `;
-  } else {
-    // Single cylinder
+  } else if (isSurfaceArea) {
+    // Surface area focused diagram with proper labels
     return `
-      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <svg width="500" height="420" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .cylinder-fill { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
+            .cylinder-edge { fill: none; stroke: #0277bd; stroke-width: 2; }
+            .surface-label { fill: #dc2626; stroke: #dc2626; stroke-width: 1; }
+            .dashed { stroke-dasharray: 5,5; opacity: 0.6; }
+            .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; text-anchor: middle; }
+            .surface-text { font-family: Arial, sans-serif; font-size: 12px; fill: #dc2626; text-anchor: middle; font-weight: bold; }
+            .title { font-family: Arial, sans-serif; font-size: 12px; fill: #6b7280; }
+          </style>
+          <linearGradient id="cylinderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#b3e5fc"/>
+            <stop offset="50%" style="stop-color:#e1f5fe"/>
+            <stop offset="100%" style="stop-color:#b3e5fc"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Main Cylinder -->
+        <g transform="translate(250, 80)">
+          <!-- Cylinder body -->
+          <rect x="-60" y="0" width="120" height="${height * 25}" fill="url(#cylinderGrad)" class="cylinder-edge"/>
+          <!-- Top ellipse -->
+          <ellipse cx="0" cy="0" rx="60" ry="15" class="cylinder-fill"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="0" cy="${height * 25}" rx="60" ry="15" class="cylinder-fill"/>
+          <!-- Hidden back edge -->
+          <ellipse cx="0" cy="0" rx="60" ry="15" class="cylinder-edge dashed"/>
+          
+          <!-- Surface Area Labels -->
+          <!-- Top Base -->
+          <text x="0" y="-30" class="surface-text">Top Base (πr²)</text>
+          <circle cx="0" cy="0" r="3" class="surface-label"/>
+          
+          <!-- Bottom Base -->
+          <text x="0" y="${height * 25 + 35}" class="surface-text">Bottom Base (πr²)</text>
+          <circle cx="0" cy="${height * 25}" r="3" class="surface-label"/>
+          
+          <!-- Curved Surface Area -->
+          <text x="100" y="${height * 12.5}" class="surface-text">Curved Surface Area</text>
+          <text x="100" y="${height * 12.5 + 15}" class="surface-text">CSA = 2πrh</text>
+          <line x1="60" y1="${height * 8}" x2="90" y2="${height * 8}" class="surface-label"/>
+          <line x1="60" y1="${height * 17}" x2="90" y2="${height * 17}" class="surface-label"/>
+          <line x1="90" y1="${height * 8}" x2="90" y2="${height * 17}" class="surface-label"/>
+          
+          <!-- Dimension Labels -->
+          <text x="0" y="${height * 25 + 60}" class="label">r = ${baseRadius} cm, h = ${height} cm</text>
+          <line x1="60" y1="${height * 12.5}" x2="80" y2="${height * 12.5}" class="cylinder-edge"/>
+          <text x="90" y="${height * 12.5 + 5}" class="label">r</text>
+          <line x1="-80" y1="0" x2="-80" y2="${height * 25}" class="cylinder-edge"/>
+          <text x="-90" y="${height * 12.5}" class="label" transform="rotate(-90, -90, ${height * 12.5})">h</text>
+        </g>
+        
+        <!-- Total Surface Area Formula -->
+        <text x="250" y="380" class="label" style="font-weight: bold;">Total Surface Area = 2πr² + 2πrh</text>
+        
+        <!-- Title -->
+        <text x="250" y="25" class="title" style="text-anchor: middle; font-weight: bold;">${instruction}</text>
+      </svg>
+    `;
+  } else {
+    // Single cylinder - larger size
+    return `
+      <svg width="500" height="380" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <style>
             .cylinder-fill { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
             .cylinder-edge { fill: none; stroke: #0277bd; stroke-width: 2; }
             .dashed { stroke-dasharray: 5,5; opacity: 0.6; }
-            .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; text-anchor: middle; }
-            .title { font-family: Arial, sans-serif; font-size: 11px; fill: #6b7280; }
+            .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; text-anchor: middle; }
+            .title { font-family: Arial, sans-serif; font-size: 12px; fill: #6b7280; }
           </style>
           <linearGradient id="cylinderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" style="stop-color:#b3e5fc"/>
@@ -772,26 +838,29 @@ function generateCylinderSVG(instruction: string): string {
         </defs>
         
         <!-- Single Cylinder -->
-        <g transform="translate(200, 80)">
+        <g transform="translate(250, 80)">
           <!-- Cylinder body -->
-          <rect x="-40" y="0" width="80" height="${height * 20}" fill="url(#cylinderGrad)" class="cylinder-edge"/>
+          <rect x="-60" y="0" width="120" height="${height * 25}" fill="url(#cylinderGrad)" class="cylinder-edge"/>
           <!-- Top ellipse -->
-          <ellipse cx="0" cy="0" rx="40" ry="10" class="cylinder-fill"/>
+          <ellipse cx="0" cy="0" rx="60" ry="15" class="cylinder-fill"/>
           <!-- Bottom ellipse -->
-          <ellipse cx="0" cy="${height * 20}" rx="40" ry="10" class="cylinder-fill"/>
+          <ellipse cx="0" cy="${height * 25}" rx="60" ry="15" class="cylinder-fill"/>
           <!-- Hidden back edge -->
-          <ellipse cx="0" cy="0" rx="40" ry="10" class="cylinder-edge dashed"/>
+          <ellipse cx="0" cy="0" rx="60" ry="15" class="cylinder-edge dashed"/>
           
           <!-- Dimension labels -->
-          <line x1="40" y1="${height * 10}" x2="55" y2="${height * 10}" class="cylinder-edge"/>
-          <text x="65" y="${height * 10 + 5}" class="label">r = ${baseRadius}</text>
+          <line x1="60" y1="${height * 12.5}" x2="80" y2="${height * 12.5}" class="cylinder-edge"/>
+          <text x="90" y="${height * 12.5 + 5}" class="label">r = ${baseRadius}</text>
           
-          <line x1="-50" y1="0" x2="-50" y2="${height * 20}" class="cylinder-edge"/>
-          <text x="-55" y="${height * 10}" class="label" transform="rotate(-90, -55, ${height * 10})">h = ${height}</text>
+          <line x1="-80" y1="0" x2="-80" y2="${height * 25}" class="cylinder-edge"/>
+          <text x="-90" y="${height * 12.5}" class="label" transform="rotate(-90, -90, ${height * 12.5})">h = ${height}</text>
+          
+          <!-- Bottom label -->
+          <text x="0" y="${height * 25 + 40}" class="label">Cylinder: r = ${baseRadius} cm, h = ${height} cm</text>
         </g>
         
         <!-- Instruction text -->
-        <text x="200" y="25" class="title" text-anchor="middle">${instruction}</text>
+        <text x="250" y="25" class="title" style="text-anchor: middle; font-weight: bold;">${instruction}</text>
       </svg>
     `;
   }
