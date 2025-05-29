@@ -60,36 +60,51 @@ Return only:
 - Any commentary, tips, or explanation
 - Any metadata or tags
 
-🎯 DIAGRAM SUPPORT FOR MATHEMATICS:
-If the question involves a diagram, include a special field:
+🎯 DIAGRAM SUPPORT FOR CBSE/ICSE CLASS 9-10 MATHEMATICS:
+For any question requiring visual representation, include a "diagram_instruction" field.
 
-"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw triangle ABC with AB = 6 cm, angle B = 90°, mark all angles and sides clearly')."
+**MANDATORY DIAGRAM REQUIREMENT for these curriculum topics:**
 
-Diagram Types: Geometry figures, angle construction, coordinate plots, function graphs
-Tool Support: Manim, GeoGebra, Matplotlib, SVG/Canvas rendering
+**GEOMETRY (Class 9-10 Core Topics):**
+- Triangle congruency: "Draw triangles ABC and DEF showing SSS/SAS/AAS/RHS congruency with marked equal sides/angles"
+- Parallelogram properties: "Draw parallelogram ABCD showing opposite sides parallel and equal, mark diagonal intersections"
+- Midpoint theorem: "Draw triangle ABC with midpoints D and E on sides AB and AC, show DE parallel to BC"
+- Pythagoras theorem: "Draw right triangle ABC with squares on all three sides, label a², b², c²"
+- Circle theorems: "Draw circle with center O, chord AB, show perpendicular from center bisecting chord"
+- Cyclic quadrilaterals: "Draw quadrilateral PQRS inscribed in circle, mark opposite angles summing to 180°"
 
-For geometry questions, be specific about:
-- Exact measurements and dimensions
-- Angle markings and labels
-- Point coordinates if applicable
-- Special geometric properties to highlight
+**MENSURATION:**
+- 3D solids: "Draw cylinder with radius r and height h, show curved surface area and total surface area"
+- Cuboids: "Draw cuboid showing length, breadth, height with all dimensions labeled clearly"
 
-**MANDATORY DIAGRAM REQUIREMENT: For ANY mathematics question involving:**
-- Geometry shapes (circles, triangles, quadrilaterals, polygons)
-- 3D objects (cylinders, cones, spheres, cuboids, prisms)
-- Coordinate geometry, graphs, or functions
-- Angle measurements or constructions
+**COORDINATE GEOMETRY:**
+- Cartesian plane: "Draw coordinate axes with origin O, plot points and show distance/midpoint calculations"
+- Linear equations: "Draw graph of linear equation showing x-intercept, y-intercept, and slope"
 
-You MUST include a "diagram_instruction" field with specific visual details.
+**ALGEBRA & NUMBER SYSTEMS:**
+- Number line: "Draw number line showing rational and irrational numbers like √2, √3 marked precisely"
+- Polynomial graphs: "Draw parabola showing roots, vertex, and axis of symmetry for quadratic expression"
 
-Required diagram instruction examples:
-- "Draw a cylinder with radius 0.5 m and height 2 m, label all dimensions clearly"
-- "Draw a circle with center O and radius 7 cm, mark tangent points A and B, show external point P"
-- "Draw triangle ABC with angle B = 90°, mark all vertices and given measurements"
-- "Draw cyclic quadrilateral ABCD inscribed in circle, mark angles D = 70° and B = 110°"
-- "Draw coordinate plane with function y = x² plotted from x = -3 to x = 3"
+**CONSTRUCTIONS:**
+- Geometric constructions: "Draw construction steps using compass and ruler for angle bisectors/perpendiculars"
+- Regular polygons: "Draw regular hexagon inscribed in circle showing construction arcs and steps"
 
-**NO EXCEPTIONS: Every geometry/3D question MUST have diagram_instruction.**`,
+**STATISTICS:**
+- Data representation: "Draw bar graph/histogram with proper scales, labels, and frequency distribution"
+- Pie charts: "Draw circular chart showing percentage divisions with clear sector labels"
+
+**TRIGONOMETRY:**
+- Right triangles: "Draw right triangle showing opposite, adjacent, hypotenuse with trigonometric ratios"
+- Height and distance: "Draw tower/building with angle of elevation/depression from observation point"
+
+Example diagram instructions for common Class 9-10 topics:
+- "Draw triangle ABC with AB = 6 cm, BC = 8 cm, angle B = 90°, construct squares on all sides for Pythagoras theorem"
+- "Draw parallelogram PQRS with PQ = 5 cm, QR = 3 cm, show that opposite sides are equal and parallel"
+- "Draw circle with center O and radius 7 cm, draw chord AB = 10 cm, show perpendicular from O to AB"
+- "Draw cylinder with base radius 3 cm and height 7 cm, label dimensions for surface area calculation"
+- "Draw coordinate plane, plot points A(2,3), B(-1,4), C(0,-2), show distance and midpoint calculations"
+
+**NO EXCEPTIONS: Every geometry, mensuration, or visual mathematics question MUST include specific diagram_instruction.**`,
 
   // Science (Classes 6-10) prompt
   "Science": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Science.
