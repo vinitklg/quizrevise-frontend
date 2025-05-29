@@ -364,11 +364,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const now = new Date();
 
     return await db
       .select()
@@ -376,11 +372,11 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(quizSchedules.userId, userId),
-          gte(quizSchedules.scheduledDate, today),
-          lt(quizSchedules.scheduledDate, tomorrow),
+          lte(quizSchedules.scheduledDate, now), // Show all quizzes scheduled for now or earlier
           eq(quizSchedules.status, "pending"),
         ),
-      );
+      )
+      .orderBy(quizSchedules.scheduledDate);
   }
 
   async getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]> {
