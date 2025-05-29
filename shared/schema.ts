@@ -157,6 +157,20 @@ export type InsertDoubtQuery = {
   fileType?: string;
 };
 
+// Question type definitions for JSON fields
+export interface Question {
+  id: number;
+  questionType: string;
+  question: string;
+  options?: { [key: string]: string } | string[];
+  correctAnswer: string;
+  explanation?: string;
+  bloomTaxonomy?: string;
+  difficultyLevel?: string;
+  diagram_instruction?: string;
+  diagramUrl?: string;
+}
+
 // Authentication schemas
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),

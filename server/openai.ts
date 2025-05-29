@@ -106,8 +106,57 @@ This is set ${setNumber} of 8 for spaced repetition learning.`;
       response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(response.choices[0].message.content || "{}");
-    return result;
+    const rawContent = response.choices[0].message.content || "{}";
+    console.log("Raw OpenAI response:", rawContent);
+    
+    try {
+      const result = JSON.parse(rawContent);
+      
+      // Validate and fix question structure
+      if (result.questions && Array.isArray(result.questions)) {
+        result.questions = result.questions.map((question: any, index: number) => {
+          // Ensure all required fields are present
+          const fixedQuestion = {
+            id: question.id || index + 1,
+            questionType: question.questionType || "mcq",
+            question: question.question || "Question text missing",
+            options: question.options || {},
+            correctAnswer: question.correctAnswer || "A",
+            explanation: question.explanation || "Explanation not provided",
+            bloomTaxonomy: question.bloomTaxonomy || "Application",
+            difficultyLevel: question.difficultyLevel || "Moderate"
+          };
+          
+          // Add diagram instruction if present
+          if (question.diagram_instruction) {
+            (fixedQuestion as any).diagram_instruction = question.diagram_instruction;
+          }
+          
+          // Fix options format if it's an array instead of object
+          if (Array.isArray(fixedQuestion.options)) {
+            const optionsObj = {};
+            fixedQuestion.options.forEach((option: string, idx: number) => {
+              const letter = String.fromCharCode(65 + idx); // A, B, C, D
+              optionsObj[letter] = option.replace(/^[A-D]\.?\s*/, ''); // Remove existing letter prefix
+            });
+            fixedQuestion.options = optionsObj;
+          }
+          
+          return fixedQuestion;
+        });
+      }
+      
+      return result;
+    } catch (parseError) {
+      console.error("JSON parsing error:", parseError);
+      console.error("Content that failed to parse:", rawContent);
+      
+      // Return a fallback structure with empty questions array
+      return {
+        questions: [],
+        error: "Failed to parse AI response"
+      };
+    }
   } catch (error) {
     console.error("Error generating quiz questions:", error);
     throw new Error(`Failed to generate quiz questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
