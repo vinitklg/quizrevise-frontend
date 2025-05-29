@@ -55,6 +55,8 @@ async function renderMathDiagram(instruction: string, questionId: string): Promi
   
   if (instruction.toLowerCase().includes('cyclic quadrilateral')) {
     svg = generateCyclicQuadrilateralSVG(instruction);
+  } else if (instruction.toLowerCase().includes('cylinder')) {
+    svg = generateCylinderSVG(instruction);
   } else if (instruction.toLowerCase().includes('chord') || instruction.toLowerCase().includes('subtend')) {
     svg = generateCircleSVG(instruction);
   } else if (instruction.toLowerCase().includes('triangle')) {
@@ -628,6 +630,125 @@ function generateFlowchartSVG(instruction: string): string {
       <text x="50" y="20" class="label" style="font-weight: bold;">${instruction}</text>
     </svg>
   `;
+}
+
+function generateCylinderSVG(instruction: string): string {
+  // Extract radius and height information from instruction
+  const radiusMatch = instruction.match(/radius\s+(\d+(?:\.\d+)?)/i);
+  const heightMatch = instruction.match(/height\s+(\d+(?:\.\d+)?)/i);
+  
+  const baseRadius = radiusMatch ? parseFloat(radiusMatch[1]) : 3;
+  const height = heightMatch ? parseFloat(heightMatch[1]) : 5;
+  
+  // Check if instruction mentions two cylinders (comparison)
+  const twoTraderMatch = instruction.match(/then.*cylinder|second.*cylinder|another.*cylinder/i);
+  const isTwoCylinders = !!twoTraderMatch;
+  
+  // Extract multiplier for second cylinder
+  const multiplierMatch = instruction.match(/radius\s+(\d+)r|tripled|doubled|(\d+(?:\.\d+)?)\s*times/i);
+  const multiplier = multiplierMatch ? (multiplierMatch[1] ? parseFloat(multiplierMatch[1]) : 3) : 2;
+  
+  if (isTwoCylinders) {
+    return `
+      <svg width="500" height="350" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .cylinder-fill { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
+            .cylinder-edge { fill: none; stroke: #0277bd; stroke-width: 2; }
+            .dashed { stroke-dasharray: 5,5; opacity: 0.6; }
+            .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; text-anchor: middle; }
+            .title { font-family: Arial, sans-serif; font-size: 11px; fill: #6b7280; }
+          </style>
+          <linearGradient id="cylinderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#b3e5fc"/>
+            <stop offset="50%" style="stop-color:#e1f5fe"/>
+            <stop offset="100%" style="stop-color:#b3e5fc"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- First Cylinder -->
+        <g transform="translate(120, 80)">
+          <!-- Cylinder body -->
+          <rect x="-30" y="0" width="60" height="${height * 15}" fill="url(#cylinderGrad)" class="cylinder-edge"/>
+          <!-- Top ellipse -->
+          <ellipse cx="0" cy="0" rx="30" ry="8" class="cylinder-fill"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="0" cy="${height * 15}" rx="30" ry="8" class="cylinder-fill"/>
+          <!-- Hidden back edge -->
+          <ellipse cx="0" cy="0" rx="30" ry="8" class="cylinder-edge dashed"/>
+          
+          <!-- Labels -->
+          <text x="0" y="-20" class="label">Original Cylinder</text>
+          <text x="0" y="${height * 15 + 25}" class="label">r = ${baseRadius}, h = ${height}</text>
+          <line x1="30" y1="${height * 7.5}" x2="45" y2="${height * 7.5}" class="cylinder-edge"/>
+          <text x="50" y="${height * 7.5 + 5}" class="label">r</text>
+        </g>
+        
+        <!-- Second Cylinder -->
+        <g transform="translate(350, 80)">
+          <!-- Cylinder body -->
+          <rect x="-${30 * multiplier}" y="0" width="${60 * multiplier}" height="${height * 15}" fill="url(#cylinderGrad)" class="cylinder-edge"/>
+          <!-- Top ellipse -->
+          <ellipse cx="0" cy="0" rx="${30 * multiplier}" ry="${8 * multiplier}" class="cylinder-fill"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="0" cy="${height * 15}" rx="${30 * multiplier}" ry="${8 * multiplier}" class="cylinder-fill"/>
+          <!-- Hidden back edge -->
+          <ellipse cx="0" cy="0" rx="${30 * multiplier}" ry="${8 * multiplier}" class="cylinder-edge dashed"/>
+          
+          <!-- Labels -->
+          <text x="0" y="-20" class="label">Modified Cylinder</text>
+          <text x="0" y="${height * 15 + 25}" class="label">r = ${baseRadius * multiplier}, h = ${height}</text>
+          <line x1="${30 * multiplier}" y1="${height * 7.5}" x2="${45 * multiplier}" y2="${height * 7.5}" class="cylinder-edge"/>
+          <text x="${50 * multiplier}" y="${height * 7.5 + 5}" class="label">${multiplier}r</text>
+        </g>
+        
+        <!-- Instruction text -->
+        <text x="250" y="25" class="title" text-anchor="middle">${instruction}</text>
+      </svg>
+    `;
+  } else {
+    // Single cylinder
+    return `
+      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .cylinder-fill { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
+            .cylinder-edge { fill: none; stroke: #0277bd; stroke-width: 2; }
+            .dashed { stroke-dasharray: 5,5; opacity: 0.6; }
+            .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; text-anchor: middle; }
+            .title { font-family: Arial, sans-serif; font-size: 11px; fill: #6b7280; }
+          </style>
+          <linearGradient id="cylinderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#b3e5fc"/>
+            <stop offset="50%" style="stop-color:#e1f5fe"/>
+            <stop offset="100%" style="stop-color:#b3e5fc"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Single Cylinder -->
+        <g transform="translate(200, 80)">
+          <!-- Cylinder body -->
+          <rect x="-40" y="0" width="80" height="${height * 20}" fill="url(#cylinderGrad)" class="cylinder-edge"/>
+          <!-- Top ellipse -->
+          <ellipse cx="0" cy="0" rx="40" ry="10" class="cylinder-fill"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="0" cy="${height * 20}" rx="40" ry="10" class="cylinder-fill"/>
+          <!-- Hidden back edge -->
+          <ellipse cx="0" cy="0" rx="40" ry="10" class="cylinder-edge dashed"/>
+          
+          <!-- Dimension labels -->
+          <line x1="40" y1="${height * 10}" x2="55" y2="${height * 10}" class="cylinder-edge"/>
+          <text x="65" y="${height * 10 + 5}" class="label">r = ${baseRadius}</text>
+          
+          <line x1="-50" y1="0" x2="-50" y2="${height * 20}" class="cylinder-edge"/>
+          <text x="-55" y="${height * 10}" class="label" transform="rotate(-90, -55, ${height * 10})">h = ${height}</text>
+        </g>
+        
+        <!-- Instruction text -->
+        <text x="200" y="25" class="title" text-anchor="middle">${instruction}</text>
+      </svg>
+    `;
+  }
 }
 
 // Generic fallback functions
