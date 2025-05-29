@@ -1045,6 +1045,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin login route
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      // Simple admin check - in production you'd want a proper admin table
+      if (email === "admin@quickrevise.com" && password === "admin123") {
+        // Create or get admin user
+        let adminUser = await storage.getUserByEmail(email);
+        if (!adminUser) {
+          adminUser = await storage.createUser({
+            email,
+            password: await bcrypt.hash(password, 10),
+            username: "admin",
+            firstName: "Admin",
+            lastName: "User",
+            subscriptionTier: "premium"
+          });
+        }
+        
+        // Store admin session
+        (req.session as any).userId = adminUser.id;
+        (req.session as any).isAdmin = true;
+        
+        res.json({ 
+          message: "Admin login successful",
+          user: {
+            id: adminUser.id,
+            email: adminUser.email,
+            username: adminUser.username,
+            isAdmin: true
+          }
+        });
+      } else {
+        res.status(401).json({ message: "Invalid admin credentials" });
+      }
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ message: "Admin login failed" });
+    }
+  });
+
   // Admin routes
   app.get("/api/admin/stats", isAuthenticated, async (req: any, res) => {
     try {

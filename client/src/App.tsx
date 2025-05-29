@@ -23,6 +23,7 @@ import AskDoubts from "@/pages/dashboard/doubts";
 import Settings from "@/pages/dashboard/settings";
 import Performance from "@/pages/dashboard/performance";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminLogin from "@/pages/admin/login";
 
 function Router() {
   return (
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/dashboard/settings" component={Settings} />
       
       {/* Admin pages */}
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       
       {/* Fallback to 404 */}
