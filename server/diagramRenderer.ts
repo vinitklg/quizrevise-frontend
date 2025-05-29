@@ -55,6 +55,8 @@ async function renderMathDiagram(instruction: string, questionId: string): Promi
   
   if (instruction.toLowerCase().includes('cyclic quadrilateral')) {
     svg = generateCyclicQuadrilateralSVG(instruction);
+  } else if (instruction.toLowerCase().includes('chord') || instruction.toLowerCase().includes('subtend')) {
+    svg = generateCircleSVG(instruction);
   } else if (instruction.toLowerCase().includes('triangle')) {
     svg = generateTriangleSVG(instruction);
   } else if (instruction.toLowerCase().includes('circle')) {
@@ -271,28 +273,78 @@ function generateTriangleSVG(instruction: string): string {
 }
 
 function generateCircleSVG(instruction: string): string {
+  // Parse instruction for specific geometric elements
+  const lowerInstruction = instruction.toLowerCase();
+  
+  // Extract chord information
+  const chordMatch = lowerInstruction.match(/chord\s+([a-z]+)/);
+  const chordName = chordMatch ? chordMatch[1].toUpperCase() : 'PQ';
+  
+  // Extract angle information
+  const angleMatch = lowerInstruction.match(/(\d+)°/);
+  const angleValue = angleMatch ? angleMatch[1] : '70';
+  
+  // Extract point information
+  const pointMatch = lowerInstruction.match(/point\s+([a-z])/);
+  const pointName = pointMatch ? pointMatch[1].toUpperCase() : 'R';
+  
+  // Check if it mentions "center" or "central angle"
+  const hasCentralAngle = lowerInstruction.includes('center') || lowerInstruction.includes('central');
+  
   return `
     <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <style>
           .circle { fill: none; stroke: #2563eb; stroke-width: 2; }
-          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; }
-          .center { fill: #dc2626; r: 3; }
+          .chord { stroke: #dc2626; stroke-width: 2; }
+          .radius { stroke: #059669; stroke-width: 1.5; stroke-dasharray: 2,2; }
+          .angle-arc { fill: none; stroke: #f59e0b; stroke-width: 2; }
+          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; font-weight: bold; }
+          .point { fill: #dc2626; }
+          .center-point { fill: #2563eb; }
         </style>
       </defs>
       
       <!-- Circle -->
       <circle cx="200" cy="150" r="80" class="circle" />
       
-      <!-- Center point -->
-      <circle cx="200" cy="150" class="center" />
+      <!-- Chord ${chordName} -->
+      <line x1="140" y1="110" x2="260" y2="190" class="chord" />
+      
+      <!-- Point ${pointName} on circumference -->
+      <circle cx="200" cy="70" r="4" class="point" />
+      
+      <!-- Center point O -->
+      <circle cx="200" cy="150" r="3" class="center-point" />
+      
+      <!-- Angle arc at point ${pointName} showing ${angleValue}° -->
+      <path d="M 180,85 A 20,20 0 0,1 220,85" class="angle-arc" />
+      
+      ${hasCentralAngle ? `
+      <!-- Central angle arc -->
+      <path d="M 160,130 A 40,40 0 0,1 240,170" class="angle-arc" stroke="#8b5cf6" />
+      ` : ''}
+      
+      <!-- Radius lines (if central angle mentioned) -->
+      ${hasCentralAngle ? `
+      <line x1="200" y1="150" x2="140" y2="110" class="radius" />
+      <line x1="200" y1="150" x2="260" y2="190" class="radius" />
+      ` : ''}
       
       <!-- Labels -->
-      <text x="190" y="140" class="label">O</text>
-      <text x="210" y="80" class="label">Radius</text>
+      <text x="205" y="145" class="label">O</text>
+      <text x="130" y="105" class="label">${chordName.charAt(0)}</text>
+      <text x="265" y="195" class="label">${chordName.charAt(1) || chordName.charAt(0)}</text>
+      <text x="195" y="60" class="label">${pointName}</text>
+      
+      <!-- Angle measurements -->
+      <text x="190" y="90" class="label" style="font-size: 12px; fill: #f59e0b;">${angleValue}°</text>
+      ${hasCentralAngle ? `
+      <text x="180" y="170" class="label" style="font-size: 12px; fill: #8b5cf6;">Central ∠</text>
+      ` : ''}
       
       <!-- Instruction text -->
-      <text x="50" y="20" class="label" style="font-weight: bold;">${instruction}</text>
+      <text x="10" y="20" class="label" style="font-weight: normal; font-size: 11px; fill: #6b7280;">${instruction}</text>
     </svg>
   `;
 }

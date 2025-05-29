@@ -49,7 +49,16 @@ export async function generateQuizQuestions(
     
     // Add diagram support instruction if enabled
     if (diagramSupport) {
-      customizedPrompt += `\n\n**FORCE DIAGRAM GENERATION: Since diagram support is enabled, you MUST include a "diagram_instruction" field for every question that involves visual concepts, geometric shapes, scientific apparatus, biological structures, or any content that can be represented visually. No exceptions.**`;
+      customizedPrompt += `\n\n**FORCE DIAGRAM GENERATION: Since diagram support is enabled, you MUST include a "diagram_instruction" field for every question that involves visual concepts, geometric shapes, scientific apparatus, biological structures, or any content that can be represented visually. 
+
+DIAGRAM INSTRUCTION REQUIREMENTS:
+- Be extremely specific about ALL geometric elements (points, lines, angles, measurements)
+- Include exact coordinates, labels, and measurements mentioned in the question
+- Specify which points, chords, angles, and measurements should be clearly marked
+- For circle problems: mention center, specific chords, points on circumference, angle measurements at specific locations
+- Example: "Draw circle with center O, chord PQ where P(120,100) and Q(280,100), point R at (200,70) on the same segment as PQ, mark angle PRQ = 70° and central angle POQ, label all points clearly"
+
+No exceptions - every visual concept must be completely specified in the diagram_instruction.**`;
     }
     
     // Add JSON formatting instruction
