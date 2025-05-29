@@ -1128,6 +1128,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/subjects", isAuthenticated, async (req: any, res) => {
+    try {
+      const subjects = await storage.getAllSubjects();
+      res.json(subjects);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      res.status(500).json({ message: "Failed to fetch subjects" });
+    }
+  });
+
+  app.get("/api/admin/quizzes", isAuthenticated, async (req: any, res) => {
+    try {
+      const quizzes = await storage.getAllQuizzes();
+      res.json(quizzes);
+    } catch (error) {
+      console.error("Error fetching quizzes:", error);
+      res.status(500).json({ message: "Failed to fetch quizzes" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

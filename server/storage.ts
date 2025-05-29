@@ -108,6 +108,9 @@ export interface IStorage {
   getQuizzesThisWeek(): Promise<number>;
   getAverageScore(): Promise<number>;
   getRecentActivity(): Promise<any[]>;
+  getAllUsers(): Promise<any[]>;
+  getAllSubjects(): Promise<any[]>;
+  getAllQuizzes(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -642,6 +645,38 @@ export class DatabaseStorage implements IStorage {
       .slice(0, 15);
 
     return allActivity;
+  }
+
+  async getAllUsers(): Promise<any[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllSubjects(): Promise<any[]> {
+    return await db.select().from(subjects).orderBy(subjects.name);
+  }
+
+  async getAllQuizzes(): Promise<any[]> {
+    const allQuizzes = await db
+      .select({
+        id: quizzes.id,
+        title: quizzes.title,
+        subject: quizzes.subject,
+        chapter: quizzes.chapter,
+        topic: quizzes.topic,
+        board: quizzes.board,
+        grade: quizzes.grade,
+        questionType: quizzes.questionType,
+        difficulty: quizzes.difficulty,
+        createdAt: quizzes.createdAt,
+        userId: quizzes.userId,
+        username: users.username,
+        userEmail: users.email
+      })
+      .from(quizzes)
+      .innerJoin(users, eq(quizzes.userId, users.id))
+      .orderBy(desc(quizzes.createdAt));
+
+    return allQuizzes;
   }
 }
 
