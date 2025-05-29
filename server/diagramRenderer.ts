@@ -190,49 +190,78 @@ async function renderGeneralDiagram(instruction: string, questionId: string): Pr
 // SVG generation functions for different diagram types
 
 function generateCyclicQuadrilateralSVG(instruction: string): string {
+  // Extract quadrilateral name (PQRS, ABCD, EFGH, etc.)
+  const quadMatch = instruction.match(/quadrilateral\s+([A-Z]{4})/i);
+  const quadName = quadMatch ? quadMatch[1].toUpperCase() : 'ABCD';
+  
+  // Extract angle values
+  const angleMatches = instruction.match(/(\d+)°/g);
+  const exteriorAngle = angleMatches ? angleMatches[0].replace('°', '') : '130';
+  
+  // Extract vertex where exterior angle is located
+  const exteriorVertexMatch = instruction.match(/exterior angle at\s+([A-Z])/i);
+  const exteriorVertex = exteriorVertexMatch ? exteriorVertexMatch[1].toUpperCase() : quadName[1];
+  
+  // Map vertices to positions
+  const vertices = {
+    [quadName[0]]: { x: 200, y: 70, labelX: 195, labelY: 60 },
+    [quadName[1]]: { x: 260, y: 120, labelX: 270, labelY: 115 },
+    [quadName[2]]: { x: 220, y: 230, labelX: 225, labelY: 245 },
+    [quadName[3]]: { x: 140, y: 200, labelX: 125, labelY: 195 }
+  };
+  
+  // Find opposite vertex for exterior angle property
+  const vertexIndex = quadName.indexOf(exteriorVertex);
+  const oppositeVertex = quadName[(vertexIndex + 2) % 4];
+  
   return `
-    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+    <svg width="450" height="350" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <style>
           .circle { fill: none; stroke: #2563eb; stroke-width: 2; }
           .quadrilateral { fill: none; stroke: #dc2626; stroke-width: 2; }
-          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; }
-          .point { fill: #dc2626; r: 3; }
-          .angle-arc { fill: none; stroke: #059669; stroke-width: 1.5; }
+          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #1f2937; font-weight: bold; }
+          .point { fill: #dc2626; }
+          .angle-arc { fill: none; stroke: #f59e0b; stroke-width: 2; }
+          .exterior-angle { fill: none; stroke: #8b5cf6; stroke-width: 2; }
+          .instruction { font-family: Arial, sans-serif; font-size: 10px; fill: #6b7280; }
         </style>
       </defs>
       
       <!-- Circle -->
       <circle cx="200" cy="150" r="80" class="circle" />
       
-      <!-- Cyclic Quadrilateral ABCD -->
-      <polygon points="200,70 260,120 220,230 140,200" class="quadrilateral" />
+      <!-- Cyclic Quadrilateral ${quadName} -->
+      <polygon points="${vertices[quadName[0]].x},${vertices[quadName[0]].y} ${vertices[quadName[1]].x},${vertices[quadName[1]].y} ${vertices[quadName[2]].x},${vertices[quadName[2]].y} ${vertices[quadName[3]].x},${vertices[quadName[3]].y}" class="quadrilateral" />
       
       <!-- Vertices -->
-      <circle cx="200" cy="70" class="point" />
-      <circle cx="260" cy="120" class="point" />
-      <circle cx="220" cy="230" class="point" />
-      <circle cx="140" cy="200" class="point" />
+      ${Object.entries(vertices).map(([vertex, pos]) => 
+        `<circle cx="${pos.x}" cy="${pos.y}" r="4" class="point" />`
+      ).join('\n      ')}
       
-      <!-- Labels -->
-      <text x="195" y="60" class="label" style="font-weight: bold;">A</text>
-      <text x="270" y="115" class="label" style="font-weight: bold;">B</text>
-      <text x="225" y="245" class="label" style="font-weight: bold;">C</text>
-      <text x="125" y="195" class="label" style="font-weight: bold;">D</text>
+      <!-- Vertex Labels -->
+      ${Object.entries(vertices).map(([vertex, pos]) => 
+        `<text x="${pos.labelX}" y="${pos.labelY}" class="label">${vertex}</text>`
+      ).join('\n      ')}
       
-      <!-- Angle markings -->
-      <path d="M 250,125 A 10,10 0 0,1 255,135" class="angle-arc" />
-      <text x="255" y="130" class="label" style="font-size: 12px;">110°</text>
+      <!-- Exterior angle at ${exteriorVertex} -->
+      <path d="M ${vertices[exteriorVertex].x - 25},${vertices[exteriorVertex].y + 15} A 25,25 0 0,1 ${vertices[exteriorVertex].x + 25},${vertices[exteriorVertex].y + 15}" class="exterior-angle" />
+      <text x="${vertices[exteriorVertex].x - 15}" y="${vertices[exteriorVertex].y + 35}" class="label" style="font-size: 12px; fill: #8b5cf6;">Exterior ∠${exteriorVertex} = ${exteriorAngle}°</text>
       
-      <path d="M 150,195 A 10,10 0 0,1 145,185" class="angle-arc" />
-      <text x="145" y="180" class="label" style="font-size: 12px;">70°</text>
+      <!-- Opposite interior angle at ${oppositeVertex} -->
+      <path d="M ${vertices[oppositeVertex].x - 20},${vertices[oppositeVertex].y - 10} A 20,20 0 0,1 ${vertices[oppositeVertex].x + 20},${vertices[oppositeVertex].y - 10}" class="angle-arc" />
+      <text x="${vertices[oppositeVertex].x - 15}" y="${vertices[oppositeVertex].y - 25}" class="label" style="font-size: 12px; fill: #f59e0b;">∠${oppositeVertex} = ${exteriorAngle}°</text>
       
       <!-- Center point -->
       <circle cx="200" cy="150" r="2" fill="#666" />
-      <text x="205" y="155" class="label" style="font-size: 12px;">O</text>
+      <text x="205" y="145" class="label" style="font-size: 12px;">O</text>
       
-      <!-- Instruction text -->
-      <text x="10" y="20" class="label" style="font-weight: bold; font-size: 12px;">${instruction}</text>
+      <!-- Complete instruction text -->
+      <text x="10" y="15" class="instruction">${instruction}</text>
+      
+      <!-- Property explanation -->
+      <text x="10" y="320" class="instruction" style="font-weight: bold;">Property: Exterior angle = Opposite interior angle</text>
+      <text x="10" y="335" class="instruction">Exterior ∠${exteriorVertex} = Interior ∠${oppositeVertex} = ${exteriorAngle}°</text>
     </svg>
   `;
 }

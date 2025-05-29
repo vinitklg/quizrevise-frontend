@@ -25,7 +25,7 @@ import {
   type InsertDoubtQuery,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lt, gt, lte, asc, desc, isNull, sql } from "drizzle-orm";
+import { eq, and, gte, lt, gt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
