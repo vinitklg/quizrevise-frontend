@@ -281,13 +281,12 @@ function generateCircleSVG(instruction: string): string {
   const chordName = chordMatch ? chordMatch[1].toUpperCase() : 'PQ';
   
   // Extract all angle measurements
-  const angleMatches = instruction.match(/∠[A-Z]{3}\s*=\s*(\d+)°|angle\s+[A-Z]{3}\s*=?\s*(\d+)°|(\d+)°/g);
-  const angleValue = angleMatches ? angleMatches[0].match(/(\d+)/)[1] : '70';
+  const angleMatches = instruction.match(/(\d+)°/g);
+  const angleValue = angleMatches && angleMatches.length > 0 ? angleMatches[0].replace('°', '') : '60';
   
   // Extract point names with better detection
-  const pointMatches = instruction.match(/Point\s+([A-Z])/g);
-  const points = pointMatches ? pointMatches.map(m => m.match(/Point\s+([A-Z])/)[1]) : ['R'];
-  const mainPoint = points[0];
+  const pointMatches = instruction.match(/point\s+([a-z])/gi);
+  const mainPoint = pointMatches && pointMatches.length > 0 ? pointMatches[0].replace(/point\s+/i, '').toUpperCase() : 'P';
   
   // Detect angle types
   const isInscribedAngle = lowerInstruction.includes('inscribed') || lowerInstruction.includes('circumference');
@@ -308,7 +307,7 @@ function generateCircleSVG(instruction: string): string {
   const arcPoint = onMajorArc ? { x: 200, y: 70 } : { x: 200, y: 230 };
   
   return `
-    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+    <svg width="450" height="350" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <style>
           .circle { fill: none; stroke: #2563eb; stroke-width: 2; }
@@ -321,6 +320,7 @@ function generateCircleSVG(instruction: string): string {
           .point { fill: #dc2626; }
           .center-point { fill: #2563eb; }
           .arc-indicator { stroke: #10b981; stroke-width: 3; fill: none; stroke-dasharray: 5,3; }
+          .instruction { font-family: 'Arial', sans-serif; font-size: 10px; fill: #6b7280; }
         </style>
       </defs>
       
@@ -346,18 +346,23 @@ function generateCircleSVG(instruction: string): string {
       <circle cx="${chordQ.x}" cy="${chordQ.y}" r="3" class="point" />
       
       <!-- Inscribed angle at point ${mainPoint} -->
-      ${isInscribedAngle ? `
       <path d="M ${arcPoint.x-25},${arcPoint.y+15} A 25,25 0 0,1 ${arcPoint.x+25},${arcPoint.y+15}" class="inscribed-angle" />
-      <text x="${arcPoint.x-5}" y="${arcPoint.y+35}" class="angle-label">∠${mainPoint}${chordName[0]}${chordName[1]} = ${angleValue}°</text>
-      ` : ''}
+      <text x="${arcPoint.x-15}" y="${arcPoint.y+35}" class="angle-label">∠${mainPoint}${chordName[0]}${chordName[1]} = ${angleValue}°</text>
       
-      <!-- Central angle at center O -->
-      ${isCentralAngle ? `
-      <path d="M ${centerX-30},${centerY-10} A 30,30 0 0,1 ${centerX+30},${centerY+10}" class="central-angle" />
+      <!-- Central angle at center O (always show for center/chord problems) -->
+      <path d="M ${centerX-35},${centerY-15} A 35,35 0 0,1 ${centerX+35},${centerY+15}" class="central-angle" />
+      
+      <!-- Radii OA and OB -->
       <line x1="${centerX}" y1="${centerY}" x2="${chordP.x}" y2="${chordP.y}" class="radius" />
       <line x1="${centerX}" y1="${centerY}" x2="${chordQ.x}" y2="${chordQ.y}" class="radius" />
-      <text x="${centerX-15}" y="${centerY+45}" class="angle-label">∠${chordName[0]}O${chordName[1]} (Central)</text>
-      ` : ''}
+      
+      <!-- Radius labels -->
+      <text x="${centerX-30}" y="${centerY-20}" class="label" style="font-size: 10px; fill: #059669;">O${chordName[0]}</text>
+      <text x="${centerX+20}" y="${centerY+25}" class="label" style="font-size: 10px; fill: #059669;">O${chordName[1]}</text>
+      
+      <!-- Central angle label and measurement -->
+      <text x="${centerX-25}" y="${centerY+60}" class="angle-label">∠${chordName[0]}O${chordName[1]}</text>
+      <text x="${centerX-20}" y="${centerY-25}" class="angle-label" style="font-size: 12px; fill: #8b5cf6; font-weight: bold;">${parseInt(angleValue) * 2}°</text>
       
       <!-- Point labels with precise positioning -->
       <text x="${centerX+8}" y="${centerY-8}" class="label">O</text>
@@ -373,8 +378,13 @@ function generateCircleSVG(instruction: string): string {
       <text x="10" y="270" class="angle-label" style="font-size: 10px; fill: #8b5cf6;">Central Angle</text>
       ` : ''}
       
-      <!-- Instruction text (truncated for clarity) -->
-      <text x="10" y="20" class="label" style="font-weight: normal; font-size: 10px; fill: #6b7280;">${instruction.substring(0, 60)}...</text>
+      <!-- Complete instruction text -->
+      <text x="10" y="15" class="instruction">${instruction}</text>
+      
+      <!-- Legend -->
+      <text x="10" y="320" class="instruction" style="font-weight: bold;">Legend:</text>
+      <text x="10" y="335" class="instruction">• Inscribed angle (orange): ${angleValue}°</text>
+      <text x="200" y="335" class="instruction">• Central angle (purple): ${parseInt(angleValue) * 2}°</text>
     </svg>
   `;
 }
