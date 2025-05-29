@@ -365,6 +365,8 @@ export class DatabaseStorage implements IStorage {
 
   async getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]> {
     const now = new Date();
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
 
     return await db
       .select()
@@ -372,7 +374,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(quizSchedules.userId, userId),
-          lte(quizSchedules.scheduledDate, now), // Show all quizzes scheduled for now or earlier
+          lte(quizSchedules.scheduledDate, endOfToday), // Show all quizzes scheduled for today or earlier
           eq(quizSchedules.status, "pending"),
         ),
       )
