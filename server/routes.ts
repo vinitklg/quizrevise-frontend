@@ -32,6 +32,15 @@ const isAuthenticated = (req: Request, res: Response, next: Function) => {
   }
 };
 
+// Middleware to check if user is admin
+const isAdminAuthenticated = (req: Request, res: Response, next: Function) => {
+  if (req.session.userId && (req.session as any).isAdmin) {
+    next();
+  } else {
+    res.status(401).json({ message: "Admin access required" });
+  }
+};
+
 // Helper to calculate spaced repetition dates
 const calculateSpacedRepetitionDates = (startDate: Date): Date[] => {
   const dates: Date[] = [];
@@ -1088,7 +1097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
-  app.get("/api/admin/stats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/stats", isAdminAuthenticated, async (req: any, res) => {
     try {
       const totalUsers = await storage.getTotalUsers();
       const activeUsers = await storage.getActiveUsers();
@@ -1118,7 +1127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/recent-activity", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/recent-activity", isAdminAuthenticated, async (req: any, res) => {
     try {
       const recentActivity = await storage.getRecentActivity();
       res.json(recentActivity);
@@ -1128,7 +1137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/users", isAdminAuthenticated, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -1138,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/subjects", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/subjects", isAdminAuthenticated, async (req: any, res) => {
     try {
       const subjects = await storage.getAllSubjects();
       res.json(subjects);
@@ -1148,7 +1157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/quizzes", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/quizzes", isAdminAuthenticated, async (req: any, res) => {
     try {
       const quizzes = await storage.getAllQuizzes();
       res.json(quizzes);
