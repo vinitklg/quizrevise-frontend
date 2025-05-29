@@ -1,7 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { Trash2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
 interface User {
@@ -17,9 +22,37 @@ interface User {
 }
 
 export default function AdminUsers() {
+  const { toast } = useToast();
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
   });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await apiRequest("DELETE", `/api/admin/users/${userId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteUser = (userId: number, username: string) => {
+    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+      deleteUserMutation.mutate(userId);
+    }
+  };
 
   if (isLoading) {
     return (

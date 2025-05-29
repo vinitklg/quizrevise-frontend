@@ -651,6 +651,16 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).orderBy(desc(users.createdAt));
   }
 
+  async deleteUser(userId: number): Promise<void> {
+    // First delete related data
+    await db.delete(quizSchedules).where(eq(quizSchedules.userId, userId));
+    await db.delete(doubtQueries).where(eq(doubtQueries.userId, userId));
+    await db.delete(quizzes).where(eq(quizzes.userId, userId));
+    
+    // Then delete the user
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
   async getAllSubjects(): Promise<any[]> {
     return await db.select().from(subjects).orderBy(subjects.name);
   }
@@ -660,13 +670,11 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: quizzes.id,
         title: quizzes.title,
-        subject: quizzes.subject,
-        chapter: quizzes.chapter,
-        topic: quizzes.topic,
-        board: quizzes.board,
-        grade: quizzes.grade,
-        questionType: quizzes.questionType,
-        difficulty: quizzes.difficulty,
+        subjectId: quizzes.subjectId,
+        chapterId: quizzes.chapterId,
+        topicId: quizzes.topicId,
+        questionTypes: quizzes.questionTypes,
+        difficultyLevel: quizzes.difficultyLevel,
         createdAt: quizzes.createdAt,
         userId: quizzes.userId,
         username: users.username,
