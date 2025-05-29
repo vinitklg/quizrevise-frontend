@@ -97,6 +97,17 @@ export interface IStorage {
   createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
   getDoubtQueriesByUser(userId: number): Promise<DoubtQuery[]>;
   answerDoubtQuery(id: number, answer: string): Promise<DoubtQuery | undefined>;
+
+  // Admin operations
+  getTotalUsers(): Promise<number>;
+  getActiveUsers(): Promise<number>;
+  getTotalQuizzes(): Promise<number>;
+  getCompletedQuizzes(): Promise<number>;
+  getTotalSubjects(): Promise<number>;
+  getUsersByTier(): Promise<{ free: number; standard: number; premium: number }>;
+  getQuizzesThisWeek(): Promise<number>;
+  getAverageScore(): Promise<number>;
+  getRecentActivity(): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -525,6 +536,112 @@ export class DatabaseStorage implements IStorage {
       .where(eq(doubtQueries.id, id))
       .returning();
     return doubt;
+  }
+
+  // Admin operations
+  async getTotalUsers(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+    return result[0]?.count || 0;
+  }
+
+  async getActiveUsers(): Promise<number> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, thirtyDaysAgo));
+    return result[0]?.count || 0;
+  }
+
+  async getTotalQuizzes(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(quizzes);
+    return result[0]?.count || 0;
+  }
+
+  async getCompletedQuizzes(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(quizSchedules)
+      .where(eq(quizSchedules.status, "completed"));
+    return result[0]?.count || 0;
+  }
+
+  async getTotalSubjects(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(subjects);
+    return result[0]?.count || 0;
+  }
+
+  async getUsersByTier(): Promise<{ free: number; standard: number; premium: number }> {
+    const results = await db
+      .select({
+        tier: users.subscriptionTier,
+        count: sql<number>`count(*)`
+      })
+      .from(users)
+      .groupBy(users.subscriptionTier);
+
+    const tiers = { free: 0, standard: 0, premium: 0 };
+    results.forEach(result => {
+      if (result.tier === 'free') tiers.free = result.count;
+      else if (result.tier === 'standard') tiers.standard = result.count;
+      else if (result.tier === 'premium') tiers.premium = result.count;
+    });
+
+    return tiers;
+  }
+
+  async getQuizzesThisWeek(): Promise<number> {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(quizzes)
+      .where(gte(quizzes.createdAt, weekAgo));
+    return result[0]?.count || 0;
+  }
+
+  async getAverageScore(): Promise<number> {
+    const result = await db
+      .select({ avg: sql<number>`avg(${quizSchedules.score})` })
+      .from(quizSchedules)
+      .where(eq(quizSchedules.status, "completed"));
+    return Math.round(result[0]?.avg || 0);
+  }
+
+  async getRecentActivity(): Promise<any[]> {
+    const recentQuizzes = await db
+      .select({
+        id: quizzes.id,
+        type: sql<string>`'quiz_created'`,
+        message: sql<string>`'Quiz "' || ${quizzes.title} || '" was created'`,
+        timestamp: quizzes.createdAt,
+        userId: quizzes.userId
+      })
+      .from(quizzes)
+      .orderBy(desc(quizzes.createdAt))
+      .limit(20);
+
+    const recentCompletions = await db
+      .select({
+        id: quizSchedules.id,
+        type: sql<string>`'quiz_completed'`,
+        message: sql<string>`'Quiz completed with score ' || ${quizSchedules.score} || '%'`,
+        timestamp: quizSchedules.completedDate,
+        userId: quizSchedules.userId
+      })
+      .from(quizSchedules)
+      .where(eq(quizSchedules.status, "completed"))
+      .orderBy(desc(quizSchedules.completedDate))
+      .limit(10);
+
+    const allActivity = [...recentQuizzes, ...recentCompletions]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 15);
+
+    return allActivity;
   }
 }
 

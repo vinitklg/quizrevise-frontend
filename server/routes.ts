@@ -1045,6 +1045,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const totalUsers = await storage.getTotalUsers();
+      const activeUsers = await storage.getActiveUsers();
+      const totalQuizzes = await storage.getTotalQuizzes();
+      const completedQuizzes = await storage.getCompletedQuizzes();
+      const totalSubjects = await storage.getTotalSubjects();
+      const usersByTier = await storage.getUsersByTier();
+      const quizzesThisWeek = await storage.getQuizzesThisWeek();
+      const averageScore = await storage.getAverageScore();
+
+      const stats = {
+        totalUsers,
+        activeUsers,
+        totalQuizzes,
+        completedQuizzes,
+        totalSubjects,
+        revenueThisMonth: 0, // TODO: Implement revenue calculation
+        usersByTier,
+        quizzesThisWeek,
+        averageScore
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get("/api/admin/recent-activity", isAuthenticated, async (req: any, res) => {
+    try {
+      const recentActivity = await storage.getRecentActivity();
+      res.json(recentActivity);
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

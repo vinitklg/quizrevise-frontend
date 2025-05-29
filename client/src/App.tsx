@@ -22,7 +22,7 @@ import TodayQuizzes from "@/pages/dashboard/today";
 import AskDoubts from "@/pages/dashboard/doubts";
 import Settings from "@/pages/dashboard/settings";
 import Performance from "@/pages/dashboard/performance";
-import AdminDashboard from "@/pages/admin";
+import AdminDashboard from "@/pages/admin/dashboard";
 
 function Router() {
   return (
