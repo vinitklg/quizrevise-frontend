@@ -80,7 +80,7 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   const [location] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -98,22 +98,30 @@ function App() {
   const shouldUsePublicLayout = isPublicRoute || !isAuthenticated || isLoading;
 
   return (
+    <>
+      <Toaster />
+      {shouldUseDashboardLayout ? (
+        <DashboardLayout>
+          <Router />
+        </DashboardLayout>
+      ) : (
+        <div className="flex flex-col min-h-screen">
+          {shouldUsePublicLayout && <Header />}
+          <main className="flex-grow">
+            <Router />
+          </main>
+          {shouldUsePublicLayout && <Footer />}
+        </div>
+      )}
+    </>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        {shouldUseDashboardLayout ? (
-          <DashboardLayout>
-            <Router />
-          </DashboardLayout>
-        ) : (
-          <div className="flex flex-col min-h-screen">
-            {shouldUsePublicLayout && <Header />}
-            <main className="flex-grow">
-              <Router />
-            </main>
-            {shouldUsePublicLayout && <Footer />}
-          </div>
-        )}
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );

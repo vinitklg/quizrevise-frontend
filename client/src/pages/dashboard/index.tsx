@@ -58,101 +58,101 @@ const Dashboard = () => {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
         
         {isUserLoading || isQuizzesLoading || isSchedulesLoading ? (
-                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{totalQuizzes}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Across all subjects
-                        </p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Active Quizzes</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{activeQuizzes}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          In progress
-                        </p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Completed Quizzes</CardTitle>
-                        <Check className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">{completedQuizzes}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Fully mastered
-                        </p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Today's Progress</CardTitle>
-                        <Award className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">
-                          {totalScheduledToday ? `${calculateProgress(completedToday, totalScheduledToday)}%` : "0%"}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {completedToday}/{totalScheduledToday} quizzes completed
-                        </p>
-                      </CardContent>
-                    </Card>
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalQuizzes}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Across all subjects
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Active Quizzes</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{activeQuizzes}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    In progress
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Completed Quizzes</CardTitle>
+                  <Check className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{completedQuizzes}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Fully mastered
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Today's Progress</CardTitle>
+                  <Award className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {totalScheduledToday ? `${calculateProgress(completedToday, totalScheduledToday)}%` : "0%"}
                   </div>
-                  
-                  <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                      {performanceData.length > 0 ? (
-                        <PerformanceChart data={performanceData} />
-                      ) : (
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Performance Over Time</CardTitle>
-                          </CardHeader>
-                          <CardContent className="h-80 flex items-center justify-center">
-                            <div className="text-center">
-                              <p className="text-muted-foreground mb-4">
-                                Complete quizzes to see your performance chart
-                              </p>
-                              <Link href="/dashboard/create-quiz">
-                                <Button>
-                                  <PlusCircle className="mr-2 h-4 w-4" />
-                                  Create a quiz
-                                </Button>
-                              </Link>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                    
-                    <div className="lg:col-span-1">
-                      <TodayQuizzes userId={user?.id || 0} />
-                    </div>
-                  </div>
-                </>
-              )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {completedToday}/{totalScheduledToday} quizzes completed
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                {performanceData.length > 0 ? (
+                  <PerformanceChart data={performanceData} />
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Performance Over Time</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-80 flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-muted-foreground mb-4">
+                          Complete quizzes to see your performance chart
+                        </p>
+                        <Link href="/dashboard/create-quiz">
+                          <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create a quiz
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+              
+              <div className="lg:col-span-1">
+                <TodayQuizzes userId={user?.id || 0} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
