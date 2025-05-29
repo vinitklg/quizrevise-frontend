@@ -88,6 +88,7 @@ export default function AdminUsers() {
                     <TableHead>Subscription</TableHead>
                     <TableHead>Board/Grade</TableHead>
                     <TableHead>Join Date</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -114,10 +115,22 @@ export default function AdminUsers() {
                       <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
+                      <TableCell>
+                        {user.username !== 'admin' && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user.id, user.username)}
+                            disabled={deleteUserMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   )) || (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         No users found
                       </TableCell>
                     </TableRow>
