@@ -161,7 +161,7 @@ export type InsertDoubtQuery = {
 export const feedback = pgTable("feedback", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  userName: text("user_name"),
+  username: text("username"),
   userEmail: text("user_email"),
   board: text("board"),
   class: integer("class"),
