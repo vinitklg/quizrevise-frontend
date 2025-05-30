@@ -477,16 +477,14 @@ export default function TakeQuiz() {
       </div>
       
       {/* Post-Quiz Feedback Popup */}
-      {quizResults && schedule && (
+      {showFeedbackPopup && schedule && (
         <PostQuizFeedback
-          isOpen={showFeedbackPopup}
-          onClose={() => setShowFeedbackPopup(false)}
           quizId={schedule.quizId}
-          score={quizResults.correctAnswers}
-          totalQuestions={quizResults.totalQuestions}
-          subject={schedule.subjectName || ""}
-          board={schedule.board || ""}
-          className={schedule.class?.toString() || ""}
+          onClose={() => setShowFeedbackPopup(false)}
+          onSubmit={() => {
+            setShowFeedbackPopup(false);
+            setLocation("/dashboard/today");
+          }}
         />
       )}
     </div>
