@@ -66,55 +66,63 @@ const Dashboard = () => {
         ) : (
           <>
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <Card>
+              <Card className="border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950 dark:to-gray-900">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Quizzes</CardTitle>
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Quizzes</CardTitle>
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
+                    <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalQuizzes}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">{totalQuizzes}</div>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     Across all subjects
                   </p>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="border-l-4 border-l-orange-500 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950 dark:to-gray-900">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Active Quizzes</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-300">Active Quizzes</CardTitle>
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-full">
+                    <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{activeQuizzes}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-2xl font-bold text-orange-800 dark:text-orange-200">{activeQuizzes}</div>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                     In progress
                   </p>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="border-l-4 border-l-green-500 bg-gradient-to-r from-green-50 to-white dark:from-green-950 dark:to-gray-900">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Completed Quizzes</CardTitle>
-                  <Check className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">Completed Quizzes</CardTitle>
+                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full">
+                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{completedQuizzes}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="text-2xl font-bold text-green-800 dark:text-green-200">{completedQuizzes}</div>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                     Fully mastered
                   </p>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="border-l-4 border-l-purple-500 bg-gradient-to-r from-purple-50 to-white dark:from-purple-950 dark:to-gray-900">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Today's Progress</CardTitle>
-                  <Award className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">Today's Progress</CardTitle>
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
+                    <Award className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-purple-800 dark:text-purple-200">
                     {totalScheduledToday ? `${calculateProgress(completedToday, totalScheduledToday)}%` : "0%"}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                     {completedToday}/{totalScheduledToday} quizzes completed
                   </p>
                 </CardContent>
