@@ -26,14 +26,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, MessageSquare, Settings, Lightbulb, Send, CheckCircle } from "lucide-react";
+import { Star, MessageSquare, Settings, Lightbulb, Send, CheckCircle, AlertTriangle, BookOpen, HelpCircle, CreditCard, Bug } from "lucide-react";
 
 // Form schema for feedback
 const feedbackSchema = z.object({
-  type: z.enum(["general", "quiz", "technical", "suggestion"]),
+  type: z.enum(["general", "technical", "suggestion", "content", "quiz_error", "doubt_answer", "payment"]),
   category: z.string().optional(),
   rating: z.number().min(1).max(5).optional(),
-  feedbackText: z.string().min(5, "Feedback must be at least 5 characters"),
+  feedbackText: z.string().min(10, "Feedback must be at least 10 characters"),
 });
 
 type FeedbackFormValues = z.infer<typeof feedbackSchema>;
@@ -131,9 +131,17 @@ const FeedbackPage = () => {
       case "general":
         return <MessageSquare className="h-5 w-5" />;
       case "technical":
-        return <Settings className="h-5 w-5" />;
+        return <Bug className="h-5 w-5" />;
       case "suggestion":
         return <Lightbulb className="h-5 w-5" />;
+      case "content":
+        return <BookOpen className="h-5 w-5" />;
+      case "quiz_error":
+        return <AlertTriangle className="h-5 w-5" />;
+      case "doubt_answer":
+        return <HelpCircle className="h-5 w-5" />;
+      case "payment":
+        return <CreditCard className="h-5 w-5" />;
       default:
         return <MessageSquare className="h-5 w-5" />;
     }
@@ -142,15 +150,42 @@ const FeedbackPage = () => {
   const getFeedbackTypeLabel = (type: string) => {
     switch (type) {
       case "general":
-        return "General Feedback";
+        return "General Experience";
       case "technical":
-        return "Technical Issue";
+        return "Technical Bug / Error";
       case "suggestion":
-        return "Suggestion";
-      case "quiz":
-        return "Quiz Feedback";
+        return "Feature Suggestion";
+      case "content":
+        return "Subject Content Issue";
+      case "quiz_error":
+        return "Quiz Error";
+      case "doubt_answer":
+        return "Doubt Answer Feedback";
+      case "payment":
+        return "Payment / Account Issue";
       default:
         return type;
+    }
+  };
+
+  const getPlaceholderText = (type: string) => {
+    switch (type) {
+      case "general":
+        return "Share your overall experience with QuickRevise. What do you like? What can we improve?";
+      case "technical":
+        return "Explain what went wrong, when it happened, and what you were trying to do. Include any error messages if possible.";
+      case "suggestion":
+        return "Describe your idea. How will it improve the app? Who will benefit from this feature?";
+      case "content":
+        return "Mention the subject, chapter, or topic. What's incorrect or needs improvement in the content?";
+      case "quiz_error":
+        return "Mention the quiz name, subject, and explain what's wrong (incorrect answer, unclear question, diagram issue, etc.)";
+      case "doubt_answer":
+        return "How was the AI response to your doubt? Was it helpful, accurate, or needs improvement?";
+      case "payment":
+        return "Describe the issue with your subscription, payment, or account access. Include relevant details.";
+      default:
+        return "Please share your detailed feedback...";
     }
   };
 
@@ -191,8 +226,8 @@ const FeedbackPage = () => {
                       <div className="flex items-center space-x-3">
                         <MessageSquare className="h-5 w-5 text-blue-600" />
                         <div>
-                          <div className="font-medium">General Feedback</div>
-                          <div className="text-sm text-gray-500">Overall experience, suggestions</div>
+                          <div className="font-medium">General Experience</div>
+                          <div className="text-sm text-gray-500">Overall platform feedback, suggestions</div>
                         </div>
                       </div>
                     </div>
@@ -209,10 +244,13 @@ const FeedbackPage = () => {
                       }}
                     >
                       <div className="flex items-center space-x-3">
-                        <Settings className="h-5 w-5 text-red-600" />
+                        <div className="flex items-center">
+                          <AlertTriangle className="h-4 w-4 text-red-500 mr-1" />
+                          <Bug className="h-5 w-5 text-red-600" />
+                        </div>
                         <div>
-                          <div className="font-medium">Technical Issue</div>
-                          <div className="text-sm text-gray-500">Bugs, errors, performance issues</div>
+                          <div className="font-medium">Technical Bug / Error</div>
+                          <div className="text-sm text-gray-500">App crashes, login issues, performance problems</div>
                         </div>
                       </div>
                     </div>
@@ -232,7 +270,90 @@ const FeedbackPage = () => {
                         <Lightbulb className="h-5 w-5 text-green-600" />
                         <div>
                           <div className="font-medium">Feature Suggestion</div>
-                          <div className="text-sm text-gray-500">New features, improvements</div>
+                          <div className="text-sm text-gray-500">New features, UI improvements, enhancements</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div 
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedType === "content" 
+                          ? "bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800" 
+                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                      onClick={() => {
+                        setSelectedType("content");
+                        form.setValue("type", "content");
+                      }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <BookOpen className="h-5 w-5 text-purple-600" />
+                        <div>
+                          <div className="font-medium">Subject Content Issue</div>
+                          <div className="text-sm text-gray-500">Incorrect information, outdated content</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div 
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedType === "quiz_error" 
+                          ? "bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800" 
+                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                      onClick={() => {
+                        setSelectedType("quiz_error");
+                        form.setValue("type", "quiz_error");
+                      }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center">
+                          <AlertTriangle className="h-4 w-4 text-orange-500 mr-1" />
+                          <AlertTriangle className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Quiz Error</div>
+                          <div className="text-sm text-gray-500">Wrong answers, unclear questions, diagram issues</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div 
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedType === "doubt_answer" 
+                          ? "bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-200 dark:border-indigo-800" 
+                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                      onClick={() => {
+                        setSelectedType("doubt_answer");
+                        form.setValue("type", "doubt_answer");
+                      }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <HelpCircle className="h-5 w-5 text-indigo-600" />
+                        <div>
+                          <div className="font-medium">Doubt Answer Feedback</div>
+                          <div className="text-sm text-gray-500">AI response quality, accuracy, helpfulness</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div 
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedType === "payment" 
+                          ? "bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800" 
+                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                      onClick={() => {
+                        setSelectedType("payment");
+                        form.setValue("type", "payment");
+                      }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <CreditCard className="h-5 w-5 text-yellow-600" />
+                        <div>
+                          <div className="font-medium">Payment / Account Issue</div>
+                          <div className="text-sm text-gray-500">Subscription problems, billing, account access</div>
                         </div>
                       </div>
                     </div>
@@ -289,7 +410,7 @@ const FeedbackPage = () => {
                               <FormLabel>Your Feedback</FormLabel>
                               <FormControl>
                                 <Textarea
-                                  placeholder="Please share your detailed feedback..."
+                                  placeholder={getPlaceholderText(selectedType || "general")}
                                   className="min-h-[120px]"
                                   {...field}
                                 />
