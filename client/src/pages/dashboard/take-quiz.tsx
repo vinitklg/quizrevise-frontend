@@ -205,7 +205,10 @@ export default function TakeQuiz() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Incorrect</p>
                   </div>
                 </div>
-                <Button onClick={() => setShowFeedbackPopup(true)} className="w-full">
+                <Button onClick={() => {
+                  console.log("Back button clicked, showing feedback popup");
+                  setShowFeedbackPopup(true);
+                }} className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Today's Quizzes
                 </Button>
@@ -474,14 +477,17 @@ export default function TakeQuiz() {
       
       {/* Post-Quiz Feedback Popup */}
       {showFeedbackPopup && schedule && (
-        <PostQuizFeedback
-          quizId={schedule.quizId}
-          onClose={() => setShowFeedbackPopup(false)}
-          onSubmit={() => {
-            setShowFeedbackPopup(false);
-            setLocation("/dashboard/today");
-          }}
-        />
+        <>
+          {console.log("Rendering feedback popup", { showFeedbackPopup, schedule })}
+          <PostQuizFeedback
+            quizId={schedule.quizId}
+            onClose={() => setShowFeedbackPopup(false)}
+            onSubmit={() => {
+              setShowFeedbackPopup(false);
+              setLocation("/dashboard/today");
+            }}
+          />
+        </>
       )}
     </div>
   );
