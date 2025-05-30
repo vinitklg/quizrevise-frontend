@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Loader2, Send, Upload, X } from "lucide-react";
@@ -59,6 +60,7 @@ const AskDoubts = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   
   // Fetch user's doubt queries
   const { data: doubtQueries = [], isLoading: isLoadingDoubts } = useQuery<DoubtQuery[]>({
@@ -142,6 +144,7 @@ const AskDoubts = () => {
           question: "",
         });
         setUploadedFile(null);
+        setIsTyping(false);
         
         const fileInput = document.getElementById('file-upload') as HTMLInputElement;
         if (fileInput) {
@@ -344,10 +347,21 @@ const AskDoubts = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input
+                          <Textarea
                             placeholder="Ask anything..."
                             {...field}
-                            className="min-h-[48px] resize-none border-2 focus:border-blue-500"
+                            rows={isTyping ? 4 : 1}
+                            onFocus={() => setIsTyping(true)}
+                            onBlur={(e) => {
+                              if (!e.target.value.trim()) {
+                                setIsTyping(false);
+                              }
+                            }}
+                            className="resize-none border-2 focus:border-blue-500 transition-all duration-200 min-h-[48px]"
+                            style={{ 
+                              height: isTyping ? 'auto' : '48px',
+                              minHeight: '48px'
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -368,18 +382,22 @@ const AskDoubts = () => {
                     {showDetails ? 'Hide' : 'Details'}
                   </Button>
                   
-                  <label htmlFor="file-upload">
-                    <Button type="button" variant="outline" size="sm" className="px-3">
-                      <Upload className="h-4 w-4" />
-                    </Button>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      className="sr-only"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleFileUpload}
-                    />
-                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="px-3"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                  />
 
                   <Button type="submit" disabled={isSubmitting} size="sm" className="px-4">
                     {isSubmitting ? (
