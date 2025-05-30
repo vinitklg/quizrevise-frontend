@@ -477,17 +477,14 @@ export default function TakeQuiz() {
       
       {/* Post-Quiz Feedback Popup */}
       {showFeedbackPopup && schedule && (
-        <>
-          {console.log("Rendering feedback popup", { showFeedbackPopup, schedule })}
-          <PostQuizFeedback
-            quizId={schedule.quizId}
-            onClose={() => setShowFeedbackPopup(false)}
-            onSubmit={() => {
-              setShowFeedbackPopup(false);
-              setLocation("/dashboard/today");
-            }}
-          />
-        </>
+        <PostQuizFeedback
+          quizId={schedule.quizId}
+          onClose={() => setShowFeedbackPopup(false)}
+          onSubmit={() => {
+            setShowFeedbackPopup(false);
+            setLocation("/dashboard/today");
+          }}
+        />
       )}
     </div>
   );

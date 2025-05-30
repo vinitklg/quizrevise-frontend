@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,8 +63,8 @@ export default function PostQuizFeedback({ quizId, onClose, onSubmit }: PostQuiz
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+  const modalContent = (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 99999 }}>
       <Card className="w-full max-w-md mx-auto bg-white dark:bg-gray-800">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -141,4 +142,6 @@ export default function PostQuizFeedback({ quizId, onClose, onSubmit }: PostQuiz
       </Card>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
