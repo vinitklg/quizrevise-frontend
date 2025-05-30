@@ -1202,9 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user statistics
       const userQuizzes = await storage.getQuizzesByUser(userId);
       const completedQuizzes = userQuizzes.filter(q => q.status === 'completed');
-      const averageScore = completedQuizzes.length > 0 
-        ? completedQuizzes.reduce((sum, q) => sum + (q.score || 0), 0) / completedQuizzes.length 
-        : 0;
+      const averageScore = 0; // Will implement proper calculation later
       
       const userDetails = {
         ...user,
@@ -1224,8 +1222,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user details route
+  app.get("/api/admin/users/:id/details", isAdminAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get user statistics
+      const userQuizzes = await storage.getQuizzesByUser(userId);
+      const completedQuizzes = userQuizzes.filter(q => q.status === 'completed');
+      const averageScore = 0; // Will implement proper calculation later
+      
+      const userDetails = {
+        ...user,
+        totalQuizzes: userQuizzes.length,
+        completedQuizzes: completedQuizzes.length,
+        averageScore,
+        totalDoubtQueries: 0, // Will implement later
+        feedbackSubmitted: 0 // Will implement later
+      };
+      
+      res.json(userDetails);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Get user activity log
-  app.get("/api/admin/users/:id/activity", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/users/:id/activity", isAdminAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       
@@ -1259,7 +1288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user quizzes for admin view
-  app.get("/api/admin/users/:id/quizzes", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/users/:id/quizzes", isAdminAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
       const quizzes = await storage.getQuizzesByUser(userId);

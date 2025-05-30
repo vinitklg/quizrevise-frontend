@@ -62,17 +62,17 @@ export default function UserDetailsPage() {
   const [quizFilter, setQuizFilter] = useState("all");
 
   const { data: userDetails, isLoading: userLoading } = useQuery<UserDetails>({
-    queryKey: ["/api/admin/users", userId, "details"],
+    queryKey: [`/api/admin/users/${userId}/details`],
     enabled: !!userId,
   });
 
   const { data: userActivity = [], isLoading: activityLoading } = useQuery<UserActivity[]>({
-    queryKey: ["/api/admin/users", userId, "activity"],
+    queryKey: [`/api/admin/users/${userId}/activity`],
     enabled: !!userId,
   });
 
   const { data: userQuizzes = [], isLoading: quizzesLoading } = useQuery<UserQuiz[]>({
-    queryKey: ["/api/admin/users", userId, "quizzes"],
+    queryKey: [`/api/admin/users/${userId}/quizzes`],
     enabled: !!userId,
   });
 
