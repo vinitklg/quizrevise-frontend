@@ -360,34 +360,36 @@ export default function TakeQuiz() {
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
                       {(() => {
-                        // Handle both array and object formats for options
-                        const options = Array.isArray(currentQuestion.options) 
-                          ? currentQuestion.options 
-                          : Object.entries(currentQuestion.options).map(([key, value]) => ({ key, value }));
-                        
-                        return options.map((option, index) => {
-                          let optionText, optionLetter;
-                          
-                          if (typeof option === 'object' && option.key && option.value) {
-                            // For assertion-reasoning questions with object format
-                            optionLetter = option.key;
-                            optionText = option.value;
-                          } else {
-                            // For regular MCQ questions with array format
-                            optionText = typeof option === 'string' ? option : `${String.fromCharCode(65 + index)}. ${option}`;
-                            optionLetter = optionText.charAt(0);
-                          }
-                          
-                          return (
-                            <div key={index} className="flex items-center space-x-2">
-                              <RadioGroupItem value={optionLetter} id={`option-${index}`} />
-                              <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                                {currentQuestion.questionType === 'assertion-reasoning' ? 
-                                  `${optionLetter}. ${optionText}` : optionText}
+                        if (typeof currentQuestion.options === 'object' && !Array.isArray(currentQuestion.options)) {
+                          // Handle assertion-reasoning questions with object format
+                          return Object.entries(currentQuestion.options).map(([key, value]) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <RadioGroupItem value={key} id={`option-${key}`} />
+                              <Label htmlFor={`option-${key}`} className="cursor-pointer">
+                                {key}. {value}
                               </Label>
                             </div>
-                          );
-                        });
+                          ));
+                        } else {
+                          // Handle regular MCQ questions with array format
+                          const options = Array.isArray(currentQuestion.options) 
+                            ? currentQuestion.options 
+                            : [];
+                          
+                          return options.map((option, index) => {
+                            const optionText = typeof option === 'string' ? option : `${String.fromCharCode(65 + index)}. ${option}`;
+                            const optionLetter = optionText.charAt(0);
+                            
+                            return (
+                              <div key={index} className="flex items-center space-x-2">
+                                <RadioGroupItem value={optionLetter} id={`option-${index}`} />
+                                <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                                  {optionText}
+                                </Label>
+                              </div>
+                            );
+                          });
+                        }
                       })()}
                     </RadioGroup>
                   )}
