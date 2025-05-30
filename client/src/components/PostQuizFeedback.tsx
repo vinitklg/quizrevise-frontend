@@ -25,7 +25,13 @@ export default function PostQuizFeedback({ quizId, onClose, onSubmit }: PostQuiz
   const [rating, setRating] = useState<number | null>(null);
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   const handleSubmit = async () => {
     if (!rating) {
@@ -143,5 +149,7 @@ export default function PostQuizFeedback({ quizId, onClose, onSubmit }: PostQuiz
     </div>
   );
 
+  if (!mounted) return null;
+  
   return createPortal(modalContent, document.body);
 }
