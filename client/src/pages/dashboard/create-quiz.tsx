@@ -168,14 +168,18 @@ const CreateQuiz = () => {
         setShowCreationNotification(false);
       });
 
+      // Reset form
+      form.reset();
+
+      // Navigate to today's quizzes after showing notification for 3 seconds
+      setTimeout(() => {
+        navigate(`/dashboard/today`);
+      }, 3000);
+
       // Hide notification after 60 seconds
       setTimeout(() => {
         setShowCreationNotification(false);
       }, 60000);
-
-      // Reset form and navigate to today's quizzes
-      form.reset();
-      navigate(`/dashboard/today`);
       
     } catch (error) {
       let errorMessage = "Failed to start quiz creation. Please try again.";
