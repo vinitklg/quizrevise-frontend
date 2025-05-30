@@ -133,12 +133,6 @@ const CreateQuiz = () => {
   const onSubmit = async (data: CreateQuizFormValues) => {
     setIsSubmitting(true);
     
-    // Show loading message
-    toast({
-      title: "Creating Quiz...",
-      description: "Please wait while we generate your quiz questions.",
-    });
-    
     try {
       // Include all form data
       const formattedData = {
@@ -164,18 +158,23 @@ const CreateQuiz = () => {
         diagramSupport: data.diagramSupport || false,
       };
 
-      const response = await apiRequest("POST", "/api/quizzes", formattedData);
-      const responseData = await response.json();
-
-      toast({
-        title: "Quiz created successfully!",
-        description: "Please go to Today's Quizzes to take your test.",
+      // Start the quiz creation process (don't wait for completion)
+      apiRequest("POST", "/api/quizzes", formattedData).catch(error => {
+        console.error("Quiz creation failed:", error);
       });
 
-      // Navigate to today's quizzes after successful quiz creation
+      // Immediately show success message and navigate
+      toast({
+        title: "Quiz Creation Started!",
+        description: "Your quiz is being prepared in the background. It will appear in 'Today's Quizzes' within 5-10 minutes.",
+      });
+
+      // Reset form and navigate to today's quizzes
+      form.reset();
       navigate(`/dashboard/today`);
+      
     } catch (error) {
-      let errorMessage = "Failed to create quiz. Please try again.";
+      let errorMessage = "Failed to start quiz creation. Please try again.";
 
       // Check if it's a subscription limit error
       if (
@@ -594,8 +593,8 @@ const CreateQuiz = () => {
                               AI-Generated Questions
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Our AI will create 8 sets of questions tailored to
-                              your selected chapter.
+                              Our AI creates 8 sets of questions in the background. 
+                              Your quiz will be ready in 5-10 minutes and appear in "Today's Quizzes".
                             </p>
                           </div>
                         </div>
