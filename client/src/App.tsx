@@ -34,6 +34,8 @@ import AdminActivity from "@/pages/admin/activity";
 import AdminDatabase from "@/pages/admin/database";
 import AdminSettings from "@/pages/admin/settings";
 import AdminFeedbacks from "@/pages/admin/feedbacks";
+import ChangePassword from "@/pages/admin/change-password";
+import UserDetails from "@/pages/admin/user-details";
 
 function Router() {
   const [location] = useLocation();
@@ -76,6 +78,8 @@ function Router() {
       <Route path="/admin/activity" component={AdminActivity} />
       <Route path="/admin/database" component={AdminDatabase} />
       <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/change-password" component={ChangePassword} />
+      <Route path="/admin/users/:id" component={UserDetails} />
       <Route path="/admin" component={AdminDashboard} />
       
       {/* Fallback to 404 */}

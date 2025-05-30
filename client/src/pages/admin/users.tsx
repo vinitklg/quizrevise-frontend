@@ -117,16 +117,24 @@ export default function AdminUsers() {
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        {user.username !== 'admin' && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteUser(user.id, user.username)}
-                            disabled={deleteUserMutation.isPending}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <Link href={`/admin/users/${user.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="w-4 h-4 mr-1" />
+                              View Details
+                            </Button>
+                          </Link>
+                          {user.username !== 'admin' && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteUser(user.id, user.username)}
+                              disabled={deleteUserMutation.isPending}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   )) || (

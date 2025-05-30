@@ -1160,6 +1160,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin change password route
+  app.post("/api/admin/change-password", isAuthenticated, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = (req.session as any).userId;
+      
+      // Get current user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash new password and update
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUserPassword(userId, hashedPassword);
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Get user details with activity tracking
+  app.get("/api/admin/users/:id/details", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get user statistics
+      const userQuizzes = await storage.getQuizzesByUser(userId);
+      const completedQuizzes = userQuizzes.filter(q => q.status === 'completed');
+      const averageScore = completedQuizzes.length > 0 
+        ? completedQuizzes.reduce((sum, q) => sum + (q.score || 0), 0) / completedQuizzes.length 
+        : 0;
+      
+      const userDetails = {
+        ...user,
+        totalQuizzes: userQuizzes.length,
+        completedQuizzes: completedQuizzes.length,
+        averageScore,
+        totalDoubtQueries: 0, // Would count from doubt_queries table
+        feedbackSubmitted: 0, // Would count from feedback table
+      };
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = userDetails;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user details error:", error);
+      res.status(500).json({ message: "Failed to get user details" });
+    }
+  });
+
+  // Get user activity log
+  app.get("/api/admin/users/:id/activity", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Mock activity data - in real app would come from activity log table
+      const activities = [
+        {
+          id: 1,
+          type: "login",
+          description: "User logged in",
+          createdAt: new Date(),
+        },
+        {
+          id: 2,
+          type: "quiz_created",
+          description: "Created quiz: Mathematics - Algebra",
+          createdAt: new Date(Date.now() - 86400000), // 1 day ago
+        },
+        {
+          id: 3,
+          type: "quiz_completed",
+          description: "Completed quiz with score 85%",
+          createdAt: new Date(Date.now() - 172800000), // 2 days ago
+        },
+      ];
+      
+      res.json(activities);
+    } catch (error) {
+      console.error("Get user activity error:", error);
+      res.status(500).json({ message: "Failed to get user activity" });
+    }
+  });
+
+  // Get user quizzes for admin view
+  app.get("/api/admin/users/:id/quizzes", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const quizzes = await storage.getQuizzesByUser(userId);
+      
+      res.json(quizzes);
+    } catch (error) {
+      console.error("Get user quizzes error:", error);
+      res.status(500).json({ message: "Failed to get user quizzes" });
+    }
+  });
+
   // Admin login route
   app.post("/api/admin/login", async (req, res) => {
     try {

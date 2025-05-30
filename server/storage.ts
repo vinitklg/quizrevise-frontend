@@ -120,6 +120,8 @@ export interface IStorage {
   getAllUsers(): Promise<any[]>;
   getAllSubjects(): Promise<any[]>;
   getAllQuizzes(): Promise<any[]>;
+  updateUserPassword(userId: number, hashedPassword: string): Promise<void>;
+  getQuizzesByUser(userId: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -727,6 +729,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(feedback.id, id))
       .returning();
     return updated;
+  }
+
+  // Admin-specific methods
+  async updateUserPassword(userId: number, hashedPassword: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+  }
+
+  async getQuizzesByUser(userId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(quizzes)
+      .where(eq(quizzes.userId, userId))
+      .orderBy(desc(quizzes.createdAt));
   }
 }
 
