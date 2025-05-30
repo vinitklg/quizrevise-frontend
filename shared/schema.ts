@@ -181,6 +181,19 @@ export const feedback = pgTable("feedback", {
 export type UpsertFeedback = typeof feedback.$inferInsert;
 export type Feedback = typeof feedback.$inferSelect;
 
+// Quiz feedback table for post-quiz ratings
+export const quizFeedback = pgTable("quiz_feedback", {
+  id: serial("id").primaryKey(),
+  quizId: integer("quiz_id").notNull().references(() => quizzes.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(), // 1-5 rating
+  comments: text("comments"), // Optional feedback comments
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type UpsertQuizFeedback = typeof quizFeedback.$inferInsert;
+export type QuizFeedback = typeof quizFeedback.$inferSelect;
+
 // Question type definitions for JSON fields
 export interface Question {
   id: number;

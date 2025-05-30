@@ -1,175 +1,144 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { Star, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostQuizFeedbackProps {
-  isOpen: boolean;
-  onClose: () => void;
   quizId: number;
-  score: number;
-  totalQuestions: number;
-  subject: string;
-  board: string;
-  className: string;
+  onClose: () => void;
+  onSubmit: () => void;
 }
 
-export default function PostQuizFeedback({
-  isOpen,
-  onClose,
-  quizId,
-  score,
-  totalQuestions,
-  subject,
-  board,
-  className
-}: PostQuizFeedbackProps) {
+const RATING_EMOJIS = [
+  { value: 1, emoji: "😠", label: "Very Poor" },
+  { value: 2, emoji: "😕", label: "Poor" },
+  { value: 3, emoji: "😐", label: "Average" },
+  { value: 4, emoji: "🙂", label: "Good" },
+  { value: 5, emoji: "😄", label: "Excellent" },
+];
+
+export default function PostQuizFeedback({ quizId, onClose, onSubmit }: PostQuizFeedbackProps) {
+  const [rating, setRating] = useState<number | null>(null);
+  const [comments, setComments] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  const [rating, setRating] = useState(0);
-  const [feedback, setFeedback] = useState("");
 
-  const submitFeedback = useMutation({
-    mutationFn: async (data: any) => {
-      const result = await apiRequest("POST", "/api/quiz-feedback", data);
-      return result;
-    },
-    onSuccess: () => {
+  const handleSubmit = async () => {
+    if (!rating) {
       toast({
-        title: "Thank you!",
-        description: "Your feedback helps us improve the quiz experience.",
-      });
-      onClose();
-      setRating(0);
-      setFeedback("");
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to submit feedback. You can try again later.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSubmit = () => {
-    if (rating === 0 && !feedback.trim()) {
-      toast({
-        title: "No feedback provided",
-        description: "Please provide a rating or feedback comment.",
+        title: "Rating Required",
+        description: "Please select a rating before submitting.",
         variant: "destructive",
       });
       return;
     }
 
-    submitFeedback.mutate({
-      quizId,
-      rating: rating > 0 ? rating : null,
-      feedbackText: feedback.trim() || null,
-      type: "quiz",
-      board,
-      class: className,
-      subject,
-      score,
-      totalQuestions
-    });
-  };
+    setIsSubmitting(true);
+    try {
+      await apiRequest("POST", "/api/quiz-feedback", {
+        quizId,
+        rating,
+        comments: comments.trim() || null,
+      });
 
-  const handleSkip = () => {
-    onClose();
-    setRating(0);
-    setFeedback("");
-  };
+      toast({
+        title: "Feedback Submitted",
+        description: "Thank you for your feedback!",
+      });
 
-  const scorePercentage = Math.round((score / totalQuestions) * 100);
+      onSubmit();
+    } catch (error) {
+      console.error("Failed to submit feedback:", error);
+      toast({
+        title: "Submission Failed",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Quiz Completed!
-            <Button variant="ghost" size="sm" onClick={handleSkip}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">How did you find this quiz?</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
               <X className="h-4 w-4" />
             </Button>
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          {/* Score Display */}
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">
-              {score}/{totalQuestions}
-            </div>
-            <div className="text-sm text-gray-600">
-              {scorePercentage}% Score
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {subject} • {board} Class {className}
-            </div>
           </div>
-
-          {/* Rating */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              How was this quiz? (Optional)
-            </label>
-            <div className="flex items-center justify-center space-x-2">
-              {[1, 2, 3, 4, 5].map((star) => (
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Rating Selection */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Rate your experience:
+            </p>
+            <div className="flex justify-between gap-2">
+              {RATING_EMOJIS.map((item) => (
                 <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  className={`p-1 transition-colors ${
-                    star <= rating 
-                      ? "text-yellow-400 hover:text-yellow-500" 
-                      : "text-gray-300 hover:text-gray-400"
+                  key={item.value}
+                  onClick={() => setRating(item.value)}
+                  className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                    rating === item.value
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                      : "border-gray-200 dark:border-gray-700"
                   }`}
                 >
-                  <Star className={`h-7 w-7 ${star <= rating ? "fill-current" : ""}`} />
+                  <span className="text-2xl mb-1">{item.emoji}</span>
+                  <span className="text-xs text-center font-medium">
+                    {item.label}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Feedback Text */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Any feedback about the questions? (Optional)
+          {/* Comments */}
+          <div className="space-y-2">
+            <label htmlFor="comments" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Tell us what you liked or what can be improved (optional):
             </label>
             <Textarea
-              placeholder="Share your thoughts about the quiz questions, difficulty, or any issues..."
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
+              id="comments"
+              placeholder="Your feedback helps us improve..."
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
               rows={3}
               className="resize-none"
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex space-x-3">
+          {/* Submit Button */}
+          <div className="flex gap-3 pt-2">
             <Button
               variant="outline"
-              onClick={handleSkip}
+              onClick={onClose}
               className="flex-1"
+              disabled={isSubmitting}
             >
               Skip
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={submitFeedback.isPending}
+              disabled={!rating || isSubmitting}
               className="flex-1"
             >
-              {submitFeedback.isPending ? "Submitting..." : "Submit Feedback"}
+              {isSubmitting ? "Submitting..." : "Submit Feedback"}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

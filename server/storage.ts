@@ -8,6 +8,7 @@ import {
   quizSchedules,
   doubtQueries,
   feedback,
+  quizFeedback,
   type User,
   type InsertUser,
   type Subject,
@@ -26,6 +27,8 @@ import {
   type InsertDoubtQuery,
   type Feedback,
   type UpsertFeedback,
+  type QuizFeedback,
+  type UpsertQuizFeedback,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lt, gt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
@@ -106,6 +109,10 @@ export interface IStorage {
   getFeedbackByUser(userId: number): Promise<Feedback[]>;
   getAllFeedback(): Promise<Feedback[]>;
   updateFeedback(id: number, data: Partial<Feedback>): Promise<Feedback | undefined>;
+
+  // Quiz feedback operations
+  createQuizFeedback(feedback: UpsertQuizFeedback): Promise<QuizFeedback>;
+  getQuizFeedback(quizId: number, userId: number): Promise<QuizFeedback | undefined>;
 
   // Admin operations
   getTotalUsers(): Promise<number>;
@@ -745,6 +752,23 @@ export class DatabaseStorage implements IStorage {
       .from(quizzes)
       .where(eq(quizzes.userId, userId))
       .orderBy(desc(quizzes.createdAt));
+  }
+
+  // Quiz feedback operations
+  async createQuizFeedback(feedback: UpsertQuizFeedback): Promise<QuizFeedback> {
+    const [newFeedback] = await db
+      .insert(quizFeedback)
+      .values(feedback)
+      .returning();
+    return newFeedback;
+  }
+
+  async getQuizFeedback(quizId: number, userId: number): Promise<QuizFeedback | undefined> {
+    const [feedback] = await db
+      .select()
+      .from(quizFeedback)
+      .where(and(eq(quizFeedback.quizId, quizId), eq(quizFeedback.userId, userId)));
+    return feedback;
   }
 }
 
