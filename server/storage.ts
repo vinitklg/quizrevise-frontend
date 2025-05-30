@@ -715,22 +715,8 @@ export class DatabaseStorage implements IStorage {
 
   async getAllFeedback(): Promise<Feedback[]> {
     return await db
-      .select({
-        id: feedback.id,
-        userId: feedback.userId,
-        type: feedback.type,
-        rating: feedback.rating,
-        feedbackText: feedback.feedbackText,
-        category: feedback.category,
-        status: feedback.status,
-        adminResponse: feedback.adminResponse,
-        createdAt: feedback.createdAt,
-        reviewedAt: feedback.reviewedAt,
-        userEmail: users.email,
-        userName: users.username
-      })
+      .select()
       .from(feedback)
-      .innerJoin(users, eq(feedback.userId, users.id))
       .orderBy(desc(feedback.createdAt));
   }
 

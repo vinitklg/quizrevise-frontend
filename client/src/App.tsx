@@ -33,6 +33,7 @@ import AdminQuizzes from "@/pages/admin/quizzes";
 import AdminActivity from "@/pages/admin/activity";
 import AdminDatabase from "@/pages/admin/database";
 import AdminSettings from "@/pages/admin/settings";
+import AdminFeedbacks from "@/pages/admin/feedbacks";
 
 function Router() {
   const [location] = useLocation();
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/subjects" component={AdminSubjects} />
       <Route path="/admin/quizzes" component={AdminQuizzes} />
+      <Route path="/admin/feedbacks" component={AdminFeedbacks} />
       <Route path="/admin/activity" component={AdminActivity} />
       <Route path="/admin/database" component={AdminDatabase} />
       <Route path="/admin/settings" component={AdminSettings} />

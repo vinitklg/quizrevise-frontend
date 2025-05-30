@@ -32,6 +32,7 @@ import {
   Eye,
   Edit
 } from "lucide-react";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 interface Feedback {
   id: number;
@@ -173,16 +174,18 @@ export default function AdminFeedbacks() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Feedback Management</h1>
-        <Button onClick={exportToCSV} className="flex items-center space-x-2">
-          <Download className="h-4 w-4" />
-          <span>Export CSV</span>
-        </Button>
-      </div>
+    <div className="flex h-screen">
+      <AdminSidebar />
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Feedback Management</h1>
+          <Button onClick={exportToCSV} className="flex items-center space-x-2">
+            <Download className="h-4 w-4" />
+            <span>Export CSV</span>
+          </Button>
+        </div>
 
-      {/* Stats Cards */}
+        {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -418,6 +421,7 @@ export default function AdminFeedbacks() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

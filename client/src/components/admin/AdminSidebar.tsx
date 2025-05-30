@@ -8,7 +8,8 @@ import {
   Settings,
   Shield,
   Activity,
-  Database
+  Database,
+  MessageSquare
 } from "lucide-react";
 
 const navigation = [
@@ -16,6 +17,7 @@ const navigation = [
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Subjects", href: "/admin/subjects", icon: BookOpen },
   { name: "Quizzes", href: "/admin/quizzes", icon: FileQuestion },
+  { name: "Feedbacks", href: "/admin/feedbacks", icon: MessageSquare },
   { name: "Activity", href: "/admin/activity", icon: Activity },
   { name: "Database", href: "/admin/database", icon: Database },
   { name: "Settings", href: "/admin/settings", icon: Settings },
