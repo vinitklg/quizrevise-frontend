@@ -63,8 +63,8 @@ export default function PostQuizFeedback({ quizId, onClose, onSubmit }: PostQuiz
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md mx-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+      <Card className="w-full max-w-md mx-auto bg-white dark:bg-gray-800">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold">How did you find this quiz?</CardTitle>
