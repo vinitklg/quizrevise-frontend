@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Clock, CheckCircle } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import PostQuizFeedback from "@/components/PostQuizFeedback";
 
 interface Question {
   id: string;
@@ -53,6 +54,7 @@ export default function TakeQuiz() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [quizResults, setQuizResults] = useState<any>(null);
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
 
   // Fetch quiz schedule and questions
   const { data: schedule, isLoading } = useQuery<QuizSchedule>({
@@ -69,6 +71,10 @@ export default function TakeQuiz() {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes/today"] });
       setIsCompleted(true);
       setShowResults(true);
+      // Show feedback popup after a short delay
+      setTimeout(() => {
+        setShowFeedbackPopup(true);
+      }, 1000);
     },
     onError: () => {
       toast({
@@ -475,6 +481,20 @@ export default function TakeQuiz() {
           </div>
         </main>
       </div>
+      
+      {/* Post-Quiz Feedback Popup */}
+      {quizResults && schedule && (
+        <PostQuizFeedback
+          isOpen={showFeedbackPopup}
+          onClose={() => setShowFeedbackPopup(false)}
+          quizId={schedule.quizId}
+          score={quizResults.correctAnswers}
+          totalQuestions={quizResults.totalQuestions}
+          subject={schedule.subjectName || ""}
+          board={schedule.board || ""}
+          className={schedule.class?.toString() || ""}
+        />
+      )}
     </div>
   );
 }

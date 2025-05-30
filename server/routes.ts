@@ -1001,6 +1001,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quiz feedback route for post-quiz submissions
+  app.post("/api/quiz-feedback", isAuthenticated, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const feedbackData = {
+        userId: req.session.userId!,
+        username: user.username,
+        userEmail: user.email,
+        type: req.body.type || "quiz",
+        feedbackText: req.body.feedbackText,
+        rating: req.body.rating,
+        board: req.body.board,
+        class: req.body.class,
+        subject: req.body.subject,
+        status: "pending"
+      };
+
+      const feedback = await storage.createFeedback(feedbackData);
+      res.status(201).json(feedback);
+    } catch (error) {
+      console.error("Error creating quiz feedback:", error);
+      res.status(500).json({ message: "Failed to submit quiz feedback" });
+    }
+  });
+
   // Admin feedback routes
   app.get("/api/admin/feedback", isAuthenticated, isAdminAuthenticated, async (req, res) => {
     try {
