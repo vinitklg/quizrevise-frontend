@@ -344,12 +344,30 @@ const Settings = () => {
                               <Button 
                                 type="button"
                                 onClick={async () => {
-                                  const updateData = {
-                                    subscribedSubjects: selectedSubjects,
-                                    stream: selectedStream || user?.stream,
-                                  };
-                                  await onSubmitProfile(updateData as any);
-                                  setIsUpdatingProfile(false); // Close the subject selection UI
+                                  if (!user) return;
+                                  
+                                  try {
+                                    const updateData = {
+                                      subscribedSubjects: selectedSubjects,
+                                      stream: selectedStream || user.stream,
+                                    };
+                                    
+                                    await apiRequest("PATCH", `/api/users/${user.id}`, updateData);
+                                    
+                                    toast({
+                                      title: "Subjects updated",
+                                      description: "Your subject preferences have been updated successfully.",
+                                    });
+                                    
+                                    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+                                    setIsUpdatingProfile(false);
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error updating subjects",
+                                      description: "There was a problem updating your subjects. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  }
                                 }}
                                 disabled={selectedSubjects.length === 0}
                               >
