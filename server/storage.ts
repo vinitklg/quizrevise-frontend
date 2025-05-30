@@ -7,6 +7,7 @@ import {
   quizSets,
   quizSchedules,
   doubtQueries,
+  feedback,
   type User,
   type InsertUser,
   type Subject,
@@ -23,6 +24,8 @@ import {
   type InsertQuizSchedule,
   type DoubtQuery,
   type InsertDoubtQuery,
+  type Feedback,
+  type UpsertFeedback,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lt, gt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
@@ -97,6 +100,12 @@ export interface IStorage {
   createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
   getDoubtQueriesByUser(userId: number): Promise<DoubtQuery[]>;
   answerDoubtQuery(id: number, answer: string): Promise<DoubtQuery | undefined>;
+
+  // Feedback operations
+  createFeedback(feedback: UpsertFeedback): Promise<Feedback>;
+  getFeedbackByUser(userId: number): Promise<Feedback[]>;
+  getAllFeedback(): Promise<Feedback[]>;
+  updateFeedback(id: number, data: Partial<Feedback>): Promise<Feedback | undefined>;
 
   // Admin operations
   getTotalUsers(): Promise<number>;
@@ -685,6 +694,53 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(quizzes.createdAt));
 
     return allQuizzes;
+  }
+
+  // Feedback operations
+  async createFeedback(feedbackData: UpsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db
+      .insert(feedback)
+      .values(feedbackData)
+      .returning();
+    return newFeedback;
+  }
+
+  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.userId, userId))
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async getAllFeedback(): Promise<Feedback[]> {
+    return await db
+      .select({
+        id: feedback.id,
+        userId: feedback.userId,
+        type: feedback.type,
+        rating: feedback.rating,
+        feedbackText: feedback.feedbackText,
+        category: feedback.category,
+        status: feedback.status,
+        adminResponse: feedback.adminResponse,
+        createdAt: feedback.createdAt,
+        reviewedAt: feedback.reviewedAt,
+        userEmail: users.email,
+        userName: users.username
+      })
+      .from(feedback)
+      .innerJoin(users, eq(feedback.userId, users.id))
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async updateFeedback(id: number, data: Partial<Feedback>): Promise<Feedback | undefined> {
+    const [updated] = await db
+      .update(feedback)
+      .set(data)
+      .where(eq(feedback.id, id))
+      .returning();
+    return updated;
   }
 }
 
