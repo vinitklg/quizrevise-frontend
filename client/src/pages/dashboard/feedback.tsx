@@ -36,6 +36,7 @@ const feedbackSchema = z.object({
   class: z.number().min(6).max(12, "Class must be between 6 and 12"),
   subject: z.string().min(1, "Please enter a subject"),
   feedbackText: z.string().min(10, "Feedback must be at least 10 characters"),
+  file: z.any().optional(),
 });
 
 type FeedbackFormValues = z.infer<typeof feedbackSchema>;

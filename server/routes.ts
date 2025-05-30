@@ -970,9 +970,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Feedback routes
   app.post("/api/feedback", isAuthenticated, async (req, res) => {
     try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const feedbackData = {
         ...req.body,
         userId: req.session.userId!,
+        userName: user.username,
+        userEmail: user.email,
         status: "pending"
       };
 
@@ -991,6 +998,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting feedback:", error);
       res.status(500).json({ message: "Failed to get feedback" });
+    }
+  });
+
+  // Admin feedback routes
+  app.get("/api/admin/feedback", isAuthenticated, isAdminAuthenticated, async (req, res) => {
+    try {
+      const allFeedback = await storage.getAllFeedback();
+      res.json(allFeedback);
+    } catch (error) {
+      console.error("Error getting all feedback:", error);
+      res.status(500).json({ message: "Failed to get feedback" });
+    }
+  });
+
+  app.patch("/api/admin/feedback/:id", isAuthenticated, isAdminAuthenticated, async (req, res) => {
+    try {
+      const feedbackId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Add reviewer info if updating status
+      if (updateData.status) {
+        updateData.reviewedBy = req.session.userId;
+        updateData.reviewedAt = new Date();
+      }
+
+      const updatedFeedback = await storage.updateFeedback(feedbackId, updateData);
+      res.json(updatedFeedback);
+    } catch (error) {
+      console.error("Error updating feedback:", error);
+      res.status(500).json({ message: "Failed to update feedback" });
     }
   });
 

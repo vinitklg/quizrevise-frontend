@@ -161,11 +161,14 @@ export type InsertDoubtQuery = {
 export const feedback = pgTable("feedback", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  type: text("type").notNull(), // "general", "quiz", "technical", "suggestion"
-  rating: integer("rating"), // 1-5 stars for quiz feedback
-  quizId: integer("quiz_id").references(() => quizzes.id), // For quiz-specific feedback
+  userName: text("user_name"),
+  userEmail: text("user_email"),
+  board: text("board"),
+  class: integer("class"),
+  subject: text("subject"),
+  type: text("type").notNull(), // "general", "technical", "suggestion"
   feedbackText: text("feedback_text"),
-  category: text("category"), // For general feedback categorization
+  file: text("file"), // File URL or path
   status: text("status").default("pending").notNull(), // pending, reviewed, resolved
   adminResponse: text("admin_response"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -222,8 +225,6 @@ export const generateQuizSchema = z.object({
 
 // Feedback schema
 export const insertFeedbackSchema = createInsertSchema(feedback, {
-  type: z.enum(["general", "quiz", "technical", "suggestion"]),
-  rating: z.number().min(1).max(5).optional(),
+  type: z.enum(["general", "technical", "suggestion"]),
   feedbackText: z.string().min(5, "Feedback must be at least 5 characters").optional(),
-  category: z.string().optional(),
 }).omit({ id: true, createdAt: true, reviewedAt: true, reviewedBy: true });
