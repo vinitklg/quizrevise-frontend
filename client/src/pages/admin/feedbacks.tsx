@@ -54,8 +54,12 @@ interface Feedback {
 
 interface FeedbackStats {
   total: number;
-  technical: number;
-  suggestions: number;
+  subjectContent: number;
+  quizError: number;
+  doubtAnswer: number;
+  generalExperience: number;
+  technicalBug: number;
+  featureSuggestion: number;
   resolved: number;
 }
 
@@ -74,8 +78,12 @@ export default function AdminFeedbacks() {
   // Calculate stats
   const stats: FeedbackStats = {
     total: feedbacks.length,
-    technical: feedbacks.filter(f => f.type === "technical").length,
-    suggestions: feedbacks.filter(f => f.type === "suggestion").length,
+    subjectContent: feedbacks.filter(f => f.type === "subject_content").length,
+    quizError: feedbacks.filter(f => f.type === "quiz_error").length,
+    doubtAnswer: feedbacks.filter(f => f.type === "doubt_answer").length,
+    generalExperience: feedbacks.filter(f => f.type === "general_experience").length,
+    technicalBug: feedbacks.filter(f => f.type === "technical_bug").length,
+    featureSuggestion: feedbacks.filter(f => f.type === "feature_suggestion").length,
     resolved: feedbacks.filter(f => f.status === "resolved").length,
   };
 
@@ -107,12 +115,18 @@ export default function AdminFeedbacks() {
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case "general":
-        return <Badge className="bg-blue-100 text-blue-800">General</Badge>;
-      case "technical":
-        return <Badge className="bg-red-100 text-red-800">Technical</Badge>;
-      case "suggestion":
-        return <Badge className="bg-green-100 text-green-800">Suggestion</Badge>;
+      case "subject_content":
+        return <Badge className="bg-blue-100 text-blue-800">Subject Content</Badge>;
+      case "quiz_error":
+        return <Badge className="bg-red-100 text-red-800">Quiz Error</Badge>;
+      case "doubt_answer":
+        return <Badge className="bg-purple-100 text-purple-800">Doubt Answer</Badge>;
+      case "general_experience":
+        return <Badge className="bg-green-100 text-green-800">General Experience</Badge>;
+      case "technical_bug":
+        return <Badge className="bg-red-100 text-red-800">Technical Bug</Badge>;
+      case "feature_suggestion":
+        return <Badge className="bg-yellow-100 text-yellow-800">Feature Suggestion</Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -186,7 +200,7 @@ export default function AdminFeedbacks() {
         </div>
 
         {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
@@ -199,31 +213,61 @@ export default function AdminFeedbacks() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Issues</CardTitle>
+            <CardTitle className="text-sm font-medium">Subject Content</CardTitle>
+            <MessageSquare className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{stats.subjectContent}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Quiz Errors</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.technical}</div>
+            <div className="text-2xl font-bold text-red-600">{stats.quizError}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Doubt Answers</CardTitle>
+            <MessageSquare className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{stats.doubtAnswer}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">General Experience</CardTitle>
+            <MessageSquare className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.generalExperience}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Technical Bugs</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.technicalBug}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Feature Suggestions</CardTitle>
-            <Lightbulb className="h-4 w-4 text-green-500" />
+            <Lightbulb className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.suggestions}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.resolved}</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.featureSuggestion}</div>
           </CardContent>
         </Card>
       </div>
@@ -253,9 +297,12 @@ export default function AdminFeedbacks() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-                <SelectItem value="technical">Technical</SelectItem>
-                <SelectItem value="suggestion">Suggestion</SelectItem>
+                <SelectItem value="subject_content">Subject Content</SelectItem>
+                <SelectItem value="quiz_error">Quiz Error</SelectItem>
+                <SelectItem value="doubt_answer">Doubt Answer</SelectItem>
+                <SelectItem value="general_experience">General Experience</SelectItem>
+                <SelectItem value="technical_bug">Technical Bug</SelectItem>
+                <SelectItem value="feature_suggestion">Feature Suggestion</SelectItem>
               </SelectContent>
             </Select>
             
@@ -287,10 +334,13 @@ export default function AdminFeedbacks() {
                   <TableHead>ID</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Board</TableHead>
                   <TableHead>Class</TableHead>
                   <TableHead>Subject</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>File</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -303,15 +353,29 @@ export default function AdminFeedbacks() {
                       {feedback.createdAt ? formatDate(feedback.createdAt.toString()) : "N/A"}
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{feedback.userName || "Anonymous"}</div>
-                        <div className="text-sm text-muted-foreground">{feedback.userEmail}</div>
-                      </div>
+                      <div className="font-medium">{feedback.userName || "Anonymous"}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{feedback.userEmail || "N/A"}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">{feedback.userPhone || "N/A"}</div>
                     </TableCell>
                     <TableCell>{feedback.board || "N/A"}</TableCell>
                     <TableCell>{feedback.class || "N/A"}</TableCell>
                     <TableCell>{feedback.subject || "N/A"}</TableCell>
                     <TableCell>{getTypeBadge(feedback.type)}</TableCell>
+                    <TableCell>
+                      {feedback.file ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={feedback.file} target="_blank" rel="noopener noreferrer">
+                            View File
+                          </a>
+                        </Button>
+                      ) : (
+                        "No File"
+                      )}
+                    </TableCell>
                     <TableCell>{getStatusBadge(feedback.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
