@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,9 +31,10 @@ import { Star, MessageSquare, Settings, Lightbulb, Send, CheckCircle, AlertTrian
 
 // Form schema for feedback
 const feedbackSchema = z.object({
-  type: z.enum(["general", "technical", "suggestion", "content", "quiz_error", "doubt_answer", "payment"]),
-  category: z.string().optional(),
-  rating: z.number().min(1).max(5).optional(),
+  type: z.enum(["general", "technical", "suggestion"]),
+  board: z.string().min(1, "Please select a board"),
+  class: z.number().min(6).max(12, "Class must be between 6 and 12"),
+  subject: z.string().min(1, "Please enter a subject"),
   feedbackText: z.string().min(10, "Feedback must be at least 10 characters"),
 });
 
@@ -67,6 +69,9 @@ const FeedbackPage = () => {
     resolver: zodResolver(feedbackSchema),
     defaultValues: {
       type: "general",
+      board: "",
+      class: 10,
+      subject: "",
       feedbackText: "",
     },
   });
@@ -226,8 +231,8 @@ const FeedbackPage = () => {
                       <div className="flex items-center space-x-3">
                         <MessageSquare className="h-5 w-5 text-blue-600" />
                         <div>
-                          <div className="font-medium">General Experience</div>
-                          <div className="text-sm text-gray-500">Overall platform feedback, suggestions</div>
+                          <div className="font-medium">General Feedback</div>
+                          <div className="text-sm text-gray-500">Overall experience, general suggestions</div>
                         </div>
                       </div>
                     </div>
@@ -249,8 +254,8 @@ const FeedbackPage = () => {
                           <Bug className="h-5 w-5 text-red-600" />
                         </div>
                         <div>
-                          <div className="font-medium">Technical Bug / Error</div>
-                          <div className="text-sm text-gray-500">App crashes, login issues, performance problems</div>
+                          <div className="font-medium">Technical Issue</div>
+                          <div className="text-sm text-gray-500">Bugs, errors, performance problems</div>
                         </div>
                       </div>
                     </div>
@@ -270,90 +275,7 @@ const FeedbackPage = () => {
                         <Lightbulb className="h-5 w-5 text-green-600" />
                         <div>
                           <div className="font-medium">Feature Suggestion</div>
-                          <div className="text-sm text-gray-500">New features, UI improvements, enhancements</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedType === "content" 
-                          ? "bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800" 
-                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                      onClick={() => {
-                        setSelectedType("content");
-                        form.setValue("type", "content");
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <BookOpen className="h-5 w-5 text-purple-600" />
-                        <div>
-                          <div className="font-medium">Subject Content Issue</div>
-                          <div className="text-sm text-gray-500">Incorrect information, outdated content</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedType === "quiz_error" 
-                          ? "bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800" 
-                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                      onClick={() => {
-                        setSelectedType("quiz_error");
-                        form.setValue("type", "quiz_error");
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 text-orange-500 mr-1" />
-                          <AlertTriangle className="h-5 w-5 text-orange-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">Quiz Error</div>
-                          <div className="text-sm text-gray-500">Wrong answers, unclear questions, diagram issues</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedType === "doubt_answer" 
-                          ? "bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-200 dark:border-indigo-800" 
-                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                      onClick={() => {
-                        setSelectedType("doubt_answer");
-                        form.setValue("type", "doubt_answer");
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <HelpCircle className="h-5 w-5 text-indigo-600" />
-                        <div>
-                          <div className="font-medium">Doubt Answer Feedback</div>
-                          <div className="text-sm text-gray-500">AI response quality, accuracy, helpfulness</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedType === "payment" 
-                          ? "bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800" 
-                          : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                      onClick={() => {
-                        setSelectedType("payment");
-                        form.setValue("type", "payment");
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <CreditCard className="h-5 w-5 text-yellow-600" />
-                        <div>
-                          <div className="font-medium">Payment / Account Issue</div>
-                          <div className="text-sm text-gray-500">Subscription problems, billing, account access</div>
+                          <div className="text-sm text-gray-500">New features, improvements, enhancements</div>
                         </div>
                       </div>
                     </div>
@@ -373,6 +295,74 @@ const FeedbackPage = () => {
                   <CardContent>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="board"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Board</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select board" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="CBSE">CBSE</SelectItem>
+                                    <SelectItem value="ICSE">ICSE</SelectItem>
+                                    <SelectItem value="ISC">ISC</SelectItem>
+                                    <SelectItem value="State Board">State Board</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="class"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Class</FormLabel>
+                                <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select class" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {[6, 7, 8, 9, 10, 11, 12].map((grade) => (
+                                      <SelectItem key={grade} value={grade.toString()}>
+                                        Class {grade}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="subject"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Subject</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="e.g. Mathematics, Physics" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
                         <FormField
                           control={form.control}
                           name="type"
