@@ -1001,24 +1001,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Quiz feedback route for post-quiz submissions
+  // Post-quiz feedback endpoints
   app.post("/api/quiz-feedback", isAuthenticated, async (req, res) => {
     try {
-      const user = await storage.getUser(req.session.userId!);
+      const { quizId, rating, comments } = req.body;
+      const userId = req.session.userId!;
+
+      // For now, store as general feedback until database schema is updated
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       const feedbackData = {
-        userId: req.session.userId!,
+        userId,
         username: user.username,
         userEmail: user.email,
-        type: req.body.type || "quiz",
-        feedbackText: req.body.feedbackText,
-        rating: req.body.rating,
-        board: req.body.board,
-        class: req.body.class,
-        subject: req.body.subject,
+        type: "quiz_feedback",
+        feedbackText: `Quiz Rating: ${rating}/5${comments ? `\nComments: ${comments}` : ''}\nQuiz ID: ${quizId}`,
+        rating,
         status: "pending"
       };
 
@@ -1027,6 +1028,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating quiz feedback:", error);
       res.status(500).json({ message: "Failed to submit quiz feedback" });
+    }
+  });
+
+  app.get("/api/quiz-feedback/:quizId", isAuthenticated, async (req, res) => {
+    try {
+      const quizId = parseInt(req.params.quizId);
+      const userId = req.session.userId!;
+
+      // Check if feedback exists for this quiz and user
+      const userFeedback = await storage.getFeedbackByUser(userId);
+      const existingFeedback = userFeedback.find(f => 
+        f.type === "quiz_feedback" && f.feedbackText?.includes(`Quiz ID: ${quizId}`)
+      );
+
+      res.json(existingFeedback || null);
+    } catch (error) {
+      console.error("Error getting quiz feedback:", error);
+      res.status(500).json({ message: "Failed to get quiz feedback" });
     }
   });
 

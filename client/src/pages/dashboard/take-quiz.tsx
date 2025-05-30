@@ -70,10 +70,6 @@ export default function TakeQuiz() {
       queryClient.invalidateQueries({ queryKey: ["/api/quizzes/today"] });
       setIsCompleted(true);
       setShowResults(true);
-      // Show feedback popup after a short delay
-      setTimeout(() => {
-        setShowFeedbackPopup(true);
-      }, 1000);
     },
     onError: () => {
       toast({
@@ -209,7 +205,7 @@ export default function TakeQuiz() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Incorrect</p>
                   </div>
                 </div>
-                <Button onClick={() => setLocation("/dashboard/today")} className="w-full">
+                <Button onClick={() => setShowFeedbackPopup(true)} className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Today's Quizzes
                 </Button>
