@@ -188,17 +188,28 @@ async function renderBiologyDiagram(instruction: string, questionId: string): Pr
 
 // Economics diagram renderer
 async function renderEconomicsDiagram(instruction: string, questionId: string): Promise<string> {
-  const fileName = `economics_${questionId}_${Date.now()}.svg`;
+  const fileName = `economics_${questionId}.svg`;
   const filePath = path.join(process.cwd(), 'public', 'diagrams', fileName);
   
   let svg = '';
+  const lower = instruction.toLowerCase();
   
-  if (instruction.toLowerCase().includes('demand') || instruction.toLowerCase().includes('supply')) {
-    svg = generateSupplyDemandSVG(instruction);
-  } else if (instruction.toLowerCase().includes('graph') || instruction.toLowerCase().includes('curve')) {
-    svg = generateEconomicsGraphSVG(instruction);
+  // Check for specific economics graph types
+  if (lower.includes('demand') && lower.includes('supply')) {
+    svg = generateEconomicsDiagramSVG(instruction);
+  } else if (lower.includes('demand') || lower.includes('supply')) {
+    svg = generateEconomicsDiagramSVG(instruction);
+  } else if (lower.includes('price floor') || lower.includes('price ceiling')) {
+    svg = generateEconomicsDiagramSVG(instruction);
+  } else if (lower.includes('production possibility') || lower.includes('ppc') || lower.includes('ppf')) {
+    svg = generateEconomicsDiagramSVG(instruction);
+  } else if (lower.includes('cost curve') || lower.includes('mc') || lower.includes('ac')) {
+    svg = generateEconomicsDiagramSVG(instruction);
+  } else if (lower.includes('revenue curve') || lower.includes('mr') || lower.includes('ar')) {
+    svg = generateEconomicsDiagramSVG(instruction);
   } else {
-    svg = generateGenericEconomicsSVG(instruction);
+    // No specific graph keywords found, skip SVG generation
+    return null;
   }
   
   fs.writeFileSync(filePath, svg);
@@ -1535,6 +1546,153 @@ function generateGenericSVG(instruction: string): string {
       <rect x="100" y="100" width="200" height="120" class="diagram" rx="10" />
       <text x="50" y="20" class="label" style="font-weight: bold;">${instruction}</text>
       <text x="200" y="170" class="label" text-anchor="middle">Diagram</text>
+    </svg>
+  `;
+}
+
+// New Economics diagram generator for board-quality graphs
+function generateEconomicsDiagramSVG(instruction: string): string {
+  const lower = instruction.toLowerCase();
+  
+  // Demand & Supply Curve
+  if ((lower.includes("demand") && lower.includes("supply")) || 
+      (lower.includes("demand") || lower.includes("supply"))) {
+    return generateDemandSupplyGraphSVG(instruction);
+  }
+  
+  // Production Possibility Curve (PPC)
+  if (lower.includes("production possibility") || lower.includes("ppc") || lower.includes("ppf")) {
+    return generatePPCGraphSVG(instruction);
+  }
+  
+  // Default to demand-supply if no specific type found
+  return generateDemandSupplyGraphSVG(instruction);
+}
+
+// Demand & Supply Graph with equilibrium point
+function generateDemandSupplyGraphSVG(instruction: string): string {
+  const lower = instruction.toLowerCase();
+  const hasSupply = lower.includes("supply");
+  const hasDemand = lower.includes("demand");
+  
+  return `
+    <svg width="500" height="400" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .axis { stroke: #2d3748; stroke-width: 2; fill: none; }
+          .grid { stroke: #e2e8f0; stroke-width: 1; fill: none; }
+          .curve { stroke-width: 3; fill: none; }
+          .demand { stroke: #3182ce; }
+          .supply { stroke: #e53e3e; }
+          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #2d3748; font-weight: bold; }
+          .axis-label { font-family: Arial, sans-serif; font-size: 12px; fill: #4a5568; }
+          .point { fill: #2d3748; }
+        </style>
+      </defs>
+      
+      <!-- Grid lines -->
+      <defs>
+        <pattern id="econ-grid" width="40" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 30" class="grid"/>
+        </pattern>
+      </defs>
+      <rect width="400" height="300" x="80" y="50" fill="url(#econ-grid)" opacity="0.3"/>
+      
+      <!-- Axes -->
+      <line x1="80" y1="350" x2="480" y2="350" class="axis"/>
+      <line x1="80" y1="50" x2="80" y2="350" class="axis"/>
+      
+      <!-- Axis labels -->
+      <text x="280" y="380" class="axis-label" text-anchor="middle">Quantity</text>
+      <text x="30" y="200" class="axis-label" text-anchor="middle" transform="rotate(-90, 30, 200)">Price</text>
+      
+      ${hasDemand ? `
+      <!-- Demand Curve (downward sloping) -->
+      <path d="M 120 100 Q 200 150 300 200 Q 350 230 420 280" class="curve demand"/>
+      <text x="430" y="285" class="label demand">D</text>
+      ` : ""}
+      
+      ${hasSupply ? `
+      <!-- Supply Curve (upward sloping) -->
+      <path d="M 120 280 Q 200 230 300 180 Q 350 150 420 100" class="curve supply"/>
+      <text x="430" y="105" class="label supply">S</text>
+      ` : ""}
+      
+      ${hasDemand && hasSupply ? `
+      <!-- Equilibrium Point -->
+      <circle cx="300" cy="190" r="4" class="point"/>
+      <text x="310" y="185" class="label">E</text>
+      <line x1="80" y1="190" x2="300" y2="190" class="grid" stroke-dasharray="5,5"/>
+      <line x1="300" y1="190" x2="300" y2="350" class="grid" stroke-dasharray="5,5"/>
+      <text x="60" y="195" class="axis-label">P*</text>
+      <text x="295" y="370" class="axis-label">Q*</text>
+      ` : ""}
+      
+      <!-- Title -->
+      <text x="280" y="30" class="label" text-anchor="middle" style="font-size: 16px;">
+        ${hasDemand && hasSupply ? "Demand & Supply Curves" : 
+          hasDemand ? "Demand Curve" : "Supply Curve"}
+      </text>
+    </svg>
+  `;
+}
+
+// Production Possibility Curve (PPC)
+function generatePPCGraphSVG(instruction: string): string {
+  return `
+    <svg width="500" height="400" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .axis { stroke: #2d3748; stroke-width: 2; fill: none; }
+          .grid { stroke: #e2e8f0; stroke-width: 1; fill: none; }
+          .ppc { stroke: #805ad5; stroke-width: 3; fill: none; }
+          .label { font-family: Arial, sans-serif; font-size: 14px; fill: #2d3748; font-weight: bold; }
+          .axis-label { font-family: Arial, sans-serif; font-size: 12px; fill: #4a5568; }
+          .point { fill: #2d3748; }
+          .point-a { fill: #e53e3e; }
+          .point-b { fill: #3182ce; }
+          .point-c { fill: #38a169; }
+        </style>
+      </defs>
+      
+      <!-- Grid lines -->
+      <defs>
+        <pattern id="ppc-grid" width="40" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 30" class="grid"/>
+        </pattern>
+      </defs>
+      <rect width="380" height="280" x="80" y="50" fill="url(#ppc-grid)" opacity="0.3"/>
+      
+      <!-- Axes -->
+      <line x1="80" y1="330" x2="460" y2="330" class="axis"/>
+      <line x1="80" y1="50" x2="80" y2="330" class="axis"/>
+      
+      <!-- Axis labels -->
+      <text x="270" y="360" class="axis-label" text-anchor="middle">Good X (Consumer Goods)</text>
+      <text x="25" y="190" class="axis-label" text-anchor="middle" transform="rotate(-90, 25, 190)">Good Y (Capital Goods)</text>
+      
+      <!-- PPC Curve (concave to origin) -->
+      <path d="M 120 80 Q 200 100 280 140 Q 350 200 420 300" class="ppc"/>
+      
+      <!-- Points on and around PPC -->
+      <circle cx="200" cy="105" r="4" class="point-a"/>
+      <text x="185" y="100" class="label point-a">A</text>
+      
+      <circle cx="280" cy="140" r="4" class="point-b"/>
+      <text x="290" y="135" class="label point-b">B</text>
+      
+      <circle cx="350" cy="200" r="4" class="point-c"/>
+      <text x="360" y="195" class="label point-c">C</text>
+      
+      <!-- Title -->
+      <text x="270" y="30" class="label" text-anchor="middle" style="font-size: 16px;">
+        Production Possibility Curve (PPC)
+      </text>
+      
+      <!-- Legend -->
+      <text x="90" y="380" class="axis-label" style="font-size: 10px;">
+        Points A, B, C: Efficient production combinations
+      </text>
     </svg>
   `;
 }
