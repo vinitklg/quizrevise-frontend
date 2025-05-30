@@ -88,14 +88,14 @@ function AppContent() {
   const [location] = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Define which routes should use dashboard layout (authenticated routes)
-  const isDashboardRoute = location.startsWith('/dashboard') || location.startsWith('/admin');
+  // Define which routes should use dashboard layout (only student dashboard routes)
+  const isDashboardRoute = location.startsWith('/dashboard');
   
   // Define which routes are public (don't require authentication)
   const isPublicRoute = ['/', '/about', '/services', '/pricing', '/login', '/signup'].includes(location) || 
                        location.startsWith('/admin/login');
 
-  // Show dashboard layout for authenticated dashboard/admin routes
+  // Show dashboard layout for authenticated dashboard routes (excluding admin)
   const shouldUseDashboardLayout = !isLoading && isAuthenticated && isDashboardRoute;
   
   // Show public layout for public routes or when not authenticated
