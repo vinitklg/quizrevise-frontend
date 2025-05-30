@@ -168,6 +168,7 @@ export const feedback = pgTable("feedback", {
   subject: text("subject"),
   type: text("type").notNull(), // "general", "technical", "suggestion"
   feedbackText: text("feedback_text"),
+  rating: integer("rating"), // 1-5 star rating
   file: text("file"), // File URL or path
   status: text("status").default("pending").notNull(), // pending, reviewed, resolved
   adminResponse: text("admin_response"),

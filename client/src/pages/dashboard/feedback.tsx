@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { MessageSquare, FileText, Lightbulb, Upload, CheckCircle } from "lucide-react";
+import { MessageSquare, FileText, Lightbulb, Upload, CheckCircle, Star } from "lucide-react";
 import type { Feedback } from "@shared/schema";
 
 const feedbackCategories = [
@@ -30,6 +30,7 @@ export default function FeedbackPage() {
     class: "",
     subject: "",
     feedbackText: "",
+    rating: 0,
     file: null as File | null
   });
 
@@ -52,7 +53,7 @@ export default function FeedbackPage() {
         title: "Feedback Submitted",
         description: "Thank you for your feedback. We'll review it soon.",
       });
-      setFormData({ board: "", class: "", subject: "", feedbackText: "", file: null });
+      setFormData({ board: "", class: "", subject: "", feedbackText: "", rating: 0, file: null });
       setSelectedCategory("");
       queryClient.invalidateQueries({ queryKey: ["/api/feedback"] });
     },
@@ -82,6 +83,7 @@ export default function FeedbackPage() {
     data.append("class", formData.class);
     data.append("subject", formData.subject);
     data.append("feedbackText", formData.feedbackText);
+    data.append("rating", formData.rating.toString());
     if (formData.file) {
       data.append("file", formData.file);
     }
@@ -271,6 +273,38 @@ export default function FeedbackPage() {
                       rows={6}
                       className="resize-none"
                     />
+                  </div>
+
+                  {/* Rating */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rate your experience (optional)
+                    </label>
+                    <div className="flex items-center space-x-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, rating: star })}
+                          className={`p-1 transition-colors ${
+                            star <= formData.rating 
+                              ? "text-yellow-400 hover:text-yellow-500" 
+                              : "text-gray-300 hover:text-gray-400"
+                          }`}
+                        >
+                          <Star className={`h-6 w-6 ${star <= formData.rating ? "fill-current" : ""}`} />
+                        </button>
+                      ))}
+                      {formData.rating > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, rating: 0 })}
+                          className="ml-2 text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* File Upload */}
