@@ -171,10 +171,10 @@ const CreateQuiz = () => {
       // Reset form
       form.reset();
 
-      // Navigate to today's quizzes after showing notification for 3 seconds
+      // Navigate to today's quizzes after showing notification for 30 seconds
       setTimeout(() => {
         navigate(`/dashboard/today`);
-      }, 3000);
+      }, 30000);
 
       // Hide notification after 60 seconds
       setTimeout(() => {
