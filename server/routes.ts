@@ -967,6 +967,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feedback routes
+  app.post("/api/feedback", isAuthenticated, async (req, res) => {
+    try {
+      const feedbackData = {
+        ...req.body,
+        userId: req.session.userId!,
+        status: "pending"
+      };
+
+      const feedback = await storage.createFeedback(feedbackData);
+      res.status(201).json(feedback);
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+
+  app.get("/api/feedback", isAuthenticated, async (req, res) => {
+    try {
+      const feedback = await storage.getFeedbackByUser(req.session.userId!);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error getting feedback:", error);
+      res.status(500).json({ message: "Failed to get feedback" });
+    }
+  });
+
   // Subscription routes
   app.post("/api/subscription", isAuthenticated, async (req, res) => {
     try {
