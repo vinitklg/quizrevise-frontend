@@ -35,6 +35,10 @@ const Dashboard = () => {
     queryKey: ["/api/quizzes/today"],
   });
 
+  const { data: completedData, isLoading: isCompletedLoading } = useQuery<QuizSchedule[]>({
+    queryKey: ["/api/quizzes/completed"],
+  });
+
   // Calculate stats
   const totalQuizzes = quizzes?.length || 0;
   const activeQuizzes = quizzes?.filter(q => q.status === "active").length || 0;
@@ -43,21 +47,24 @@ const Dashboard = () => {
   const totalScheduledToday = schedules?.length || 0;
   const completedToday = schedules?.filter(s => s.status === "completed").length || 0;
   
-  // Performance data for the chart
-  const performanceData = schedules
-    ?.filter(s => s.completedDate && s.score !== null)
+  // Performance data for the chart using completed quiz data
+  const performanceData = completedData
+    ?.filter(s => s.completedDate && s.score !== null && s.score > 0)
     .map(s => ({
       date: s.completedDate as string,
       score: s.score as number,
-      quizSet: 1 // This would need to be fetched from the actual quiz set
+      quizSet: s.quizId || 1 // Use actual quiz ID or default to 1
     })) || [];
+
+  console.log('Completed Data:', completedData);
+  console.log('Performance Data:', performanceData);
 
   return (
     <div className="pt-4 pb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
         
-        {isUserLoading || isQuizzesLoading || isSchedulesLoading ? (
+        {isUserLoading || isQuizzesLoading || isSchedulesLoading || isCompletedLoading ? (
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
