@@ -53,9 +53,12 @@ const Login = () => {
       });
       
       // Check if user is admin and redirect accordingly
-      if (user.isAdmin || user.username === 'admin') {
+      console.log("Login response user:", user); // Debug log
+      if (user.isAdmin === true || user.username === 'admin' || user.email === 'admin@quickrevise.com') {
+        console.log("Redirecting to admin dashboard"); // Debug log
         navigate("/admin");
       } else {
+        console.log("Redirecting to student dashboard"); // Debug log
         navigate("/dashboard");
       }
     } catch (error) {
