@@ -79,6 +79,7 @@ const CreateQuiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCreationNotification, setShowCreationNotification] = useState(false);
 
   // Get user's subscribed subjects
   const userSubjects = user?.subscribedSubjects || [];
@@ -158,16 +159,19 @@ const CreateQuiz = () => {
         diagramSupport: data.diagramSupport || false,
       };
 
+      // Show prominent creation notification
+      setShowCreationNotification(true);
+      
       // Start the quiz creation process (don't wait for completion)
       apiRequest("POST", "/api/quizzes", formattedData).catch(error => {
         console.error("Quiz creation failed:", error);
+        setShowCreationNotification(false);
       });
 
-      // Immediately show success message and navigate
-      toast({
-        title: "Quiz Creation Started!",
-        description: "Your quiz is being prepared in the background. It will appear in 'Today's Quizzes' within 5-10 minutes.",
-      });
+      // Hide notification after 60 seconds
+      setTimeout(() => {
+        setShowCreationNotification(false);
+      }, 60000);
 
       // Reset form and navigate to today's quizzes
       form.reset();
@@ -202,6 +206,34 @@ const CreateQuiz = () => {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           Create Quiz
         </h1>
+
+        {/* Prominent Quiz Creation Notification */}
+        {showCreationNotification && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 mx-4 max-w-md w-full text-center">
+              <div className="mb-6">
+                <div className="animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Creating Your Quiz
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                  AI is generating 8 sets of personalized questions for your spaced repetition learning journey.
+                </p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                <p className="text-blue-800 dark:text-blue-200 font-medium">
+                  This will take 2-3 minutes. Your quiz will appear in "Today's Quizzes" when ready.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreationNotification(false)}
+                className="mt-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                Dismiss (continues in background)
+              </button>
+            </div>
+          </div>
+        )}
 
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
