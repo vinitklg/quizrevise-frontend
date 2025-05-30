@@ -157,6 +157,25 @@ export type InsertDoubtQuery = {
   fileType?: string;
 };
 
+// Feedback table
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(), // "general", "quiz", "technical", "suggestion"
+  rating: integer("rating"), // 1-5 stars for quiz feedback
+  quizId: integer("quiz_id").references(() => quizzes.id), // For quiz-specific feedback
+  feedbackText: text("feedback_text"),
+  category: text("category"), // For general feedback categorization
+  status: text("status").default("pending").notNull(), // pending, reviewed, resolved
+  adminResponse: text("admin_response"),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+});
+
+export type UpsertFeedback = typeof feedback.$inferInsert;
+export type Feedback = typeof feedback.$inferSelect;
+
 // Question type definitions for JSON fields
 export interface Question {
   id: number;
@@ -200,3 +219,11 @@ export const generateQuizSchema = z.object({
   difficultyLevels: z.array(z.enum(["basic", "standard", "challenging", "most-challenging"])).min(1, "Select at least one difficulty level"),
   numberOfQuestions: z.number().min(5).max(50),
 });
+
+// Feedback schema
+export const insertFeedbackSchema = createInsertSchema(feedback, {
+  type: z.enum(["general", "quiz", "technical", "suggestion"]),
+  rating: z.number().min(1).max(5).optional(),
+  feedbackText: z.string().min(5, "Feedback must be at least 5 characters").optional(),
+  category: z.string().optional(),
+}).omit({ id: true, createdAt: true, reviewedAt: true, reviewedBy: true });

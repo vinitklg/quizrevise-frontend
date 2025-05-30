@@ -350,7 +350,7 @@ const AskDoubts = () => {
                           <Textarea
                             placeholder="Ask anything..."
                             {...field}
-                            rows={isTyping ? 4 : 1}
+                            rows={isTyping ? 6 : 1}
                             onFocus={() => setIsTyping(true)}
                             onBlur={(e) => {
                               if (!e.target.value.trim()) {
