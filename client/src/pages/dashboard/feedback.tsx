@@ -11,9 +11,9 @@ import { MessageSquare, FileText, Lightbulb, Upload, CheckCircle } from "lucide-
 import type { Feedback } from "@shared/schema";
 
 const feedbackCategories = [
-  { value: "general", label: "General Feedback", icon: MessageSquare, color: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "technical", label: "Technical Issue", icon: FileText, color: "bg-red-50 text-red-700 border-red-200" },
-  { value: "suggestion", label: "Feature Suggestion", icon: Lightbulb, color: "bg-green-50 text-green-700 border-green-200" }
+  { value: "content", label: "Subject Content Issue", icon: FileText, color: "bg-orange-50 text-orange-700 border-orange-200" },
+  { value: "quiz", label: "Quiz Error (wrong question/answer/diagram)", icon: MessageSquare, color: "bg-red-50 text-red-700 border-red-200" },
+  { value: "doubt", label: "Doubt Answer Feedback", icon: Lightbulb, color: "bg-blue-50 text-blue-700 border-blue-200" }
 ];
 
 export default function FeedbackPage() {
@@ -158,9 +158,9 @@ export default function FeedbackPage() {
                         <div>
                           <h3 className="font-medium">{category.label}</h3>
                           <p className="text-sm text-gray-600">
-                            {category.value === "general" && "Overall experience, general suggestions"}
-                            {category.value === "technical" && "Bugs, errors, performance issues"}
-                            {category.value === "suggestion" && "New features, improvements, enhancements"}
+                            {category.value === "content" && "Report errors in subject content, curriculum alignment issues"}
+                            {category.value === "quiz" && "Report incorrect questions, answers, or diagram issues in quizzes"}
+                            {category.value === "doubt" && "Provide feedback on doubt resolution quality and accuracy"}
                           </p>
                         </div>
                       </div>
@@ -308,20 +308,20 @@ export default function FeedbackPage() {
             <CardContent>
               {isLoading ? (
                 <div className="text-center py-8">Loading your feedback...</div>
-              ) : feedbacks?.length === 0 ? (
+              ) : !feedbacks || feedbacks.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   No feedback submitted yet. Share your thoughts using the Submit Feedback tab.
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {feedbacks?.map((feedback: Feedback) => (
+                  {feedbacks.map((feedback: Feedback) => (
                     <div key={feedback.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            feedback.type === "general" ? "bg-blue-100 text-blue-800" :
-                            feedback.type === "technical" ? "bg-red-100 text-red-800" :
-                            "bg-green-100 text-green-800"
+                            feedback.type === "content" ? "bg-orange-100 text-orange-800" :
+                            feedback.type === "quiz" ? "bg-red-100 text-red-800" :
+                            "bg-blue-100 text-blue-800"
                           }`}>
                             {feedbackCategories.find(c => c.value === feedback.type)?.label}
                           </span>
