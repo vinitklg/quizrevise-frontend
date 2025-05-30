@@ -39,6 +39,7 @@ interface Feedback {
   userId: number;
   userName?: string;
   userEmail?: string;
+  userPhone?: string;
   board?: string;
   class?: number;
   subject?: string;
