@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Clock, CheckCircle } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
 import PostQuizFeedback from "@/components/PostQuizFeedback";
 
 interface Question {
@@ -161,7 +160,6 @@ export default function TakeQuiz() {
   if (isLoading) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
@@ -172,7 +170,6 @@ export default function TakeQuiz() {
   if (!schedule) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Quiz Not Found</h2>
@@ -189,7 +186,6 @@ export default function TakeQuiz() {
   if (isCompleted && showResults && quizResults) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto p-6">
             {/* Results Header */}
@@ -283,8 +279,6 @@ export default function TakeQuiz() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
-      
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
           <div className="py-6">
