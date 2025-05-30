@@ -13,7 +13,10 @@ import type { Feedback } from "@shared/schema";
 const feedbackCategories = [
   { value: "content", label: "Subject Content Issue", icon: FileText, color: "bg-orange-50 text-orange-700 border-orange-200" },
   { value: "quiz", label: "Quiz Error (wrong question/answer/diagram)", icon: MessageSquare, color: "bg-red-50 text-red-700 border-red-200" },
-  { value: "doubt", label: "Doubt Answer Feedback", icon: Lightbulb, color: "bg-blue-50 text-blue-700 border-blue-200" }
+  { value: "doubt", label: "Doubt Answer Feedback", icon: Lightbulb, color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { value: "general", label: "General Experience", icon: MessageSquare, color: "bg-green-50 text-green-700 border-green-200" },
+  { value: "technical", label: "Technical Bug / Error", icon: FileText, color: "bg-purple-50 text-purple-700 border-purple-200" },
+  { value: "suggestion", label: "Feature Suggestion", icon: Lightbulb, color: "bg-indigo-50 text-indigo-700 border-indigo-200" }
 ];
 
 export default function FeedbackPage() {
@@ -161,6 +164,9 @@ export default function FeedbackPage() {
                             {category.value === "content" && "Report errors in subject content, curriculum alignment issues"}
                             {category.value === "quiz" && "Report incorrect questions, answers, or diagram issues in quizzes"}
                             {category.value === "doubt" && "Provide feedback on doubt resolution quality and accuracy"}
+                            {category.value === "general" && "Share your overall experience using the platform"}
+                            {category.value === "technical" && "Report bugs, errors, or technical issues"}
+                            {category.value === "suggestion" && "Suggest new features or improvements"}
                           </p>
                         </div>
                       </div>
@@ -321,7 +327,11 @@ export default function FeedbackPage() {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             feedback.type === "content" ? "bg-orange-100 text-orange-800" :
                             feedback.type === "quiz" ? "bg-red-100 text-red-800" :
-                            "bg-blue-100 text-blue-800"
+                            feedback.type === "doubt" ? "bg-blue-100 text-blue-800" :
+                            feedback.type === "general" ? "bg-green-100 text-green-800" :
+                            feedback.type === "technical" ? "bg-purple-100 text-purple-800" :
+                            feedback.type === "suggestion" ? "bg-indigo-100 text-indigo-800" :
+                            "bg-gray-100 text-gray-800"
                           }`}>
                             {feedbackCategories.find(c => c.value === feedback.type)?.label}
                           </span>
