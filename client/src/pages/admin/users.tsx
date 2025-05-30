@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Eye } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { Link } from "wouter";
 
 interface User {
   id: number;
