@@ -408,21 +408,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Generate all questions for spaced repetition in a single optimized API call
-      console.log(`Generating all quiz questions for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+      // Check if similar quiz questions already exist for this topic
+      console.log(`Checking for existing quiz questions for topic: ${selectedTopic.name}`);
       
-      const batchQuestions = await generateBatchQuizQuestions(
-        selectedSubject.name,
-        selectedChapter.name,
-        selectedTopic.name,
-        user.grade || 10,
-        user.board || "CBSE",
-        validatedData.questionTypes,
-        validatedData.bloomTaxonomy,
-        validatedData.difficultyLevels,
-        validatedData.numberOfQuestions,
-        validatedData.diagramSupport
-      );
+      const existingQuiz = await storage.findSimilarQuiz({
+        subjectId: validatedData.subjectId,
+        topicId: validatedData.topicId,
+        grade: user.grade || 10,
+        board: user.board || "CBSE",
+        questionTypes: validatedData.questionTypes,
+        difficultyLevels: validatedData.difficultyLevels,
+        numberOfQuestions: validatedData.numberOfQuestions
+      });
+
+      let batchQuestions;
+      
+      if (existingQuiz && existingQuiz.quizSets.length === 8) {
+        console.log(`Found existing quiz questions for topic: ${selectedTopic.name}, reusing questions`);
+        
+        // Reuse existing questions but create new quiz instance for this user
+        batchQuestions = {
+          questions: existingQuiz.quizSets.flatMap((set: any) => 
+            set.questions.map((q: any) => ({
+              ...q,
+              setNumber: set.setNumber
+            }))
+          )
+        };
+      } else {
+        console.log(`Generating new quiz questions for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+        
+        batchQuestions = await generateBatchQuizQuestions(
+          selectedSubject.name,
+          selectedChapter.name,
+          selectedTopic.name,
+          user.grade || 10,
+          user.board || "CBSE",
+          validatedData.questionTypes,
+          validatedData.bloomTaxonomy,
+          validatedData.difficultyLevels,
+          validatedData.numberOfQuestions,
+          validatedData.diagramSupport
+        );
+      }
 
       // Group questions by set number and create quiz sets
       const quizSets = [];

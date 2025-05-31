@@ -226,7 +226,7 @@ const CreateQuiz = () => {
               </div>
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                 <p className="text-blue-800 dark:text-blue-200 font-medium">
-                  This will take 5-10 minutes. Please refresh the page after 5 minutes to see your quiz in "Today's Quizzes".
+                  If similar questions exist, this will be instant. Otherwise, new questions will be generated in 1-2 minutes. Please refresh the page after completion.
                 </p>
               </div>
               <button

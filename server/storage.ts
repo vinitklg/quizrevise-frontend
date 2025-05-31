@@ -72,6 +72,15 @@ export interface IStorage {
   getQuizById(id: number): Promise<Quiz | undefined>;
   getQuizzesByUser(userId: number): Promise<Quiz[]>;
   getActiveQuizzesByUser(userId: number): Promise<Quiz[]>;
+  findSimilarQuiz(criteria: {
+    subjectId: number;
+    topicId: number;
+    grade: number;
+    board: string;
+    questionTypes: string[];
+    difficultyLevels: string[];
+    numberOfQuestions: number;
+  }): Promise<{ quizSets: QuizSet[] } | undefined>;
 
   // QuizSet operations
   createQuizSet(quizSet: InsertQuizSet): Promise<QuizSet>;
@@ -350,6 +359,52 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(quizzes)
       .where(and(eq(quizzes.userId, userId), eq(quizzes.status, "active")));
+  }
+
+  async findSimilarQuiz(criteria: {
+    subjectId: number;
+    topicId: number;
+    grade: number;
+    board: string;
+    questionTypes: string[];
+    difficultyLevels: string[];
+    numberOfQuestions: number;
+  }): Promise<{ quizSets: QuizSet[] } | undefined> {
+    try {
+      // Find a quiz with similar parameters
+      const [similarQuiz] = await db
+        .select()
+        .from(quizzes)
+        .where(
+          and(
+            eq(quizzes.subjectId, criteria.subjectId),
+            eq(quizzes.topicId, criteria.topicId),
+            eq(quizzes.numberOfQuestions, criteria.numberOfQuestions),
+            eq(quizzes.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (!similarQuiz) {
+        return undefined;
+      }
+
+      // Get all quiz sets for this quiz
+      const quizSetsData = await db
+        .select()
+        .from(quizSets)
+        .where(eq(quizSets.quizId, similarQuiz.id))
+        .orderBy(quizSets.setNumber);
+
+      if (quizSetsData.length === 8) {
+        return { quizSets: quizSetsData };
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error("Error finding similar quiz:", error);
+      return undefined;
+    }
   }
 
   // QuizSet operations
