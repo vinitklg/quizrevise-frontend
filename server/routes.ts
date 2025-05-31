@@ -565,6 +565,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get subjects that user has taken tests for
+  app.get("/api/quizzes/performance/subjects", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const subjectsWithTests = await storage.getSubjectsWithPerformanceData(userId);
+      res.json(subjectsWithTests);
+    } catch (error) {
+      console.error("Error fetching subjects with performance data:", error);
+      res.status(500).json({ message: "Failed to get subjects with test data" });
+    }
+  });
+
   app.post("/api/quizzes/complete/:quizId/:quizSetId", isAuthenticated, async (req, res) => {
     try {
       const { quizId, quizSetId } = req.params;

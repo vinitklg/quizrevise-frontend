@@ -98,6 +98,7 @@ export interface IStorage {
     startDate?: Date,
     endDate?: Date,
   ): Promise<{ date: string; score: number; quizSet: number }[]>;
+  getSubjectsWithPerformanceData(userId: number): Promise<{ id: number; name: string }[]>;
 
   // Doubt Query operations
   createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
@@ -509,6 +510,28 @@ export class DatabaseStorage implements IStorage {
       score: result.score || 0,
       quizSet: result.quizSet,
     }));
+  }
+
+  async getSubjectsWithPerformanceData(userId: number): Promise<{ id: number; name: string }[]> {
+    const results = await db
+      .select({
+        id: subjects.id,
+        name: subjects.name,
+      })
+      .from(subjects)
+      .innerJoin(quizzes, eq(quizzes.subjectId, subjects.id))
+      .innerJoin(quizSchedules, eq(quizSchedules.quizId, quizzes.id))
+      .where(
+        and(
+          eq(quizSchedules.userId, userId),
+          eq(quizSchedules.status, "completed"),
+          sql`${quizSchedules.score} IS NOT NULL`
+        )
+      )
+      .groupBy(subjects.id, subjects.name)
+      .orderBy(subjects.name);
+
+    return results;
   }
 
   // Doubt Query operations

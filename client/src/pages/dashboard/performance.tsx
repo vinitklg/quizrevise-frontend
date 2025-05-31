@@ -18,9 +18,9 @@ const Performance = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
-  // Get subjects from API to match actual subject data
+  // Get subjects that user has taken tests for
   const { data: subjects } = useQuery({
-    queryKey: ['/api/subjects'],
+    queryKey: ['/api/quizzes/performance/subjects'],
     enabled: !!user,
   });
 
