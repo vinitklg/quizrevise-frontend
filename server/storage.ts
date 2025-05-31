@@ -490,6 +490,7 @@ export class DatabaseStorage implements IStorage {
         score: quizSchedules.score,
         quizSet: quizSchedules.quizSetId,
         quizId: quizSchedules.quizId,
+        scheduleId: quizSchedules.id,
       })
       .from(quizSchedules);
 
@@ -506,7 +507,7 @@ export class DatabaseStorage implements IStorage {
     );
 
     return results.map((result) => ({
-      date: result.date?.toISOString().split("T")[0] || "",
+      date: `${result.date?.toISOString().split("T")[0]} (Set ${result.quizSet})`,
       score: result.score || 0,
       quizSet: result.quizSet,
     }));
