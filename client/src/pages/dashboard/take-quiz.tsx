@@ -361,15 +361,18 @@ export default function TakeQuiz() {
                     >
                       {(() => {
                         if (typeof currentQuestion.options === 'object' && !Array.isArray(currentQuestion.options)) {
-                          // Handle assertion-reasoning questions with object format
-                          return Object.entries(currentQuestion.options).map(([key, value]) => (
-                            <div key={key} className="flex items-center space-x-2">
-                              <RadioGroupItem value={key} id={`option-${key}`} />
-                              <Label htmlFor={`option-${key}`} className="cursor-pointer">
-                                {key}. {value}
-                              </Label>
-                            </div>
-                          ));
+                          // Handle MCQ questions with object format - only show A, B, C, D options
+                          const validOptions = ['A', 'B', 'C', 'D'];
+                          return Object.entries(currentQuestion.options)
+                            .filter(([key]) => validOptions.includes(key))
+                            .map(([key, value]) => (
+                              <div key={key} className="flex items-center space-x-2">
+                                <RadioGroupItem value={key} id={`option-${key}`} />
+                                <Label htmlFor={`option-${key}`} className="cursor-pointer">
+                                  {key}. {value}
+                                </Label>
+                              </div>
+                            ));
                         } else {
                           // Handle regular MCQ questions with array format
                           const options = Array.isArray(currentQuestion.options) 
