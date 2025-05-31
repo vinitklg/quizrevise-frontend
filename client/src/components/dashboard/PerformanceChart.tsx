@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -42,7 +42,7 @@ const PerformanceChart = ({ data, title = "Performance Over Time" }: Performance
       <CardContent>
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <BarChart
               data={chartData}
               margin={{
                 top: 5,
@@ -73,16 +73,13 @@ const PerformanceChart = ({ data, title = "Performance Over Time" }: Performance
                 labelFormatter={(label) => `Date: ${label}`}
               />
               <Legend />
-              <Line
-                type="monotone"
+              <Bar
                 dataKey="score"
                 name="Quiz Score"
-                stroke="var(--chart-1, #3B82F6)"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                fill="var(--chart-1, #3B82F6)"
+                radius={[4, 4, 0, 0]}
               />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

@@ -18,12 +18,11 @@ const Performance = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
-  // Hard code the commercial subjects that match the Create Quiz page
-  const commercialSubjects = [
-    "commercial studies",
-    "economic",
-    "accounts"
-  ];
+  // Get subjects from API to match actual subject data
+  const { data: subjects } = useQuery({
+    queryKey: ['/api/subjects'],
+    enabled: !!user,
+  });
 
   const { data: performanceData, isLoading } = useQuery({
     queryKey: ['/api/quizzes/performance', selectedSubject, startDate, endDate],
@@ -130,9 +129,9 @@ const Performance = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Subjects</SelectItem>
-                {commercialSubjects.map((subject) => (
-                  <SelectItem key={subject} value={subject}>
-                    {subject.charAt(0).toUpperCase() + subject.slice(1)}
+                {subjects?.map((subject) => (
+                  <SelectItem key={subject.id} value={subject.id.toString()}>
+                    {subject.name}
                   </SelectItem>
                 ))}
               </SelectContent>
