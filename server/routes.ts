@@ -636,6 +636,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get adaptive questions for spaced repetition based on performance
+  app.get("/api/quiz-schedule/:scheduleId/adaptive-questions", isAuthenticated, async (req, res) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      const userId = req.session.userId!;
+      
+      // Get the schedule and quiz information
+      const schedules = await storage.getQuizSchedulesByUser(userId);
+      const schedule = schedules.find(s => s.id === scheduleId);
+      
+      if (!schedule) {
+        return res.status(404).json({ message: "Quiz schedule not found" });
+      }
+      
+      // Get quiz set with all questions
+      const quizSet = await storage.getQuizSet(schedule.quizSetId);
+      if (!quizSet) {
+        return res.status(404).json({ message: "Quiz set not found" });
+      }
+      
+      // Get user's performance history for this quiz
+      const userSchedules = await storage.getQuizSchedulesByUser(userId);
+      const quizHistory = userSchedules.filter(s => 
+        s.quizId === schedule.quizId && 
+        s.status === "completed" && 
+        s.score !== null
+      );
+      
+      let selectedQuestions = [];
+      const allQuestions = quizSet.questions || [];
+      
+      if (quizHistory.length === 0) {
+        // First attempt - use foundational questions
+        selectedQuestions = allQuestions
+          .filter(q => q.difficultyLevel === "Basic" || q.difficultyLevel === "Moderate")
+          .slice(0, 15);
+      } else {
+        // Calculate average performance
+        const averageScore = quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length;
+        
+        if (averageScore >= 90) {
+          // High performance - challenge with hardest questions
+          selectedQuestions = allQuestions
+            .filter(q => q.difficultyLevel === "Challenging" || q.difficultyLevel === "Advanced")
+            .slice(0, 15);
+        } else if (averageScore >= 70) {
+          // Good performance - focus on mistakes and moderate challenges
+          const mistakeQuestions = [];
+          quizHistory.forEach(history => {
+            if (history.userAnswers) {
+              Object.keys(history.userAnswers).forEach(questionId => {
+                const userAnswer = history.userAnswers[questionId];
+                const question = allQuestions.find(q => q.id.toString() === questionId);
+                if (question && userAnswer !== question.correctAnswer) {
+                  mistakeQuestions.push(question);
+                }
+              });
+            }
+          });
+          
+          selectedQuestions = mistakeQuestions.slice(0, 10);
+          
+          // Fill remaining with moderate questions
+          if (selectedQuestions.length < 15) {
+            const moderateQuestions = allQuestions
+              .filter(q => q.difficultyLevel === "Moderate" && !selectedQuestions.includes(q))
+              .slice(0, 15 - selectedQuestions.length);
+            selectedQuestions = [...selectedQuestions, ...moderateQuestions];
+          }
+        } else {
+          // Low performance - focus on foundational concepts
+          selectedQuestions = allQuestions
+            .filter(q => q.difficultyLevel === "Basic" || q.difficultyLevel === "Moderate")
+            .slice(0, 15);
+        }
+      }
+      
+      // Ensure minimum 15 questions
+      if (selectedQuestions.length < 15) {
+        const remainingQuestions = allQuestions
+          .filter(q => !selectedQuestions.includes(q))
+          .slice(0, 15 - selectedQuestions.length);
+        selectedQuestions = [...selectedQuestions, ...remainingQuestions];
+      }
+      
+      res.json({
+        schedule,
+        questions: selectedQuestions.slice(0, 15),
+        adaptiveInfo: {
+          averageScore: quizHistory.length > 0 ? 
+            quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length : 0,
+          totalAttempts: quizHistory.length,
+          selectionReason: quizHistory.length === 0 ? "first_attempt" : 
+            quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length >= 90 ? "high_performance" :
+            quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length >= 70 ? "mistake_focused" : "foundational"
+        }
+      });
+    } catch (error) {
+      console.error("Error getting adaptive questions:", error);
+      res.status(500).json({ message: "Failed to get adaptive questions" });
+    }
+  });
+
   // Get individual quiz schedule with questions
   app.get("/api/quiz-schedule/:scheduleId", isAuthenticated, async (req, res) => {
     try {
