@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateQuizQuestions, answerDoubtQuery } from "./openai";
+import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } from "./openai";
 import { renderDiagram } from "./diagramRenderer";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -408,29 +408,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Generate 8 sets of questions for spaced repetition learning
+      // Generate all questions for spaced repetition in a single optimized API call
+      console.log(`Generating all quiz questions for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+      
+      const batchQuestions = await generateBatchQuizQuestions(
+        selectedSubject.name,
+        selectedChapter.name,
+        selectedTopic.name,
+        user.grade || 10,
+        user.board || "CBSE",
+        validatedData.questionTypes,
+        validatedData.bloomTaxonomy,
+        validatedData.difficultyLevels,
+        validatedData.numberOfQuestions,
+        validatedData.diagramSupport
+      );
+
+      // Group questions by set number and create quiz sets
       const quizSets = [];
+      const questionsBySet: Record<number, any[]> = {};
+      
+      // Initialize sets 1-8
+      for (let i = 1; i <= 8; i++) {
+        questionsBySet[i] = [];
+      }
+      
+      // Distribute questions across sets
+      batchQuestions.questions.forEach((question: any) => {
+        const setNum = question.setNumber || 1;
+        if (questionsBySet[setNum]) {
+          questionsBySet[setNum].push(question);
+        }
+      });
+      
+      // Create quiz sets and process diagrams
       for (let setNumber = 1; setNumber <= 8; setNumber++) {
-        console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
-        
-        // Use the specific topic for much better targeted question generation
-        const questions = await generateQuizQuestions(
-          selectedSubject.name,
-          selectedChapter.name,
-          selectedTopic.name, // Using the specific topic for precise targeting
-          user.grade || 10,
-          user.board || "CBSE",
-          validatedData.questionTypes,
-          validatedData.bloomTaxonomy,
-          validatedData.difficultyLevels,
-          validatedData.numberOfQuestions,
-          setNumber,
-          validatedData.diagramSupport
-        );
+        const setQuestions = questionsBySet[setNumber] || [];
         
         // Process questions and render diagrams if they exist
         const processedQuestions = await Promise.all(
-          questions.questions.map(async (question: any, index: number) => {
+          setQuestions.map(async (question: any, index: number) => {
             // Check if question has diagram instruction
             if (question.diagram_instruction) {
               try {
@@ -446,7 +463,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 };
               } catch (error) {
                 console.error('Error rendering diagram:', error);
-                // Continue without diagram if rendering fails
                 return question;
               }
             }
