@@ -49,7 +49,7 @@ const Dashboard = () => {
   
   // Active quizzes should only be quizzes that have at least one pending schedule
   // Count unique quiz IDs that have pending schedules (today + upcoming)
-  const pendingQuizIds = new Set();
+  const pendingQuizIds = new Set<number>();
   
   // Add quiz IDs from today's pending schedules
   schedules?.filter(s => s.status === "pending").forEach(s => {
