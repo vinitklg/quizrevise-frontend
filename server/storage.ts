@@ -473,6 +473,15 @@ export class DatabaseStorage implements IStorage {
       sql`${quizSchedules.score} IS NOT NULL`,
     ];
 
+    // Add date range filters if provided
+    if (startDate) {
+      whereConditions.push(gte(quizSchedules.completedDate, startDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(lte(quizSchedules.completedDate, endDate));
+    }
+
     // Add subject filter if provided
     let queryBuilder = db
       .select({
@@ -489,19 +498,6 @@ export class DatabaseStorage implements IStorage {
         .where(and(...whereConditions, eq(quizzes.subjectId, subjectId)));
     } else {
       queryBuilder = queryBuilder.where(and(...whereConditions));
-    }
-
-    // Add date range filters if provided
-    if (startDate) {
-      queryBuilder = queryBuilder.where(
-        gte(quizSchedules.completedDate, startDate),
-      );
-    }
-
-    if (endDate) {
-      queryBuilder = queryBuilder.where(
-        lte(quizSchedules.completedDate, endDate),
-      );
     }
 
     const results = await queryBuilder.orderBy(
