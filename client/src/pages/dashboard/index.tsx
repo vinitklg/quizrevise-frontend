@@ -47,10 +47,21 @@ const Dashboard = () => {
   // Calculate stats
   const totalQuizzes = quizzes?.length || 0;
   
-  // Active quizzes = pending quizzes from today + upcoming quizzes
-  const todayPendingCount = schedules?.filter(s => s.status === "pending").length || 0;
-  const upcomingCount = upcomingQuizzes?.length || 0;
-  const activeQuizzes = todayPendingCount + upcomingCount;
+  // Active quizzes should only be quizzes that have at least one pending schedule
+  // Count unique quiz IDs that have pending schedules (today + upcoming)
+  const pendingQuizIds = new Set();
+  
+  // Add quiz IDs from today's pending schedules
+  schedules?.filter(s => s.status === "pending").forEach(s => {
+    pendingQuizIds.add(s.quizId);
+  });
+  
+  // Add quiz IDs from upcoming schedules
+  upcomingQuizzes?.forEach(s => {
+    pendingQuizIds.add(s.quizId);
+  });
+  
+  const activeQuizzes = pendingQuizIds.size;
   
   const completedQuizzes = quizzes?.filter(q => q.status === "completed").length || 0;
   
@@ -59,6 +70,8 @@ const Dashboard = () => {
 
   console.log('Today Schedules:', schedules);
   console.log('Upcoming Quizzes:', upcomingQuizzes);
+  console.log('Pending Quiz IDs:', Array.from(pendingQuizIds));
+  console.log('Active Quizzes Count:', activeQuizzes);
   console.log('Performance Data:', performanceData);
 
   return (
