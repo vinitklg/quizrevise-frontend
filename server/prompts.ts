@@ -399,6 +399,7 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 📌 Formatting Rules:
 - Frame analytical and application-based questions
 - Include economic data, statistics, and real-world scenarios
+- Use Indian currency formatting (₹) for all monetary values
 - Present solutions with proper economic reasoning and calculations
 
 📤 Output Format:

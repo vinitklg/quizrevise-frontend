@@ -188,28 +188,32 @@ async function renderBiologyDiagram(instruction: string, questionId: string): Pr
 
 // Economics diagram renderer
 async function renderEconomicsDiagram(instruction: string, questionId: string): Promise<string> {
-  const fileName = `economics_${questionId}.svg`;
+  const fileName = `economics_${questionId}_${Date.now()}.svg`;
   const filePath = path.join(process.cwd(), 'public', 'diagrams', fileName);
   
   let svg = '';
   const lower = instruction.toLowerCase();
   
-  // Check for specific economics graph types
-  if (lower.includes('demand') && lower.includes('supply')) {
-    svg = generateEconomicsDiagramSVG(instruction);
-  } else if (lower.includes('demand') || lower.includes('supply')) {
-    svg = generateEconomicsDiagramSVG(instruction);
+  // Check for specific economics graph types and generate unique diagrams
+  if (lower.includes('production possibility') || lower.includes('ppc') || lower.includes('ppf')) {
+    svg = generatePPCGraphSVG(instruction);
+  } else if (lower.includes('demand') && lower.includes('supply')) {
+    svg = generateDemandSupplyGraphSVG(instruction);
+  } else if (lower.includes('demand') && (lower.includes('shift') || lower.includes('increase') || lower.includes('decrease'))) {
+    svg = generateDemandSupplyGraphSVG(instruction);
+  } else if (lower.includes('supply') && (lower.includes('shift') || lower.includes('increase') || lower.includes('decrease'))) {
+    svg = generateDemandSupplyGraphSVG(instruction);
   } else if (lower.includes('price floor') || lower.includes('price ceiling')) {
-    svg = generateEconomicsDiagramSVG(instruction);
-  } else if (lower.includes('production possibility') || lower.includes('ppc') || lower.includes('ppf')) {
-    svg = generateEconomicsDiagramSVG(instruction);
-  } else if (lower.includes('cost curve') || lower.includes('mc') || lower.includes('ac')) {
-    svg = generateEconomicsDiagramSVG(instruction);
-  } else if (lower.includes('revenue curve') || lower.includes('mr') || lower.includes('ar')) {
-    svg = generateEconomicsDiagramSVG(instruction);
+    svg = generateDemandSupplyGraphSVG(instruction);
+  } else if (lower.includes('elasticity')) {
+    svg = generateDemandSupplyGraphSVG(instruction);
+  } else if (lower.includes('market') || lower.includes('equilibrium')) {
+    svg = generateDemandSupplyGraphSVG(instruction);
+  } else if (lower.includes('cost') || lower.includes('revenue') || lower.includes('profit')) {
+    svg = generateSupplyDemandSVG(instruction);
   } else {
-    // No specific graph keywords found, skip SVG generation
-    return null;
+    // Generate a basic economic graph for other economics topics
+    svg = generateGenericEconomicsSVG(instruction);
   }
   
   fs.writeFileSync(filePath, svg);
@@ -1574,6 +1578,39 @@ function generateDemandSupplyGraphSVG(instruction: string): string {
   const lower = instruction.toLowerCase();
   const hasSupply = lower.includes("supply");
   const hasDemand = lower.includes("demand");
+  const hasShift = lower.includes("shift") || lower.includes("increase") || lower.includes("decrease");
+  const hasEquilibrium = lower.includes("equilibrium");
+  
+  // Create unique variations based on instruction content
+  const hash = instruction.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+  const offsetX = (Math.abs(hash) % 40) - 20; // -20 to +20
+  const offsetY = (Math.abs(hash * 2) % 30) - 15; // -15 to +15
+  const curveType = Math.abs(hash) % 3; // 0, 1, or 2 for different curve shapes
+  
+  let demandPath = '';
+  let supplyPath = '';
+  let shiftedDemandPath = '';
+  let shiftedSupplyPath = '';
+  
+  // Generate different curve shapes based on hash
+  if (curveType === 0) {
+    demandPath = `M ${120 + offsetX} ${100 + offsetY} Q ${200 + offsetX} ${150 + offsetY} ${300 + offsetX} ${200 + offsetY} Q ${350 + offsetX} ${230 + offsetY} ${420 + offsetX} ${280 + offsetY}`;
+    supplyPath = `M ${120 + offsetX} ${280 + offsetY} Q ${200 + offsetX} ${230 + offsetY} ${300 + offsetX} ${180 + offsetY} Q ${350 + offsetX} ${150 + offsetY} ${420 + offsetX} ${100 + offsetY}`;
+  } else if (curveType === 1) {
+    demandPath = `M ${130 + offsetX} ${90 + offsetY} L ${180 + offsetX} ${140 + offsetY} L ${280 + offsetX} ${190 + offsetY} L ${380 + offsetX} ${270 + offsetY}`;
+    supplyPath = `M ${130 + offsetX} ${270 + offsetY} L ${180 + offsetX} ${220 + offsetY} L ${280 + offsetX} ${170 + offsetY} L ${380 + offsetX} ${90 + offsetY}`;
+  } else {
+    demandPath = `M ${110 + offsetX} ${110 + offsetY} Q ${250 + offsetX} ${160 + offsetY} ${410 + offsetX} ${270 + offsetY}`;
+    supplyPath = `M ${110 + offsetX} ${270 + offsetY} Q ${250 + offsetX} ${200 + offsetY} ${410 + offsetX} ${110 + offsetY}`;
+  }
+  
+  if (hasShift) {
+    shiftedDemandPath = `M ${140 + offsetX} ${80 + offsetY} Q ${220 + offsetX} ${130 + offsetY} ${320 + offsetX} ${180 + offsetY} Q ${370 + offsetX} ${210 + offsetY} ${440 + offsetX} ${260 + offsetY}`;
+    shiftedSupplyPath = `M ${140 + offsetX} ${260 + offsetY} Q ${220 + offsetX} ${210 + offsetY} ${320 + offsetX} ${160 + offsetY} Q ${370 + offsetX} ${130 + offsetY} ${440 + offsetX} ${80 + offsetY}`;
+  }
+  
+  const priceValue = Math.floor(Math.abs(hash) % 500) + 100;
+  const quantityValue = Math.floor(Math.abs(hash * 3) % 1000) + 200;
   
   return `
     <svg width="500" height="400" viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
@@ -1584,6 +1621,9 @@ function generateDemandSupplyGraphSVG(instruction: string): string {
           .curve { stroke-width: 3; fill: none; }
           .demand { stroke: #3182ce; }
           .supply { stroke: #e53e3e; }
+          .shifted { stroke-width: 2; stroke-dasharray: 8,4; }
+          .demand-shifted { stroke: #60a5fa; }
+          .supply-shifted { stroke: #fca5a5; }
           .label { font-family: Arial, sans-serif; font-size: 14px; fill: #2d3748; font-weight: bold; }
           .axis-label { font-family: Arial, sans-serif; font-size: 12px; fill: #4a5568; }
           .point { fill: #2d3748; }
@@ -1592,46 +1632,49 @@ function generateDemandSupplyGraphSVG(instruction: string): string {
       
       <!-- Grid lines -->
       <defs>
-        <pattern id="econ-grid" width="40" height="30" patternUnits="userSpaceOnUse">
+        <pattern id="econ-grid-${Math.abs(hash)}" width="40" height="30" patternUnits="userSpaceOnUse">
           <path d="M 40 0 L 0 0 0 30" class="grid"/>
         </pattern>
       </defs>
-      <rect width="400" height="300" x="80" y="50" fill="url(#econ-grid)" opacity="0.3"/>
+      <rect width="400" height="300" x="80" y="50" fill="url(#econ-grid-${Math.abs(hash)})" opacity="0.3"/>
       
       <!-- Axes -->
       <line x1="80" y1="350" x2="480" y2="350" class="axis"/>
       <line x1="80" y1="50" x2="80" y2="350" class="axis"/>
       
-      <!-- Axis labels -->
-      <text x="280" y="380" class="axis-label" text-anchor="middle">Quantity</text>
-      <text x="30" y="200" class="axis-label" text-anchor="middle" transform="rotate(-90, 30, 200)">Price</text>
+      <!-- Axis labels with Indian currency -->
+      <text x="280" y="380" class="axis-label" text-anchor="middle">Quantity (Units)</text>
+      <text x="30" y="200" class="axis-label" text-anchor="middle" transform="rotate(-90, 30, 200)">Price (₹)</text>
       
       ${hasDemand ? `
-      <!-- Demand Curve (downward sloping) -->
-      <path d="M 120 100 Q 200 150 300 200 Q 350 230 420 280" class="curve demand"/>
-      <text x="430" y="285" class="label demand">D</text>
+      <!-- Demand Curve -->
+      <path d="${demandPath}" class="curve demand"/>
+      <text x="${430 + offsetX}" y="${285 + offsetY}" class="label demand">D</text>
+      ${hasShift ? `<path d="${shiftedDemandPath}" class="curve demand-shifted shifted"/>
+      <text x="${450 + offsetX}" y="${265 + offsetY}" class="label demand-shifted">D'</text>` : ''}
       ` : ""}
       
       ${hasSupply ? `
-      <!-- Supply Curve (upward sloping) -->
-      <path d="M 120 280 Q 200 230 300 180 Q 350 150 420 100" class="curve supply"/>
-      <text x="430" y="105" class="label supply">S</text>
+      <!-- Supply Curve -->
+      <path d="${supplyPath}" class="curve supply"/>
+      <text x="${430 + offsetX}" y="${105 + offsetY}" class="label supply">S</text>
+      ${hasShift ? `<path d="${shiftedSupplyPath}" class="curve supply-shifted shifted"/>
+      <text x="${450 + offsetX}" y="${85 + offsetY}" class="label supply-shifted">S'</text>` : ''}
       ` : ""}
       
-      ${hasDemand && hasSupply ? `
+      ${hasDemand && hasSupply && hasEquilibrium ? `
       <!-- Equilibrium Point -->
-      <circle cx="300" cy="190" r="4" class="point"/>
-      <text x="310" y="185" class="label">E</text>
-      <line x1="80" y1="190" x2="300" y2="190" class="grid" stroke-dasharray="5,5"/>
-      <line x1="300" y1="190" x2="300" y2="350" class="grid" stroke-dasharray="5,5"/>
-      <text x="60" y="195" class="axis-label">P*</text>
-      <text x="295" y="370" class="axis-label">Q*</text>
+      <circle cx="${300 + offsetX}" cy="${190 + offsetY}" r="4" class="point"/>
+      <text x="${310 + offsetX}" y="${185 + offsetY}" class="label">E</text>
+      <line x1="80" y1="${190 + offsetY}" x2="${300 + offsetX}" y2="${190 + offsetY}" class="grid" stroke-dasharray="5,5"/>
+      <line x1="${300 + offsetX}" y1="${190 + offsetY}" x2="${300 + offsetX}" y2="350" class="grid" stroke-dasharray="5,5"/>
+      <text x="60" y="${195 + offsetY}" class="axis-label">₹${priceValue}</text>
+      <text x="${295 + offsetX}" y="370" class="axis-label">${quantityValue}</text>
       ` : ""}
       
-      <!-- Title -->
+      <!-- Title with question context -->
       <text x="280" y="30" class="label" text-anchor="middle" style="font-size: 16px;">
-        ${hasDemand && hasSupply ? "Demand & Supply Curves" : 
-          hasDemand ? "Demand Curve" : "Supply Curve"}
+        ${instruction.substring(0, 60)}${instruction.length > 60 ? '...' : ''}
       </text>
     </svg>
   `;
