@@ -176,10 +176,10 @@ const CreateQuiz = () => {
         navigate(`/dashboard/today`);
       }, 30000);
 
-      // Hide notification after 60 seconds
+      // Hide notification after 30 seconds (same time as navigation)
       setTimeout(() => {
         setShowCreationNotification(false);
-      }, 60000);
+      }, 30000);
       
     } catch (error) {
       let errorMessage = "Failed to start quiz creation. Please try again.";
