@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   board: varchar("board", { length: 50 }).notNull(),
   stream: varchar("stream", { length: 50 }),
   selectedSubjects: text("selected_subjects").array(),
+  role: varchar("role", { length: 50 }).default("user"),
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
