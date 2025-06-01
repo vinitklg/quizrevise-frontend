@@ -185,6 +185,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary setup route to populate subjects
+  app.post("/api/setup/subjects", async (req, res) => {
+    try {
+      const subjects = [
+        // CBSE Grade 6-10
+        { name: 'Mathematics', board: 'CBSE', grade: 6 },
+        { name: 'Science', board: 'CBSE', grade: 6 },
+        { name: 'Social Science', board: 'CBSE', grade: 6 },
+        { name: 'English', board: 'CBSE', grade: 6 },
+        { name: 'Hindi', board: 'CBSE', grade: 6 },
+        
+        { name: 'Mathematics', board: 'CBSE', grade: 11, stream: 'Science' },
+        { name: 'Physics', board: 'CBSE', grade: 11, stream: 'Science' },
+        { name: 'Chemistry', board: 'CBSE', grade: 11, stream: 'Science' },
+        { name: 'Biology', board: 'CBSE', grade: 11, stream: 'Science' },
+        { name: 'English', board: 'CBSE', grade: 11, stream: 'Science' },
+        
+        { name: 'Accountancy', board: 'CBSE', grade: 11, stream: 'Commerce' },
+        { name: 'Business Studies', board: 'CBSE', grade: 11, stream: 'Commerce' },
+        { name: 'Economics', board: 'CBSE', grade: 11, stream: 'Commerce' },
+        { name: 'Mathematics', board: 'CBSE', grade: 11, stream: 'Commerce' },
+        { name: 'English', board: 'CBSE', grade: 11, stream: 'Commerce' },
+        
+        { name: 'Mathematics', board: 'ICSE', grade: 9 },
+        { name: 'Physics', board: 'ICSE', grade: 9 },
+        { name: 'Chemistry', board: 'ICSE', grade: 9 },
+        { name: 'Biology', board: 'ICSE', grade: 9 },
+        { name: 'English', board: 'ICSE', grade: 9 },
+        
+        { name: 'Physics', board: 'ISC', grade: 11, stream: 'Science' },
+        { name: 'Chemistry', board: 'ISC', grade: 11, stream: 'Science' },
+        { name: 'Mathematics', board: 'ISC', grade: 11, stream: 'Science' },
+        { name: 'Biology', board: 'ISC', grade: 11, stream: 'Science' },
+        { name: 'English', board: 'ISC', grade: 11, stream: 'Science' }
+      ];
+
+      for (const subject of subjects) {
+        await storage.createSubject(subject.name, subject.board, subject.grade, subject.stream);
+      }
+
+      res.json({ message: "Subjects populated successfully", count: subjects.length });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to populate subjects" });
+    }
+  });
+
   // Subject routes
   app.get("/api/subjects", async (req, res) => {
     try {
