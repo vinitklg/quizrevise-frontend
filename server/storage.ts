@@ -845,6 +845,55 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(quizFeedback.quizId, quizId), eq(quizFeedback.userId, userId)));
     return feedback;
   }
+
+  // Additional admin methods for stats and management
+  async getUserCount(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+    return result[0]?.count || 0;
+  }
+
+  async getQuizCount(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(quizzes);
+    return result[0]?.count || 0;
+  }
+
+  async getPendingFeedbackCount(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(feedback)
+      .where(eq(feedback.status, 'pending'));
+    return result[0]?.count || 0;
+  }
+
+  async getPendingDoubtQueriesCount(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(doubtQueries)
+      .where(eq(doubtQueries.status, 'pending'));
+    return result[0]?.count || 0;
+  }
+
+  async getAllDoubtQueries(): Promise<DoubtQuery[]> {
+    return await db
+      .select()
+      .from(doubtQueries)
+      .orderBy(desc(doubtQueries.createdAt));
+  }
+
+  async getAllQuizzes(): Promise<Quiz[]> {
+    return await db
+      .select()
+      .from(quizzes)
+      .orderBy(desc(quizzes.createdAt));
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
+  }
 }
 
 export const storage = new DatabaseStorage();

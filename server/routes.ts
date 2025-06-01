@@ -1660,6 +1660,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin feedback management
+  app.get("/api/admin/feedback", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const feedback = await storage.getAllFeedback();
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  app.patch("/api/admin/feedback/:id", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const feedbackId = parseInt(req.params.id);
+      const { adminResponse, status } = req.body;
+      
+      const updatedFeedback = await storage.updateFeedback(feedbackId, {
+        adminResponse,
+        status,
+        updatedAt: new Date(),
+      });
+      
+      res.json(updatedFeedback);
+    } catch (error) {
+      console.error("Error updating feedback:", error);
+      res.status(500).json({ message: "Failed to update feedback" });
+    }
+  });
+
+  // Admin doubt queries management
+  app.get("/api/admin/doubt-queries", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const doubtQueries = await storage.getAllDoubtQueries();
+      res.json(doubtQueries);
+    } catch (error) {
+      console.error("Error fetching doubt queries:", error);
+      res.status(500).json({ message: "Failed to fetch doubt queries" });
+    }
+  });
+
+  // Admin stats
+  app.get("/api/admin/stats", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const [totalUsers, totalQuizzes, pendingFeedback, pendingDoubts] = await Promise.all([
+        storage.getUserCount(),
+        storage.getQuizCount(),
+        storage.getPendingFeedbackCount(),
+        storage.getPendingDoubtQueriesCount(),
+      ]);
+
+      res.json({
+        totalUsers,
+        totalQuizzes,
+        pendingFeedback,
+        pendingDoubts,
+        activeQuizzes: totalQuizzes,
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,60 +1,100 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { MessageSquare, FileText, Lightbulb, Upload, CheckCircle, Star } from "lucide-react";
-import type { Feedback } from "@shared/schema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { MessageSquare, Send, Star, Clock, CheckCircle } from "lucide-react";
 
-const feedbackCategories = [
-  { value: "content", label: "Subject Content Issue", icon: FileText, color: "bg-orange-50 text-orange-700 border-orange-200" },
-  { value: "quiz", label: "Quiz Error (wrong question/answer/diagram)", icon: MessageSquare, color: "bg-red-50 text-red-700 border-red-200" },
-  { value: "doubt", label: "Doubt Answer Feedback", icon: Lightbulb, color: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "general", label: "General Experience", icon: MessageSquare, color: "bg-green-50 text-green-700 border-green-200" },
-  { value: "technical", label: "Technical Bug / Error", icon: FileText, color: "bg-purple-50 text-purple-700 border-purple-200" },
-  { value: "suggestion", label: "Feature Suggestion", icon: Lightbulb, color: "bg-indigo-50 text-indigo-700 border-indigo-200" }
-];
+const feedbackSchema = z.object({
+  feedbackType: z.string().min(1, "Please select a feedback type"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  rating: z.number().min(1).max(5),
+});
+
+type FeedbackFormData = z.infer<typeof feedbackSchema>;
+
+interface Feedback {
+  id: number;
+  feedbackType: string;
+  title: string;
+  description: string;
+  rating: number;
+  status: string;
+  adminResponse: string;
+  createdAt: string;
+}
 
 export default function FeedbackPage() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  const [selectedTab, setSelectedTab] = useState<"submit" | "my">("submit");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [formData, setFormData] = useState({
-    board: "",
-    class: "",
-    subject: "",
-    feedbackText: "",
-    rating: 0,
-    file: null as File | null
+  const [rating, setRating] = useState(5);
+
+  const form = useForm<FeedbackFormData>({
+    resolver: zodResolver(feedbackSchema),
+    defaultValues: {
+      feedbackType: "",
+      title: "",
+      description: "",
+      rating: 5,
+    },
   });
 
-  const { data: feedbacks, isLoading } = useQuery({
+  // Fetch user's feedback
+  const { data: feedback = [], isLoading } = useQuery<Feedback[]>({
     queryKey: ["/api/feedback"],
-    enabled: selectedTab === "my"
   });
 
+  // Submit feedback mutation
   const submitFeedback = useMutation({
-    mutationFn: async (data: FormData) => {
-      const result = await fetch("/api/feedback", {
-        method: "POST",
-        body: data,
+    mutationFn: async (data: FeedbackFormData) => {
+      return apiRequest("POST", "/api/feedback", {
+        ...data,
+        userId: user?.id,
+        userName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        userEmail: user?.email,
       });
-      if (!result.ok) throw new Error("Failed to submit feedback");
-      return result.json();
     },
     onSuccess: () => {
       toast({
-        title: "Feedback Submitted",
-        description: "Thank you for your feedback. We'll review it soon.",
+        title: "Feedback submitted",
+        description: "Thank you for your feedback! We'll review it shortly.",
       });
-      setFormData({ board: "", class: "", subject: "", feedbackText: "", rating: 0, file: null });
-      setSelectedCategory("");
+      form.reset();
+      setRating(5);
       queryClient.invalidateQueries({ queryKey: ["/api/feedback"] });
     },
     onError: () => {
@@ -66,350 +106,220 @@ export default function FeedbackPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCategory || !formData.feedbackText.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a feedback type and provide details.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const data = new FormData();
-    data.append("type", selectedCategory);
-    data.append("board", formData.board);
-    data.append("class", formData.class);
-    data.append("subject", formData.subject);
-    data.append("feedbackText", formData.feedbackText);
-    data.append("rating", formData.rating.toString());
-    if (formData.file) {
-      data.append("file", formData.file);
-    }
-
-    submitFeedback.mutate(data);
+  const onSubmit = (data: FeedbackFormData) => {
+    submitFeedback.mutate({ ...data, rating });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "File too large",
-          description: "Please select a file smaller than 5MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setFormData({ ...formData, file });
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="destructive"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+      case "resolved":
+        return <Badge variant="default"><CheckCircle className="w-3 h-3 mr-1" />Resolved</Badge>;
+      case "in_progress":
+        return <Badge variant="secondary"><MessageSquare className="w-3 h-3 mr-1" />In Progress</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const renderStars = (currentRating: number, interactive = false) => {
+    return (
+      <div className="flex items-center space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`w-5 h-5 ${
+              star <= currentRating
+                ? "fill-yellow-400 text-yellow-400"
+                : "text-gray-300"
+            } ${interactive ? "cursor-pointer hover:text-yellow-400" : ""}`}
+            onClick={interactive ? () => setRating(star) : undefined}
+          />
+        ))}
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">Feedback</h1>
-        
-        {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setSelectedTab("submit")}
-            className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
-              selectedTab === "submit"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Submit Feedback
-          </button>
-          <button
-            onClick={() => setSelectedTab("my")}
-            className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
-              selectedTab === "my"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            My Feedback
-          </button>
+    <div className="py-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Feedback & Support
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Share your thoughts and help us improve Quick Revise
+          </p>
         </div>
 
-        {selectedTab === "submit" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Feedback Categories */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Feedback Categories</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Please select the type of feedback you'd like to provide
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {feedbackCategories.map((category) => {
-                  const IconComponent = category.icon;
-                  return (
-                    <div
-                      key={category.value}
-                      onClick={() => setSelectedCategory(category.value)}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        selectedCategory === category.value
-                          ? category.color
-                          : "bg-white border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <IconComponent className="h-5 w-5" />
-                        <div>
-                          <h3 className="font-medium">{category.label}</h3>
-                          <p className="text-sm text-gray-600">
-                            {category.value === "content" && "Report errors in subject content, curriculum alignment issues"}
-                            {category.value === "quiz" && "Report incorrect questions, answers, or diagram issues in quizzes"}
-                            {category.value === "doubt" && "Provide feedback on doubt resolution quality and accuracy"}
-                            {category.value === "general" && "Share your overall experience using the platform"}
-                            {category.value === "technical" && "Report bugs, errors, or technical issues"}
-                            {category.value === "suggestion" && "Suggest new features or improvements"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
+        <Tabs defaultValue="submit" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="submit">Submit Feedback</TabsTrigger>
+            <TabsTrigger value="history">My Feedback</TabsTrigger>
+          </TabsList>
 
-            {/* Feedback Form */}
+          <TabsContent value="submit">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">Share Your Feedback</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Your feedback helps us improve the platform for everyone
-                </p>
+                <CardTitle>Submit New Feedback</CardTitle>
+                <CardDescription>
+                  Help us improve by sharing your experience, suggestions, or reporting issues
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Board, Class, Subject Row */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Board
-                      </label>
-                      <Select
-                        value={formData.board}
-                        onValueChange={(value) => setFormData({ ...formData, board: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Board" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CBSE">CBSE</SelectItem>
-                          <SelectItem value="ICSE">ICSE</SelectItem>
-                          <SelectItem value="ISC">ISC</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Class
-                      </label>
-                      <Select
-                        value={formData.class}
-                        onValueChange={(value) => setFormData({ ...formData, class: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Class 10" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[6, 7, 8, 9, 10, 11, 12].map((grade) => (
-                            <SelectItem key={grade} value={grade.toString()}>
-                              Class {grade}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Subject
-                      </label>
-                      <Input
-                        placeholder="e.g. Mathematics, Physics"
-                        value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Feedback Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Feedback Type
-                    </label>
-                    <Select
-                      value={selectedCategory}
-                      onValueChange={setSelectedCategory}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="General Feedback" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {feedbackCategories.map((category) => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Feedback Text */}
-                  <div>
-                    <Textarea
-                      placeholder="Share your thoughts, suggestions, or report any issues you've encountered..."
-                      value={formData.feedbackText}
-                      onChange={(e) => setFormData({ ...formData, feedbackText: e.target.value })}
-                      rows={6}
-                      className="resize-none"
-                    />
-                  </div>
-
-                  {/* Rating */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Rate your experience (optional)
-                    </label>
-                    <div className="flex items-center space-x-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, rating: star })}
-                          className={`p-1 transition-colors ${
-                            star <= formData.rating 
-                              ? "text-yellow-400 hover:text-yellow-500" 
-                              : "text-gray-300 hover:text-gray-400"
-                          }`}
-                        >
-                          <Star className={`h-6 w-6 ${star <= formData.rating ? "fill-current" : ""}`} />
-                        </button>
-                      ))}
-                      {formData.rating > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, rating: 0 })}
-                          className="ml-2 text-sm text-gray-500 hover:text-gray-700"
-                        >
-                          Clear
-                        </button>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="feedbackType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Feedback Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select feedback type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="bug_report">Bug Report</SelectItem>
+                              <SelectItem value="feature_request">Feature Request</SelectItem>
+                              <SelectItem value="improvement">Improvement Suggestion</SelectItem>
+                              <SelectItem value="content_issue">Content Issue</SelectItem>
+                              <SelectItem value="ui_ux">UI/UX Feedback</SelectItem>
+                              <SelectItem value="general">General Feedback</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
-                  </div>
+                    />
 
-                  {/* File Upload */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Attach File (Optional)
-                    </label>
-                    <div className="flex items-center space-x-3">
-                      <Input
-                        type="file"
-                        onChange={handleFileChange}
-                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                        className="file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                      <Upload className="h-4 w-4 text-gray-400" />
-                    </div>
-                    {formData.file && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Selected: {formData.file.name}
-                      </p>
-                    )}
-                  </div>
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Brief summary of your feedback"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <Button
-                    type="submit"
-                    disabled={submitFeedback.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {submitFeedback.isPending ? "Submitting..." : "Submit Feedback"}
-                  </Button>
-                </form>
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Please provide detailed information about your feedback..."
+                              rows={5}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Be as specific as possible to help us understand and address your feedback
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-2">
+                      <FormLabel>Overall Rating</FormLabel>
+                      {renderStars(rating, true)}
+                      <FormDescription>
+                        Rate your overall experience with Quick Revise
+                      </FormDescription>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={submitFeedback.isPending}
+                      className="w-full"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {submitFeedback.isPending ? "Submitting..." : "Submit Feedback"}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
-          </div>
-        ) : (
-          /* My Feedback Tab */
-          <Card>
-            <CardHeader>
-              <CardTitle>My Feedback History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">Loading your feedback...</div>
-              ) : !feedbacks || feedbacks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No feedback submitted yet. Share your thoughts using the Submit Feedback tab.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {feedbacks.map((feedback: Feedback) => (
-                    <div key={feedback.id} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            feedback.type === "content" ? "bg-orange-100 text-orange-800" :
-                            feedback.type === "quiz" ? "bg-red-100 text-red-800" :
-                            feedback.type === "doubt" ? "bg-blue-100 text-blue-800" :
-                            feedback.type === "general" ? "bg-green-100 text-green-800" :
-                            feedback.type === "technical" ? "bg-purple-100 text-purple-800" :
-                            feedback.type === "suggestion" ? "bg-indigo-100 text-indigo-800" :
-                            "bg-gray-100 text-gray-800"
-                          }`}>
-                            {feedbackCategories.find(c => c.value === feedback.type)?.label}
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            feedback.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                            feedback.status === "reviewed" ? "bg-blue-100 text-blue-800" :
-                            "bg-green-100 text-green-800"
-                          }`}>
-                            {feedback.status === "pending" && "Pending Review"}
-                            {feedback.status === "reviewed" && "Under Review"}
-                            {feedback.status === "resolved" && "Resolved"}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString() : ""}
-                        </span>
-                      </div>
-                      
-                      {(feedback.board || feedback.class || feedback.subject) && (
-                        <div className="text-sm text-gray-600">
-                          {feedback.board && `${feedback.board} `}
-                          {feedback.class && `Class ${feedback.class} `}
-                          {feedback.subject && `• ${feedback.subject}`}
-                        </div>
-                      )}
-                      
-                      <p className="text-gray-700">{feedback.feedbackText}</p>
-                      
-                      {feedback.adminResponse && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <CheckCircle className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-800">Admin Response</span>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Feedback History</CardTitle>
+                <CardDescription>
+                  Track the status of your submitted feedback
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+                    <p className="mt-2 text-gray-600 dark:text-gray-400">Loading feedback...</p>
+                  </div>
+                ) : feedback.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      You haven't submitted any feedback yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {feedback.map((item) => (
+                      <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium">{item.title}</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {item.feedbackType.replace("_", " ").toUpperCase()}
+                            </p>
                           </div>
-                          <p className="text-blue-700 text-sm">{feedback.adminResponse}</p>
+                          <div className="flex items-center space-x-2">
+                            {renderStars(item.rating)}
+                            {getStatusBadge(item.status)}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {item.description}
+                        </p>
+
+                        {item.adminResponse && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border-l-4 border-blue-500">
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                              Admin Response:
+                            </h4>
+                            <p className="text-sm text-blue-800 dark:text-blue-200">
+                              {item.adminResponse}
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-gray-500">
+                          Submitted on {new Date(item.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
