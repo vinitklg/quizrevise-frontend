@@ -73,7 +73,7 @@ const Settings = () => {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUpdatingEducation, setIsUpdatingEducation] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.subscribedSubjects || []);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.selectedSubjects || []);
   const [selectedStream, setSelectedStream] = useState<string>(user?.stream || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -81,7 +81,7 @@ const Settings = () => {
   // Update state when user data loads
   useEffect(() => {
     if (user) {
-      setSelectedSubjects(user.subscribedSubjects || []);
+      setSelectedSubjects(user.selectedSubjects || []);
       setSelectedStream(user.stream || "");
     }
   }, [user]);
@@ -93,7 +93,7 @@ const Settings = () => {
       lastName: user?.lastName || "",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
-      subscribedSubjects: user?.subscribedSubjects || [],
+      subscribedSubjects: user?.selectedSubjects || [],
     },
   });
 
@@ -122,7 +122,7 @@ const Settings = () => {
       // Include selected subjects in the update
       const updateData = {
         ...data,
-        subscribedSubjects: selectedSubjects,
+        selectedSubjects: selectedSubjects,
         stream: selectedStream || user.stream,
       };
       
@@ -348,7 +348,7 @@ const Settings = () => {
                                   
                                   try {
                                     const updateData = {
-                                      subscribedSubjects: selectedSubjects,
+                                      selectedSubjects: selectedSubjects,
                                       stream: selectedStream || user.stream,
                                     };
                                     
