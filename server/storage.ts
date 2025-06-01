@@ -157,7 +157,7 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(userData: InsertUser): Promise<User> {
     // Hash password
-    const hashedPassword = await bcrypt.hash(userData.passwordHash, 10);
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
 
     // Ensure subscribedSubjects is an array if not provided
     const subscribedSubjects = userData.subscribedSubjects || [];
@@ -166,7 +166,7 @@ export class DatabaseStorage implements IStorage {
       .insert(users)
       .values({
         ...userData,
-        passwordHash: hashedPassword,
+        password: hashedPassword,
         selectedSubjects: userData.selectedSubjects || [],
       })
       .returning();

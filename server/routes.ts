@@ -88,15 +88,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
         username: validatedData.username,
         email: validatedData.email,
-        passwordHash: validatedData.password,
+        password: validatedData.password,
         firstName: validatedData.firstName || null,
         lastName: validatedData.lastName || null,
         phoneNumber: validatedData.phoneNumber || null,
         preferredSubject: validatedData.preferredSubject || null,
-        grade: validatedData.grade || null,
-        board: validatedData.board || null,
-        subscribedSubjects: [],
-        subscriptionTier: "free"
+        grade: validatedData.grade || 10,
+        board: validatedData.board || "CBSE",
+        selectedSubjects: validatedData.selectedSubjects || []
       };
       
       const user = await storage.createUser(userData);
@@ -105,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       
       // Return user without password
-      const { password, ...userWithoutPassword } = user;
+      const { passwordHash, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
       if (error instanceof ZodError) {
