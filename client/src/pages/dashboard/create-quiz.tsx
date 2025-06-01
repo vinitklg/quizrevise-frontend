@@ -82,7 +82,7 @@ const CreateQuiz = () => {
   const [showCreationNotification, setShowCreationNotification] = useState(false);
 
   // Get user's subscribed subjects
-  const userSubjects = user?.subscribedSubjects || [];
+  const userSubjects = user?.selectedSubjects || [];
 
   // Fetch all subjects to match with user's subscribed subject codes
   const { data: allSubjects = [], isLoading: isLoadingSubjects } =
@@ -339,26 +339,7 @@ const CreateQuiz = () => {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {user?.subscriptionTier === "free" ? (
-                                        subscribedSubjects.length === 0 ? (
-                                          <SelectItem
-                                            value="no-subjects"
-                                            disabled
-                                          >
-                                            No preferred subjects found. Update
-                                            your profile.
-                                          </SelectItem>
-                                        ) : (
-                                          subscribedSubjects.map((subject) => (
-                                            <SelectItem
-                                              key={subject.code}
-                                              value={subject.name}
-                                            >
-                                              {subject.name}
-                                            </SelectItem>
-                                          ))
-                                        )
-                                      ) : isLoadingSubjects ? (
+                                      {isLoadingSubjects ? (
                                         <SelectItem value="loading" disabled>
                                           Loading subjects...
                                         </SelectItem>
@@ -367,12 +348,12 @@ const CreateQuiz = () => {
                                           value="no-subjects"
                                           disabled
                                         >
-                                          No subscribed subjects found.
+                                          No subjects selected. Please update your profile.
                                         </SelectItem>
                                       ) : (
                                         subscribedSubjects.map((subject) => (
                                           <SelectItem
-                                            key={subject.id}
+                                            key={subject.code}
                                             value={subject.name}
                                           >
                                             {subject.name}
