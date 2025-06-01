@@ -85,14 +85,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Set initial empty subscribed subjects array and ensure required fields
       const userData = {
-        ...validatedData,
-        username: validatedData.username,
         email: validatedData.email,
         password: validatedData.password,
         firstName: validatedData.firstName || null,
         lastName: validatedData.lastName || null,
         phoneNumber: validatedData.phoneNumber || null,
-        preferredSubject: validatedData.preferredSubject || null,
         grade: validatedData.grade || 10,
         board: validatedData.board || "CBSE",
         selectedSubjects: validatedData.selectedSubjects || []

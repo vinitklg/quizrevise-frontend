@@ -27,7 +27,6 @@ import { useQuery } from "@tanstack/react-query";
 import SubjectSelection from "@/components/SubjectSelection";
 
 const signupSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   firstName: z.string().optional(),
@@ -36,7 +35,7 @@ const signupSchema = z.object({
     .min(10, "Phone number must be at least 10 digits")
     .max(15, "Phone number must not exceed 15 digits")
     .optional(),
-  subscribedSubjects: z.array(z.string()).default([]),
+  selectedSubjects: z.array(z.string()).default([]),
   grade: z.coerce.number().min(6).max(12).optional(),
   board: z.enum(["CBSE", "ICSE", "ISC"]).optional(),
   stream: z.string().optional(),
@@ -55,13 +54,12 @@ const Signup = () => {
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      username: "",
       email: "",
       password: "",
       firstName: "",
       lastName: "",
       phoneNumber: "",
-      subscribedSubjects: [],
+      selectedSubjects: [],
       grade: undefined,
       board: undefined,
       stream: "",
@@ -77,7 +75,7 @@ const Signup = () => {
       // Include selected subjects and stream in the signup data
       const signupData = {
         ...data,
-        subscribedSubjects: selectedSubjects,
+        selectedSubjects: selectedSubjects,
         stream: selectedStream || data.stream,
       };
 
@@ -157,19 +155,7 @@ const Signup = () => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input placeholder="johndoe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
 
               <FormField
                 control={form.control}
