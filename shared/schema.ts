@@ -5,18 +5,18 @@ import { z } from "zod";
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  phoneNumber: text("phone_number"),
-  grade: integer("grade"),
-  board: text("board"), // CBSE, ICSE, or ISC
-  stream: text("stream"), // Science, Commerce, Humanities (for classes 11-12)
-  subscribedSubjects: text("subscribed_subjects").array(), // Array of standardized subject codes
-  subscriptionTier: text("subscription_tier").default("free").notNull(), // free, standard, premium
+  username: varchar("username", { length: 255 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  firstName: varchar("first_name", { length: 255 }),
+  lastName: varchar("last_name", { length: 255 }),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  grade: integer("grade").notNull(),
+  board: varchar("board", { length: 50 }).notNull(),
+  stream: varchar("stream", { length: 50 }),
+  selectedSubjects: text("selected_subjects").array(),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Standardized subjects table

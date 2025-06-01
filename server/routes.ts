@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
         username: validatedData.username,
         email: validatedData.email,
-        password: validatedData.password,
+        passwordHash: validatedData.password,
         firstName: validatedData.firstName || null,
         lastName: validatedData.lastName || null,
         phoneNumber: validatedData.phoneNumber || null,
