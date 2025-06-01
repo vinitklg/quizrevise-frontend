@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// Force Supabase connection with URL-encoded password
+// Supabase connection using transaction pooler
 const SUPABASE_URL = "postgresql://postgres.jedhpenyyjqjvjkkadba:quickrevise%402025@aws-0-ap-south-1.pooler.supabase.com:6543/postgres";
 
 export const pool = new Pool({ 
