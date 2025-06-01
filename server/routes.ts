@@ -222,7 +222,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       for (const subject of subjects) {
-        await storage.createSubject(subject.name, subject.board, subject.grade, subject.stream);
+        await storage.createSubject({
+          name: subject.name,
+          board: subject.board,
+          grade: subject.grade,
+          stream: subject.stream || null,
+          code: `${subject.board}_${subject.grade}_${subject.name.replace(/\s+/g, '_')}`
+        });
       }
 
       res.json({ message: "Subjects populated successfully", count: subjects.length });
