@@ -84,7 +84,28 @@ export default function AdminDashboard() {
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [adminResponse, setAdminResponse] = useState("");
 
-  // Check if user is admin
+  // Fetch admin data (must be called before any conditional returns)
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+    enabled: !!user?.isAdmin,
+  });
+
+  const { data: feedback = [] } = useQuery<Feedback[]>({
+    queryKey: ["/api/admin/feedback"],
+    enabled: !!user?.isAdmin,
+  });
+
+  const { data: doubtQueries = [] } = useQuery<DoubtQuery[]>({
+    queryKey: ["/api/admin/doubt-queries"],
+    enabled: !!user?.isAdmin,
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["/api/admin/stats"],
+    enabled: !!user?.isAdmin,
+  });
+
+  // Check if user is admin (after hooks)
   if (!user?.isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -100,23 +121,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  // Fetch admin data
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/admin/users"],
-  });
-
-  const { data: feedback = [] } = useQuery<Feedback[]>({
-    queryKey: ["/api/admin/feedback"],
-  });
-
-  const { data: doubtQueries = [] } = useQuery<DoubtQuery[]>({
-    queryKey: ["/api/admin/doubt-queries"],
-  });
-
-  const { data: stats } = useQuery({
-    queryKey: ["/api/admin/stats"],
-  });
 
   // Respond to feedback mutation
   const respondToFeedback = useMutation({
