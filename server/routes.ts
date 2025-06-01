@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       
       // Return user without password
-      const { passwordHash, ...userWithoutPassword } = user;
+      const { password, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error) {
       if (error instanceof ZodError) {
