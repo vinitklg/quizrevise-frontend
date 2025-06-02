@@ -1,7 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { pool } from "./db";
+import { pool, db } from "./db";
+import { quizzes, quizSchedules, quizSets } from "@shared/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } from "./openai";
 import { renderDiagram } from "./diagramRenderer";
 import bcrypt from "bcryptjs";
@@ -876,42 +878,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId!;
       
-      // Get today's pending quiz schedules using raw SQL to avoid column issues
-      const scheduleResult = await pool.query(
-        `SELECT 
-          qs.id,
-          qs.quiz_id as "quizId",
-          qs.quiz_set_id as "quizSetId", 
-          qs.scheduled_date as "scheduledDate",
-          qs.status,
-          q.title as quiz_title
-        FROM quiz_schedules qs
-        JOIN quizzes q ON qs.quiz_id = q.id
-        WHERE qs.user_id = $1 
-          AND DATE(qs.scheduled_date) = CURRENT_DATE 
-          AND qs.status = 'pending'
-        ORDER BY qs.scheduled_date`,
-        [userId]
-      );
-      
-      // Transform the results to match expected format
-      const todayQuizzes = scheduleResult.rows.map(row => ({
-        id: row.id,
-        quizId: row.quizId,
-        quizSetId: row.quizSetId,
-        scheduledDate: row.scheduledDate,
-        status: row.status,
+      const todayQuizzes = await db
+        .select({
+          id: quizSchedules.id,
+          quizId: quizSchedules.quizId,
+          quizSetId: quizSchedules.quizSetId,
+          scheduledDate: quizSchedules.scheduledDate,
+          status: quizSchedules.status,
+          title: quizzes.title,
+          topic: quizzes.topic,
+          setNumber: quizSets.setNumber
+        })
+        .from(quizSchedules)
+        .innerJoin(quizzes, eq(quizSchedules.quizId, quizzes.id))
+        .innerJoin(quizSets, eq(quizSchedules.quizSetId, quizSets.id))
+        .where(
+          and(
+            eq(quizSchedules.userId, userId),
+            eq(quizSchedules.status, "pending"),
+            sql`DATE(${quizSchedules.scheduledDate}) = CURRENT_DATE`
+          )
+        );
+
+      // Transform to match expected frontend format
+      const formattedQuizzes = todayQuizzes.map(quiz => ({
+        id: quiz.id,
+        quizId: quiz.quizId,
+        quizSetId: quiz.quizSetId,
+        scheduledDate: quiz.scheduledDate,
+        status: quiz.status,
         quiz: {
-          title: row.quiz_title || 'Unknown Quiz'
+          title: quiz.title,
+          topic: quiz.topic
         },
         quizSet: {
-          setNumber: 1,
-          questions: []
+          setNumber: quiz.setNumber
         }
       }));
       
-      console.log("Today's quizzes found:", todayQuizzes.length, todayQuizzes);
-      res.json(todayQuizzes);
+      console.log("Today's quizzes found:", formattedQuizzes.length, formattedQuizzes);
+      res.json(formattedQuizzes);
     } catch (error) {
       console.error("Error getting today's quizzes:", error);
       res.status(500).json({ message: "Failed to get today's quizzes" });
