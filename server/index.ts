@@ -16,9 +16,6 @@ const PORT = process.env.PORT || 5000
 app.use(cors())
 app.use(express.json())
 
-// Serve static files from client/dist
-app.use(express.static(path.join(__dirname, '../client/dist')))
-
 // Initialize Supabase
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -121,14 +118,8 @@ app.post('/api/init-database', async (req, res) => {
   }
 })
 
-// Development: serve React app directly using Vite
-if (process.env.NODE_ENV === 'development') {
-  // In development, let Vite handle the frontend
-  app.get('/', (req, res) => {
-    res.redirect('http://localhost:5173')
-  })
-} else {
-  // Production: serve built files
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/dist')))
   app.get('*', (req, res) => {
     if (!req.path.startsWith('/api')) {
@@ -142,5 +133,11 @@ app.listen(PORT, () => {
   console.log(`Fresh QuickRevise API running on port ${PORT}`)
   console.log('Visit /api/health to check server status')
   console.log('Visit /api/test-supabase to test database connection')
-  console.log('Frontend will be served at http://localhost:' + PORT)
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Development mode: Start Vite separately with "npm run dev:client"')
+    console.log('Frontend available at: http://localhost:5173')
+  } else {
+    console.log('Frontend available at: http://localhost:' + PORT)
+  }
 })
