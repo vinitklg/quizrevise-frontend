@@ -1700,6 +1700,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update doubt query with admin response
+  app.patch("/api/admin/doubt-queries/:id", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { response, status } = req.body;
+      
+      const updatedDoubt = await storage.updateDoubtQuery(parseInt(id), {
+        response,
+        status,
+        answeredAt: new Date(),
+      });
+      
+      res.json(updatedDoubt);
+    } catch (error) {
+      console.error("Error updating doubt query:", error);
+      res.status(500).json({ message: "Failed to update doubt query" });
+    }
+  });
+
+  // Delete user
+  app.delete("/api/admin/users/:id", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteUser(parseInt(id));
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Admin stats
   app.get("/api/admin/stats", isAdminAuthenticated, async (req: any, res) => {
     try {

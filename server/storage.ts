@@ -884,6 +884,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(doubtQueries.createdAt));
   }
 
+  async updateDoubtQuery(id: number, data: Partial<DoubtQuery>): Promise<DoubtQuery | undefined> {
+    const [updated] = await db
+      .update(doubtQueries)
+      .set(data)
+      .where(eq(doubtQueries.id, id))
+      .returning();
+    return updated;
+  }
+
   async getAllQuizzes(): Promise<Quiz[]> {
     return await db
       .select()
