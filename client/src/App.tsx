@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Auth from '@/components/Auth'
 import Dashboard from '@/components/Dashboard'
+import type { Session } from '@supabase/supabase-js'
 
 function App() {
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
