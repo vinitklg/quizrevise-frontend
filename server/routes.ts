@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { pool } from "./db";
 import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } from "./openai";
 import { renderDiagram } from "./diagramRenderer";
 import bcrypt from "bcryptjs";
@@ -867,44 +868,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId!;
       
-      // Get all schedules for today
-      const allSchedules = await storage.getQuizSchedulesByUser(userId);
+      // Get today's pending quiz schedules using raw SQL to avoid column issues
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
       
-      // Filter schedules for today only and pending status
-      const todaySchedules = allSchedules.filter(schedule => {
-        const scheduleDate = new Date(schedule.scheduledDate);
-        scheduleDate.setHours(0, 0, 0, 0);
-        return scheduleDate.getTime() === today.getTime() && schedule.status === "pending";
-      });
-      
-      // Get the quiz and quiz set details for each schedule
-      const enrichedSchedules = await Promise.all(
-        todaySchedules.map(async (schedule) => {
-          try {
-            const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, schedule.quizId));
-            const [quizSet] = await db.select().from(quizSets).where(eq(quizSets.id, schedule.quizSetId));
-            
-            return {
-              ...schedule,
-              quiz: quiz || { title: 'Unknown Quiz' },
-              quizSet: quizSet || { setNumber: 1, questions: [] }
-            };
-          } catch (error) {
-            console.error('Error fetching quiz/set details:', error);
-            return {
-              ...schedule,
-              quiz: { title: 'Unknown Quiz' },
-              quizSet: { setNumber: 1, questions: [] }
-            };
-          }
-        })
+      const result = await pool.query(
+        `SELECT 
+          qs.id,
+          qs.quiz_id as "quizId",
+          qs.quiz_set_id as "quizSetId", 
+          qs.scheduled_date as "scheduledDate",
+          qs.status,
+          q.title as quiz_title,
+          qset.set_number as set_number,
+          qset.questions
+        FROM quiz_schedules qs
+        JOIN quizzes q ON qs.quiz_id = q.id
+        LEFT JOIN quiz_sets qset ON qs.quiz_set_id = qset.id
+        WHERE qs.user_id = $1 
+          AND DATE(qs.scheduled_date) = $2 
+          AND qs.status = 'pending'
+        ORDER BY qs.scheduled_date`,
+        [userId, todayStr]
       );
       
-      res.json(enrichedSchedules);
+      // Transform the results to match expected format
+      const todayQuizzes = result.rows.map(row => ({
+        id: row.id,
+        quizId: row.quizId,
+        quizSetId: row.quizSetId,
+        scheduledDate: row.scheduledDate,
+        status: row.status,
+        quiz: {
+          title: row.quiz_title || 'Unknown Quiz'
+        },
+        quizSet: {
+          setNumber: row.set_number || 1,
+          questions: row.questions || []
+        }
+      }));
+      
+      res.json(todayQuizzes);
     } catch (error) {
       console.error("Error getting today's quizzes:", error);
       res.status(500).json({ message: "Failed to get today's quizzes" });
