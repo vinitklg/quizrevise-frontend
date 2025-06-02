@@ -163,7 +163,7 @@ export const feedback = pgTable("feedback", {
   userId: integer("user_id").notNull().references(() => users.id),
   username: text("username"),
   userEmail: text("useremail"),
-  userPhone: text("userphone"),
+  userPhone: text("userphone"), // Fixed: lowercase column name to match database
   board: text("board"),
   class: integer("class"),
   subject: text("subject"),
