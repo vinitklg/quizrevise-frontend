@@ -121,10 +121,13 @@ app.post('/api/init-database', async (req, res) => {
   }
 })
 
-// Serve simple frontend for all non-API routes
+// Serve static files from client/dist
+app.use(express.static(path.join(__dirname, '../client/dist')))
+
+// Serve React app for all non-API routes
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, 'simple-frontend.html'))
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'))
   }
 })
 
