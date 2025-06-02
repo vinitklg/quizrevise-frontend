@@ -878,7 +878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId!;
       
-      // Use raw SQL to bypass schema issues
+      // Use raw SQL to bypass schema issues - simplified query
       const result = await pool.query(`
         SELECT 
           qs.id,
@@ -887,7 +887,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qs.scheduled_date as "scheduledDate",
           qs.status,
           q.title,
-          q.topic,
           qset.set_number as "setNumber"
         FROM quiz_schedules qs
         JOIN quizzes q ON qs.quiz_id = q.id
@@ -906,8 +905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scheduledDate: quiz.scheduledDate,
         status: quiz.status,
         quiz: {
-          title: quiz.title,
-          topic: quiz.topic
+          title: quiz.title
         },
         quizSet: {
           setNumber: quiz.setNumber
