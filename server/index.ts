@@ -1,79 +1,210 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import express from 'express'
+import { createClient } from '@supabase/supabase-js'
+import OpenAI from 'openai'
+import cors from 'cors'
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+const app = express()
+const PORT = process.env.PORT || 5000
 
-// Serve static files from public directory with proper MIME types
-app.use(express.static('public', {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.svg')) {
-      res.setHeader('Content-Type', 'image/svg+xml');
+// Middleware
+app.use(cors())
+app.use(express.json())
+
+// Initialize Supabase
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase environment variables')
+  process.exit(1)
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+})
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'QuickRevise API is running' })
+})
+
+// Get user profile
+app.get('/api/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' })
     }
-  }
-}));
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' })
     }
-  });
 
-  next();
-});
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
 
-(async () => {
-  const server = await registerRoutes(app);
+    if (profileError && profileError.code !== 'PGRST116') {
+      throw profileError
+    }
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    res.json({ user, profile })
+  } catch (error) {
+    console.error('Profile error:', error)
+    res.status(500).json({ error: 'Failed to get profile' })
   }
+})
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+// Create or update profile
+app.post('/api/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' })
+    }
+
+    const { full_name, grade, board } = req.body
+
+    const { data, error: upsertError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        full_name,
+        grade,
+        board,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+
+    if (upsertError) {
+      throw upsertError
+    }
+
+    res.json(data)
+  } catch (error) {
+    console.error('Profile update error:', error)
+    res.status(500).json({ error: 'Failed to update profile' })
+  }
+})
+
+// Generate quiz questions using OpenAI
+app.post('/api/generate-quiz', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' })
+    }
+
+    const { subject, topic, grade, board, numQuestions = 5 } = req.body
+
+    // Generate quiz using OpenAI
+    const prompt = `Create ${numQuestions} multiple choice questions for ${grade} grade ${board} board students on the topic "${topic}" in ${subject}. 
+
+Format as JSON with this structure:
+{
+  "questions": [{
+    "question": "Question text",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_answer": "Option A",
+    "explanation": "Brief explanation of why this is correct"
+  }]
+}
+
+Make questions educational and appropriate for the grade level.`
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }
+    })
+
+    const result = JSON.parse(completion.choices[0].message.content)
+
+    // Save quiz to Supabase
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .insert({
+        user_id: user.id,
+        title: `${subject} - ${topic}`,
+        subject,
+        topic,
+        grade,
+        board,
+        questions: result.questions,
+        status: 'active'
+      })
+      .select()
+      .single()
+
+    if (quizError) {
+      throw quizError
+    }
+
+    res.json({ quiz, questions: result.questions })
+  } catch (error) {
+    console.error('Quiz generation error:', error)
+    res.status(500).json({ error: 'Failed to generate quiz' })
+  }
+})
+
+// Get user's quizzes
+app.get('/api/quizzes', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No authorization header' })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' })
+    }
+
+    const { data, error: quizzesError } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (quizzesError) {
+      throw quizzesError
+    }
+
+    res.json(data)
+  } catch (error) {
+    console.error('Quizzes error:', error)
+    res.status(500).json({ error: 'Failed to get quizzes' })
+  }
+})
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`QuickRevise API running on port ${PORT}`)
+})
