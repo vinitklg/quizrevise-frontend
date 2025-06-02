@@ -389,21 +389,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Immediately respond to user - quiz creation started
-      res.status(202).json({
-        quiz,
-        status: "generating",
-        message: "Quiz creation started. We are generating 8 sets of questions which may take 5-10 minutes. Please refresh this page after 10 minutes to see your quiz in Today's Quizzes tab.",
-        estimatedTime: "5-10 minutes"
+      // Generate first set immediately for instant user access
+      console.log(`Generating immediate quiz set 1/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+      
+      const firstSetQuestions = await generateQuizQuestions(
+        selectedSubject.name,
+        selectedChapter.name,
+        selectedTopic.name,
+        user.grade || 10,
+        user.board || "CBSE",
+        validatedData.questionTypes,
+        validatedData.bloomTaxonomy,
+        validatedData.difficultyLevels,
+        validatedData.numberOfQuestions,
+        1
+      );
+      
+      const firstQuizSet = await storage.createQuizSet({
+        quizId: quiz.id,
+        setNumber: 1,
+        questions: firstSetQuestions.questions
+      });
+      
+      // Schedule the first set for today (immediate access)
+      const dates = calculateSpacedRepetitionDates(new Date());
+      const firstSchedule = await storage.createQuizSchedule({
+        quizId: quiz.id,
+        userId: user.id,
+        quizSetId: firstQuizSet.id,
+        scheduledDate: dates[0], // Today
+        status: "pending"
       });
 
-      // Generate quiz sets asynchronously in the background
+      // Return immediately with the first set ready
+      res.status(201).json({
+        quiz,
+        firstSet: firstQuizSet,
+        schedule: firstSchedule,
+        status: "ready",
+        message: "Quiz created successfully! First set is ready to take. Remaining 7 sets will be generated in the background.",
+      });
+
+      // Generate remaining 7 sets asynchronously in the background
       setImmediate(async () => {
         try {
-          console.log(`Starting background generation for quiz ${quiz.id} - user ${user.id}`);
-          const quizSets = [];
+          console.log(`Starting background generation for remaining sets (2-8) of quiz ${quiz.id} - user ${user.id}`);
           
-          for (let setNumber = 1; setNumber <= 8; setNumber++) {
+          for (let setNumber = 2; setNumber <= 8; setNumber++) {
             console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
             
             const questions = await generateQuizQuestions(
@@ -425,25 +457,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               questions: questions.questions
             });
             
-            quizSets.push(quizSet);
-          }
-          
-          // Schedule quizzes for spaced repetition
-          const dates = calculateSpacedRepetitionDates(new Date());
-          
-          for (let i = 0; i < quizSets.length; i++) {
-            console.log(`Scheduling quiz set ${i + 1}/8 for user ${user.id} on ${dates[i]}`);
-            
+            // Schedule this set for its spaced repetition date
             await storage.createQuizSchedule({
               quizId: quiz.id,
               userId: user.id,
-              quizSetId: quizSets[i].id,
-              scheduledDate: dates[i],
+              quizSetId: quizSet.id,
+              scheduledDate: dates[setNumber - 1],
               status: "pending"
             });
           }
           
-          console.log(`Successfully completed background generation for quiz ${quiz.id} - user ${user.id} with ${quizSets.length} sets`);
+          console.log(`Successfully completed background generation for quiz ${quiz.id} - user ${user.id} (sets 2-8)`);
           
         } catch (error) {
           console.error(`Background quiz generation failed for quiz ${quiz.id}:`, error);

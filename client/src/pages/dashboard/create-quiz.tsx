@@ -165,24 +165,23 @@ const CreateQuiz = () => {
       const response = await apiRequest("POST", "/api/quizzes", formattedData);
       const responseData = await response.json();
 
-      // Check if quiz generation started (async processing)
-      if (responseData.status === "generating") {
+      // Check if quiz is ready (first set generated)
+      if (responseData.status === "ready") {
+        toast({
+          title: "Quiz Ready!",
+          description: responseData.message,
+          duration: 8000,
+        });
+        
+        // Navigate to today's quizzes where the first set is available
+        navigate(`/dashboard/today`);
+      } else if (responseData.status === "generating") {
+        // Fallback for full async processing
         toast({
           title: "Quiz Generation Started",
           description: responseData.message,
-          duration: 60000, // Show for 1 minute
+          duration: 60000,
         });
-        
-        // Show a prominent modal or alert for better visibility
-        setTimeout(() => {
-          toast({
-            title: "Quiz Processing",
-            description: "Your quiz is being generated in the background. Check Today's Quizzes tab in 10 minutes.",
-            duration: 10000,
-          });
-        }, 2000);
-        
-        // Navigate to today's quizzes
         navigate(`/dashboard/today`);
       } else {
         // Legacy response for immediate quiz creation
