@@ -389,59 +389,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Generate all 8 sets of questions for spaced repetition with proper isolation
-      const quizSets = [];
-      for (let setNumber = 1; setNumber <= 8; setNumber++) {
-        console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
-        
-        // Use the specific topic for much better targeted question generation
-        const questions = await generateQuizQuestions(
-          selectedSubject.name,
-          selectedChapter.name,
-          selectedTopic.name, // Using the specific topic for precise targeting
-          user.grade || 10,
-          user.board || "CBSE",
-          validatedData.questionTypes,
-          validatedData.bloomTaxonomy,
-          validatedData.difficultyLevels,
-          validatedData.numberOfQuestions,
-          setNumber
-        );
-        
-        const quizSet = await storage.createQuizSet({
-          quizId: quiz.id,
-          setNumber: setNumber,
-          questions: questions.questions
-        });
-        
-        quizSets.push(quizSet);
-      }
-      
-      // Schedule quizzes for spaced repetition
-      const dates = calculateSpacedRepetitionDates(new Date());
-      const schedules = [];
-      
-      for (let i = 0; i < quizSets.length; i++) {
-        console.log(`Scheduling quiz set ${i + 1}/8 for user ${user.id} on ${dates[i]}`);
-        
-        const schedule = await storage.createQuizSchedule({
-          quizId: quiz.id,
-          userId: user.id, // Ensure proper user isolation
-          quizSetId: quizSets[i].id,
-          scheduledDate: dates[i],
-          status: "pending"
-        });
-        
-        schedules.push(schedule);
-      }
-      
-      console.log(`Successfully created quiz for user ${user.id} with ${quizSets.length} sets and ${schedules.length} schedules`);
-      
-      res.status(201).json({
+      // Immediately respond to user - quiz creation started
+      res.status(202).json({
         quiz,
-        quizSets,
-        schedules,
-        message: `Created quiz with ${quizSets.length} sets for spaced repetition`
+        status: "generating",
+        message: "Quiz creation started. We are generating 8 sets of questions which may take 5-10 minutes. Please refresh this page after 10 minutes to see your quiz in Today's Quizzes tab.",
+        estimatedTime: "5-10 minutes"
+      });
+
+      // Generate quiz sets asynchronously in the background
+      setImmediate(async () => {
+        try {
+          console.log(`Starting background generation for quiz ${quiz.id} - user ${user.id}`);
+          const quizSets = [];
+          
+          for (let setNumber = 1; setNumber <= 8; setNumber++) {
+            console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+            
+            const questions = await generateQuizQuestions(
+              selectedSubject.name,
+              selectedChapter.name,
+              selectedTopic.name,
+              user.grade || 10,
+              user.board || "CBSE",
+              validatedData.questionTypes,
+              validatedData.bloomTaxonomy,
+              validatedData.difficultyLevels,
+              validatedData.numberOfQuestions,
+              setNumber
+            );
+            
+            const quizSet = await storage.createQuizSet({
+              quizId: quiz.id,
+              setNumber: setNumber,
+              questions: questions.questions
+            });
+            
+            quizSets.push(quizSet);
+          }
+          
+          // Schedule quizzes for spaced repetition
+          const dates = calculateSpacedRepetitionDates(new Date());
+          
+          for (let i = 0; i < quizSets.length; i++) {
+            console.log(`Scheduling quiz set ${i + 1}/8 for user ${user.id} on ${dates[i]}`);
+            
+            await storage.createQuizSchedule({
+              quizId: quiz.id,
+              userId: user.id,
+              quizSetId: quizSets[i].id,
+              scheduledDate: dates[i],
+              status: "pending"
+            });
+          }
+          
+          console.log(`Successfully completed background generation for quiz ${quiz.id} - user ${user.id} with ${quizSets.length} sets`);
+          
+        } catch (error) {
+          console.error(`Background quiz generation failed for quiz ${quiz.id}:`, error);
+        }
       });
     } catch (error) {
       if (error instanceof ZodError) {

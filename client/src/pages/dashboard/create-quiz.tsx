@@ -165,13 +165,33 @@ const CreateQuiz = () => {
       const response = await apiRequest("POST", "/api/quizzes", formattedData);
       const responseData = await response.json();
 
-      toast({
-        title: "Quiz created successfully!",
-        description: "Please go to Today's Quizzes to take your test.",
-      });
-
-      // Navigate to today's quizzes after successful quiz creation
-      navigate(`/dashboard/today`);
+      // Check if quiz generation started (async processing)
+      if (responseData.status === "generating") {
+        toast({
+          title: "Quiz Generation Started",
+          description: responseData.message,
+          duration: 60000, // Show for 1 minute
+        });
+        
+        // Show a prominent modal or alert for better visibility
+        setTimeout(() => {
+          toast({
+            title: "Quiz Processing",
+            description: "Your quiz is being generated in the background. Check Today's Quizzes tab in 10 minutes.",
+            duration: 10000,
+          });
+        }, 2000);
+        
+        // Navigate to today's quizzes
+        navigate(`/dashboard/today`);
+      } else {
+        // Legacy response for immediate quiz creation
+        toast({
+          title: "Quiz created successfully!",
+          description: "Please go to Today's Quizzes to take your test.",
+        });
+        navigate(`/dashboard/today`);
+      }
     } catch (error) {
       let errorMessage = "Failed to create quiz. Please try again.";
 
