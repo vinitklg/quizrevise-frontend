@@ -823,21 +823,7 @@ export class DatabaseStorage implements IStorage {
 
   async getQuizzesByUser(userId: number): Promise<any[]> {
     return await db
-      .select({
-        id: quizzes.id,
-        title: quizzes.title,
-        subjectId: quizzes.subjectId,
-        chapterId: quizzes.chapterId,
-        topicId: quizzes.topicId,
-        topic: quizzes.topic,
-        questionTypes: quizzes.questionTypes,
-        difficultyLevels: quizzes.difficultyLevels,
-        bloomTaxonomy: quizzes.bloomTaxonomy,
-        numberOfQuestions: quizzes.numberOfQuestions,
-        status: quizzes.status,
-        createdAt: quizzes.createdAt,
-        userId: quizzes.userId
-      })
+      .select()
       .from(quizzes)
       .where(eq(quizzes.userId, userId))
       .orderBy(desc(quizzes.createdAt));

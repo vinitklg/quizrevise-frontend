@@ -865,27 +865,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/quizzes/today", isAuthenticated, async (req, res) => {
     try {
-      const schedules = await storage.getTodayQuizSchedules(req.session.userId!);
+      const userId = req.session.userId!;
       
-      // Get the quiz and quiz set details, only for pending quizzes
+      // Get all schedules for today
+      const allSchedules = await storage.getQuizSchedulesByUser(userId);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // Filter schedules for today only and pending status
+      const todaySchedules = allSchedules.filter(schedule => {
+        const scheduleDate = new Date(schedule.scheduledDate);
+        scheduleDate.setHours(0, 0, 0, 0);
+        return scheduleDate.getTime() === today.getTime() && schedule.status === "pending";
+      });
+      
+      // Get the quiz and quiz set details for each schedule
       const enrichedSchedules = await Promise.all(
-        schedules
-          .filter(schedule => schedule.status === "pending")  // ✅ Only show pending quizzes
-          .map(async (schedule) => {
-          const quiz = await storage.getQuizById(schedule.quizId);
-          const quizSet = await storage.getQuizSetById(schedule.quizSetId);
-          
-          return {
-            ...schedule,
-            quiz,
-            quizSet
-          };
+        todaySchedules.map(async (schedule) => {
+          try {
+            const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, schedule.quizId));
+            const [quizSet] = await db.select().from(quizSets).where(eq(quizSets.id, schedule.quizSetId));
+            
+            return {
+              ...schedule,
+              quiz: quiz || { title: 'Unknown Quiz' },
+              quizSet: quizSet || { setNumber: 1, questions: [] }
+            };
+          } catch (error) {
+            console.error('Error fetching quiz/set details:', error);
+            return {
+              ...schedule,
+              quiz: { title: 'Unknown Quiz' },
+              quizSet: { setNumber: 1, questions: [] }
+            };
+          }
         })
       );
       
       res.json(enrichedSchedules);
     } catch (error) {
-      console.error(error);
+      console.error("Error getting today's quizzes:", error);
       res.status(500).json({ message: "Failed to get today's quizzes" });
     }
   });
