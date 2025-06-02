@@ -93,7 +93,7 @@ export const doubtQueries = pgTable("doubt_queries", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   question: text("question").notNull(),
-  answer: text("answer"),
+  response: text("response"), // Changed from "answer" to "response"
   subjectId: integer("subject_id").notNull().default(1), // Default to first subject
   board: text("board"), // New: Student's board (CBSE, ICSE, etc.)
   class: text("class"), // New: Student's class/grade
