@@ -77,6 +77,16 @@ export default function FeedbackPage() {
       return;
     }
 
+    // Only require board, class, subject for content-specific feedback
+    if (selectedCategory === "content" && (!formData.board || !formData.class || !formData.subject)) {
+      toast({
+        title: "Subject Information Required",
+        description: "Please select board, class, and subject for content-related feedback.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data = new FormData();
     data.append("type", selectedCategory);
     data.append("board", formData.board);
@@ -192,7 +202,7 @@ export default function FeedbackPage() {
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Board
+                        Board {selectedCategory !== "content" && <span className="text-gray-400 font-normal">(Optional)</span>}
                       </label>
                       <Select
                         value={formData.board}
@@ -211,7 +221,7 @@ export default function FeedbackPage() {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Class
+                        Class {selectedCategory !== "content" && <span className="text-gray-400 font-normal">(Optional)</span>}
                       </label>
                       <Select
                         value={formData.class}
@@ -232,7 +242,7 @@ export default function FeedbackPage() {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Subject
+                        Subject {selectedCategory !== "content" && <span className="text-gray-400 font-normal">(Optional)</span>}
                       </label>
                       <Input
                         placeholder="e.g. Mathematics, Physics"
