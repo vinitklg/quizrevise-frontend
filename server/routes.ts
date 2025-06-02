@@ -878,30 +878,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId!;
       
-      const todayQuizzes = await db
-        .select({
-          id: quizSchedules.id,
-          quizId: quizSchedules.quizId,
-          quizSetId: quizSchedules.quizSetId,
-          scheduledDate: quizSchedules.scheduledDate,
-          status: quizSchedules.status,
-          title: quizzes.title,
-          topic: quizzes.topic,
-          setNumber: quizSets.setNumber
-        })
-        .from(quizSchedules)
-        .innerJoin(quizzes, eq(quizSchedules.quizId, quizzes.id))
-        .innerJoin(quizSets, eq(quizSchedules.quizSetId, quizSets.id))
-        .where(
-          and(
-            eq(quizSchedules.userId, userId),
-            eq(quizSchedules.status, "pending"),
-            sql`DATE(${quizSchedules.scheduledDate}) = CURRENT_DATE`
-          )
-        );
+      // Use raw SQL to bypass schema issues
+      const result = await pool.query(`
+        SELECT 
+          qs.id,
+          qs.quiz_id as "quizId",
+          qs.quiz_set_id as "quizSetId",
+          qs.scheduled_date as "scheduledDate",
+          qs.status,
+          q.title,
+          q.topic,
+          qset.set_number as "setNumber"
+        FROM quiz_schedules qs
+        JOIN quizzes q ON qs.quiz_id = q.id
+        JOIN quiz_sets qset ON qs.quiz_set_id = qset.id
+        WHERE qs.user_id = $1 
+          AND DATE(qs.scheduled_date) = CURRENT_DATE 
+          AND qs.status = 'pending'
+        ORDER BY qs.scheduled_date
+      `, [userId]);
 
       // Transform to match expected frontend format
-      const formattedQuizzes = todayQuizzes.map(quiz => ({
+      const formattedQuizzes = result.rows.map(quiz => ({
         id: quiz.id,
         quizId: quiz.quizId,
         quizSetId: quiz.quizSetId,
