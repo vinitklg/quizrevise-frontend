@@ -453,22 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create a new quiz with topic ID for precise targeting
-      const quiz = await storage.createQuiz({
-        userId: user.id,
-        chapterId: validatedData.chapterId,
-        subjectId: validatedData.subjectId,
-        topicId: validatedData.topicId, // Using topic ID for better targeting
-        title: validatedData.title,
-        topic: validatedData.topic,
-        questionTypes: validatedData.questionTypes,
-        bloomTaxonomy: validatedData.bloomTaxonomy,
-        difficultyLevels: validatedData.difficultyLevels,
-        numberOfQuestions: validatedData.numberOfQuestions,
-        status: "active"
-      });
-      
-      // Check if similar quiz questions already exist for this topic
+      // Check if similar quiz questions already exist for this topic BEFORE creating quiz
       console.log(`Checking for existing quiz questions for topic: ${selectedTopic.name}`);
       
       const existingQuiz = await storage.findSimilarQuiz({
