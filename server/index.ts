@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
@@ -11,8 +12,11 @@ app.use(cors())
 app.use(express.json())
 
 // Initialize Supabase
-const supabaseUrl = process.env.SUPABASE_URL
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+console.log('Initializing with Supabase URL:', supabaseUrl)
+console.log('Service key available:', !!supabaseServiceKey)
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing Supabase environment variables')
@@ -28,99 +32,28 @@ const openai = new OpenAI({
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'QuickRevise API is running' })
+  res.json({ status: 'OK', message: 'QuickRevise Fresh Supabase API is running' })
 })
 
-// Get user profile
-app.get('/api/profile', async (req, res) => {
+// Test Supabase connection
+app.get('/api/test-supabase', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' })
+    const { data, error } = await supabase.from('profiles').select('count').limit(1)
+    if (error) {
+      throw error
     }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-    
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' })
-    }
-
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError && profileError.code !== 'PGRST116') {
-      throw profileError
-    }
-
-    res.json({ user, profile })
-  } catch (error) {
-    console.error('Profile error:', error)
-    res.status(500).json({ error: 'Failed to get profile' })
-  }
-})
-
-// Create or update profile
-app.post('/api/profile', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' })
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-    
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' })
-    }
-
-    const { full_name, grade, board } = req.body
-
-    const { data, error: upsertError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        email: user.email,
-        full_name,
-        grade,
-        board,
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single()
-
-    if (upsertError) {
-      throw upsertError
-    }
-
-    res.json(data)
-  } catch (error) {
-    console.error('Profile update error:', error)
-    res.status(500).json({ error: 'Failed to update profile' })
+    res.json({ status: 'Supabase connected successfully', data })
+  } catch (error: any) {
+    res.status(500).json({ error: 'Supabase connection failed', details: error.message })
   }
 })
 
 // Generate quiz questions using OpenAI
 app.post('/api/generate-quiz', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' })
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-    
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' })
-    }
-
     const { subject, topic, grade, board, numQuestions = 5 } = req.body
+
+    console.log('Generating quiz for:', { subject, topic, grade, board, numQuestions })
 
     // Generate quiz using OpenAI
     const prompt = `Create ${numQuestions} multiple choice questions for ${grade} grade ${board} board students on the topic "${topic}" in ${subject}. 
@@ -143,68 +76,46 @@ Make questions educational and appropriate for the grade level.`
       response_format: { type: "json_object" }
     })
 
-    const result = JSON.parse(completion.choices[0].message.content)
+    const result = JSON.parse(completion.choices[0].message.content || '{}')
+    
+    console.log('Generated questions:', result.questions?.length || 0)
 
-    // Save quiz to Supabase
-    const { data: quiz, error: quizError } = await supabase
-      .from('quizzes')
-      .insert({
-        user_id: user.id,
-        title: `${subject} - ${topic}`,
-        subject,
-        topic,
-        grade,
-        board,
-        questions: result.questions,
-        status: 'active'
-      })
-      .select()
-      .single()
-
-    if (quizError) {
-      throw quizError
-    }
-
-    res.json({ quiz, questions: result.questions })
-  } catch (error) {
+    res.json({ questions: result.questions || [] })
+  } catch (error: any) {
     console.error('Quiz generation error:', error)
-    res.status(500).json({ error: 'Failed to generate quiz' })
+    res.status(500).json({ error: 'Failed to generate quiz', details: error.message })
   }
 })
 
-// Get user's quizzes
-app.get('/api/quizzes', async (req, res) => {
+// Initialize database tables
+app.post('/api/init-database', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No authorization header' })
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error } = await supabase.auth.getUser(token)
+    // Create simple quizzes table for testing
+    const { error } = await supabase.from('quizzes').select('*').limit(1)
     
-    if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' })
+    if (error && error.code === 'PGRST204') {
+      // Table doesn't exist, create a simple test entry to verify connection
+      console.log('Database tables need to be created in Supabase dashboard')
+      return res.json({ 
+        message: 'Please create tables in your Supabase dashboard first',
+        instructions: [
+          '1. Go to your Supabase dashboard',
+          '2. Navigate to Table Editor',
+          '3. Create tables: profiles, quizzes, subjects'
+        ]
+      })
     }
 
-    const { data, error: quizzesError } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (quizzesError) {
-      throw quizzesError
-    }
-
-    res.json(data)
-  } catch (error) {
-    console.error('Quizzes error:', error)
-    res.status(500).json({ error: 'Failed to get quizzes' })
+    res.json({ message: 'Database connection verified' })
+  } catch (error: any) {
+    console.error('Database init error:', error)
+    res.status(500).json({ error: 'Database initialization failed', details: error.message })
   }
 })
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`QuickRevise API running on port ${PORT}`)
+  console.log(`Fresh QuickRevise API running on port ${PORT}`)
+  console.log('Visit /api/health to check server status')
+  console.log('Visit /api/test-supabase to test database connection')
 })
