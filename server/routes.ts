@@ -26,9 +26,16 @@ declare module 'express-session' {
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req: Request, res: Response, next: Function) => {
+  console.log("Session check:", {
+    sessionId: req.sessionID,
+    userId: req.session.userId,
+    session: req.session
+  });
+  
   if (req.session.userId) {
     next();
   } else {
+    console.log("Authentication failed - no userId in session");
     res.status(401).json({ message: "Unauthorized" });
   }
 };
@@ -902,6 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }));
       
+      console.log("Today's quizzes found:", todayQuizzes.length, todayQuizzes);
       res.json(todayQuizzes);
     } catch (error) {
       console.error("Error getting today's quizzes:", error);
