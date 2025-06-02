@@ -121,15 +121,21 @@ app.post('/api/init-database', async (req, res) => {
   }
 })
 
-// Serve static files from client/dist
-app.use(express.static(path.join(__dirname, '../client/dist')))
-
-// Serve React app for all non-API routes
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'))
-  }
-})
+// Development: serve React app directly using Vite
+if (process.env.NODE_ENV === 'development') {
+  // In development, let Vite handle the frontend
+  app.get('/', (req, res) => {
+    res.redirect('http://localhost:5173')
+  })
+} else {
+  // Production: serve built files
+  app.use(express.static(path.join(__dirname, '../client/dist')))
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../client/dist/index.html'))
+    }
+  })
+}
 
 // Start server
 app.listen(PORT, () => {
