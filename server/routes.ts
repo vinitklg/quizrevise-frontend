@@ -869,10 +869,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId!;
       
       // Get today's pending quiz schedules using raw SQL to avoid column issues
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-      
-      // First, get the basic schedule information
       const scheduleResult = await pool.query(
         `SELECT 
           qs.id,
@@ -884,10 +880,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM quiz_schedules qs
         JOIN quizzes q ON qs.quiz_id = q.id
         WHERE qs.user_id = $1 
-          AND DATE(qs.scheduled_date) = $2 
+          AND DATE(qs.scheduled_date) = CURRENT_DATE 
           AND qs.status = 'pending'
         ORDER BY qs.scheduled_date`,
-        [userId, todayStr]
+        [userId]
       );
       
       // Transform the results to match expected format
