@@ -265,9 +265,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      // Find or create the subject first to get its code for validation
+      const subjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
+      let selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
+      
+      // If subject doesn't exist, create it dynamically
+      if (!selectedSubject) {
+        selectedSubject = await storage.createSubject({
+          name: reqData.subject,
+          gradeLevel: user.grade || 10,
+          board: user.board || "CBSE",
+          code: `${user.board || "CBSE"}_${user.grade || 10}_${reqData.subject.toUpperCase().replace(/\s+/g, '_')}`,
+          stream: user.stream || null,
+          isCore: true
+        });
+      }
+      
       // Verify subject is in the user's subscribed subjects if they're on a paid plan
       if (user.subscriptionTier !== "free" && user.subscribedSubjects && user.subscribedSubjects.length > 0) {
-        if (!user.subscribedSubjects.includes(reqData.subject)) {
+        // Check both subject name and subject code for compatibility
+        const hasAccess = user.subscribedSubjects.includes(reqData.subject) || 
+                         user.subscribedSubjects.includes(selectedSubject.code || '') ||
+                         user.subscribedSubjects.some(subCode => {
+                           const subject = subjects.find(s => s.code === subCode);
+                           return subject && subject.name.toLowerCase() === reqData.subject.toLowerCase();
+                         });
+        
+        if (!hasAccess) {
           return res.status(403).json({ 
             message: "You don't have access to this subject. Please subscribe to it first."
           });
