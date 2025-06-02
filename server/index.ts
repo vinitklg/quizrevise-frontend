@@ -118,13 +118,62 @@ app.post('/api/init-database', async (req, res) => {
   }
 })
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '../client/dist')))
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'))
-  }
-})
+// Development mode: create a simple index.html
+if (process.env.NODE_ENV === 'development') {
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>QuickRevise - Spaced Learning Platform</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-gray-50">
+          <div id="root">
+            <div class="min-h-screen flex items-center justify-center">
+              <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+                <div class="text-center">
+                  <h1 class="text-3xl font-bold text-gray-900 mb-4">QuickRevise</h1>
+                  <p class="text-gray-600 mb-6">Your AI-Powered Spaced Learning Platform</p>
+                  <div class="space-y-4">
+                    <a href="/dashboard" class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">
+                      Student Dashboard
+                    </a>
+                    <a href="/admin" class="block w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md">
+                      Admin Dashboard
+                    </a>
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                      <h3 class="text-lg font-semibold text-gray-900 mb-3">Features Available:</h3>
+                      <ul class="text-sm text-gray-600 space-y-2">
+                        <li>✓ AI Quiz Generation (Working with Supabase)</li>
+                        <li>✓ Spaced Repetition Learning</li>
+                        <li>✓ CBSE/ICSE/ISC Content</li>
+                        <li>✓ Performance Analytics</li>
+                        <li>✓ Admin Dashboard</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `)
+    }
+  })
+} else {
+  // Production: serve built files
+  app.use(express.static(path.join(__dirname, '../client/dist')))
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../client/dist/index.html'))
+    }
+  })
+}
 
 // Start server
 app.listen(PORT, () => {
