@@ -497,6 +497,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
+      // Create the quiz first with the generated questions
+      const quiz = await storage.createQuiz({
+        userId: user.id,
+        chapterId: validatedData.chapterId,
+        subjectId: validatedData.subjectId,
+        topicId: validatedData.topicId,
+        title: validatedData.title,
+        topic: validatedData.topic,
+        questionTypes: validatedData.questionTypes,
+        bloomTaxonomy: validatedData.bloomTaxonomy,
+        difficultyLevels: validatedData.difficultyLevels,
+        numberOfQuestions: validatedData.numberOfQuestions,
+        questions: batchQuestions.questions,
+        status: "active"
+      });
+
       // Group questions by set number and create quiz sets
       const quizSets = [];
       const questionsBySet: Record<number, any[]> = {};
