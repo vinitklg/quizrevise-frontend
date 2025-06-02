@@ -26,6 +26,7 @@ import FeedbackPage from "@/pages/dashboard/feedback";
 import Settings from "@/pages/dashboard/settings";
 import Performance from "@/pages/dashboard/performance";
 import AdminDashboard from "@/pages/admin/dashboard";
+import ComprehensiveAdminDashboard from "@/pages/admin/comprehensive-dashboard";
 import AdminLogin from "@/pages/admin/login";
 import AdminUsers from "@/pages/admin/users";
 import AdminSubjects from "@/pages/admin/subjects";
