@@ -6,6 +6,7 @@ import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } f
 import { renderDiagram } from "./diagramRenderer";
 import bcrypt from "bcryptjs";
 import session from "express-session";
+import pgSession from "connect-pg-simple";
 import { 
   loginSchema, 
   signupSchema, 
@@ -69,8 +70,16 @@ const calculateSpacedRepetitionDates = (startDate: Date): Date[] => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up session middleware
+  // Set up PostgreSQL session store
+  const pgStore = pgSession(session);
+  
+  // Set up session middleware with database storage
   app.use(session({
+    store: new pgStore({
+      pool: pool,
+      tableName: 'sessions',
+      createTableIfMissing: false
+    }),
     secret: process.env.SESSION_SECRET || 'quiz-revise-secret',
     resave: false,
     saveUninitialized: false,
