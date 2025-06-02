@@ -319,7 +319,7 @@ export default function TakeQuiz() {
                 </CardHeader>
                 <CardContent>
                   {/* MCQ Questions */}
-                  {currentQuestion.questionType === "mcq" && currentQuestion.options && (
+                  {(currentQuestion.type === "mcq" || currentQuestion.questionType === "mcq") && currentQuestion.options && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
@@ -340,7 +340,7 @@ export default function TakeQuiz() {
                   )}
 
                   {/* Fill in the Blanks */}
-                  {currentQuestion.questionType === "fill-in-blanks" && (
+                  {(currentQuestion.type === "fill-in-blank" || currentQuestion.questionType === "fill-in-blanks") && (
                     <div className="space-y-3">
                       <Input
                         placeholder="Type your answer here..."
@@ -352,7 +352,7 @@ export default function TakeQuiz() {
                   )}
 
                   {/* Assertion and Reasoning */}
-                  {currentQuestion.questionType === "assertion-reasoning" && (
+                  {(currentQuestion.type === "assertion-reasoning" || currentQuestion.questionType === "assertion-reasoning") && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
@@ -385,7 +385,7 @@ export default function TakeQuiz() {
                   )}
 
                   {/* True/False Questions */}
-                  {currentQuestion.questionType === "true-false" && (
+                  {(currentQuestion.type === "true-false" || currentQuestion.questionType === "true-false") && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
