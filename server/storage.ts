@@ -1,0 +1,533 @@
+import {
+  users,
+  subjects,
+  chapters,
+  topics,
+  quizzes,
+  quizSets,
+  quizSchedules,
+  doubtQueries,
+  type User,
+  type InsertUser,
+  type Subject,
+  type InsertSubject,
+  type Chapter,
+  type InsertChapter,
+  type Topic,
+  type InsertTopic,
+  type Quiz,
+  type InsertQuiz,
+  type QuizSet,
+  type InsertQuizSet,
+  type QuizSchedule,
+  type InsertQuizSchedule,
+  type DoubtQuery,
+  type InsertDoubtQuery,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lt, gt, lte, asc, desc, isNull, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+
+export interface IStorage {
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined>;
+  updateSubscription(
+    id: number,
+    tier: string,
+    subjectIds: string[],
+  ): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+
+  // Subject operations
+  getAllSubjects(): Promise<Subject[]>;
+  getSubjectById(id: number): Promise<Subject | undefined>;
+  getSubjectsByBoard(board: string): Promise<Subject[]>;
+  getSubjectsByGrade(grade: number): Promise<Subject[]>;
+  getSubjectsByBoardAndGrade(board: string, grade: number): Promise<Subject[]>;
+  getSubjectsByBoardGradeStream(board: string, grade: number, stream?: string): Promise<Subject[]>;
+  getAvailableStreams(board: string, grade: number): Promise<string[]>;
+  createSubject(subject: InsertSubject): Promise<Subject>;
+
+  // Chapter operations
+  getChaptersBySubject(subjectId: number): Promise<Chapter[]>;
+  createChapter(chapter: InsertChapter): Promise<Chapter>;
+
+  // Topic operations
+  getTopicsByChapter(chapterId: number): Promise<Topic[]>;
+  getTopicsBySubject(subjectId: number): Promise<Topic[]>;
+  createTopic(topic: InsertTopic): Promise<Topic>;
+  getTopicById(id: number): Promise<Topic | undefined>;
+
+  // Quiz operations
+  createQuiz(quiz: InsertQuiz): Promise<Quiz>;
+  getQuizById(id: number): Promise<Quiz | undefined>;
+  getQuizzesByUser(userId: number): Promise<Quiz[]>;
+  getActiveQuizzesByUser(userId: number): Promise<Quiz[]>;
+
+  // QuizSet operations
+  createQuizSet(quizSet: InsertQuizSet): Promise<QuizSet>;
+  getQuizSetsByQuiz(quizId: number): Promise<QuizSet[]>;
+  getQuizSetById(id: number): Promise<QuizSet | undefined>;
+
+  // QuizSchedule operations
+  createQuizSchedule(schedule: InsertQuizSchedule): Promise<QuizSchedule>;
+  getQuizSchedulesByUser(userId: number): Promise<QuizSchedule[]>;
+  getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]>;
+  getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]>;
+  getQuizSchedulesByQuizAndSet(
+    quizId: number,
+    quizSetId: number,
+    userId: number,
+  ): Promise<QuizSchedule[]>;
+  updateQuizSchedule(
+    id: number,
+    data: Partial<QuizSchedule>,
+  ): Promise<QuizSchedule | undefined>;
+  getQuizPerformance(
+    userId: number,
+    subjectId?: number,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{ date: string; score: number; quizSet: number }[]>;
+
+  // Doubt Query operations
+  createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
+  getDoubtQueriesByUser(userId: number): Promise<DoubtQuery[]>;
+  answerDoubtQuery(id: number, answer: string): Promise<DoubtQuery | undefined>;
+}
+
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  // Username is no longer used, we're using email as the primary identifier
+
+  async createUser(userData: InsertUser): Promise<User> {
+    // Hash password
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    // Ensure subscribedSubjects is an array if not provided
+    const subscribedSubjects = userData.subscribedSubjects || [];
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        password: hashedPassword,
+        subscribedSubjects,
+      })
+      .returning();
+    return user;
+  }
+
+  async updateUser(
+    id: number,
+    data: Partial<InsertUser>,
+  ): Promise<User | undefined> {
+    // If password is being updated, hash it
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
+    const [user] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateSubscription(
+    id: number,
+    tier: string,
+    subjectIds: string[],
+  ): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        subscriptionTier: tier,
+        subscribedSubjects: subjectIds,
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  // Subject operations
+  async getAllSubjects(): Promise<Subject[]> {
+    return await db.select().from(subjects);
+  }
+
+  async getSubjectById(id: number): Promise<Subject | undefined> {
+    const [subject] = await db
+      .select()
+      .from(subjects)
+      .where(eq(subjects.id, id));
+    return subject;
+  }
+
+  async getSubjectsByBoard(board: string): Promise<Subject[]> {
+    return await db.select().from(subjects).where(eq(subjects.board, board));
+  }
+
+  async getSubjectsByGrade(grade: number): Promise<Subject[]> {
+    return await db
+      .select()
+      .from(subjects)
+      .where(eq(subjects.gradeLevel, grade));
+  }
+
+  async getSubjectsByBoardAndGrade(
+    board: string,
+    grade: number,
+  ): Promise<Subject[]> {
+    return await db
+      .select()
+      .from(subjects)
+      .where(and(eq(subjects.board, board), eq(subjects.gradeLevel, grade)));
+  }
+
+  async getSubjectsByBoardGradeStream(
+    board: string, 
+    grade: number, 
+    stream?: string
+  ): Promise<Subject[]> {
+    const conditions = [
+      eq(subjects.board, board),
+      eq(subjects.gradeLevel, grade)
+    ];
+
+    // For grades 6-10, stream should be null
+    // For grades 11-12, filter by stream
+    if (grade <= 10) {
+      conditions.push(eq(subjects.stream, null));
+    } else if (stream) {
+      conditions.push(eq(subjects.stream, stream));
+    }
+
+    return await db
+      .select()
+      .from(subjects)
+      .where(and(...conditions));
+  }
+
+  async getAvailableStreams(board: string, grade: number): Promise<string[]> {
+    if (grade <= 10) return [];
+
+    const result = await db
+      .selectDistinct({ stream: subjects.stream })
+      .from(subjects)
+      .where(
+        and(
+          eq(subjects.board, board),
+          eq(subjects.gradeLevel, grade),
+          ne(subjects.stream, null)
+        )
+      );
+
+    return result.map(r => r.stream).filter(Boolean) as string[];
+  }
+
+  async createSubject(subject: InsertSubject): Promise<Subject> {
+    const [createdSubject] = await db
+      .insert(subjects)
+      .values(subject)
+      .returning();
+    return createdSubject;
+  }
+
+  // Chapter operations
+  async getChaptersBySubject(subjectId: number): Promise<Chapter[]> {
+    return await db
+      .select()
+      .from(chapters)
+      .where(eq(chapters.subjectId, subjectId));
+  }
+
+  async createChapter(chapter: InsertChapter): Promise<Chapter> {
+    const [createdChapter] = await db
+      .insert(chapters)
+      .values(chapter)
+      .returning();
+    return createdChapter;
+  }
+
+  // Topic operations
+  async getTopicsByChapter(chapterId: number): Promise<Topic[]> {
+    return await db
+      .select()
+      .from(topics)
+      .where(eq(topics.chapterId, chapterId));
+  }
+
+  async getTopicsBySubject(subjectId: number): Promise<Topic[]> {
+    return await db
+      .select()
+      .from(topics)
+      .where(eq(topics.subjectId, subjectId));
+  }
+
+  async createTopic(topic: InsertTopic): Promise<Topic> {
+    const [createdTopic] = await db.insert(topics).values(topic).returning();
+    return createdTopic;
+  }
+
+  async getTopicById(id: number): Promise<Topic | undefined> {
+    const [topic] = await db.select().from(topics).where(eq(topics.id, id));
+    return topic;
+  }
+
+  // Quiz operations
+  async createQuiz(quiz: InsertQuiz): Promise<Quiz> {
+    const [createdQuiz] = await db.insert(quizzes).values(quiz).returning();
+    return createdQuiz;
+  }
+
+  async getQuizById(id: number): Promise<Quiz | undefined> {
+    const [quiz] = await db.select().from(quizzes).where(eq(quizzes.id, id));
+    return quiz;
+  }
+
+  async getQuizzesByUser(userId: number): Promise<Quiz[]> {
+    // Ensure we only return quizzes for the specific user
+    return await db
+      .select()
+      .from(quizzes)
+      .where(eq(quizzes.userId, userId))
+      .orderBy(quizzes.createdAt);
+  }
+
+  async getActiveQuizzesByUser(userId: number): Promise<Quiz[]> {
+    return await db
+      .select()
+      .from(quizzes)
+      .where(and(eq(quizzes.userId, userId), eq(quizzes.status, "active")));
+  }
+
+  // QuizSet operations
+  async createQuizSet(quizSet: InsertQuizSet): Promise<QuizSet> {
+    const [createdQuizSet] = await db
+      .insert(quizSets)
+      .values(quizSet)
+      .returning();
+    return createdQuizSet;
+  }
+
+  async getQuizSetsByQuiz(quizId: number): Promise<QuizSet[]> {
+    // Ensure quiz sets are returned in correct order for spaced repetition
+    return await db
+      .select()
+      .from(quizSets)
+      .where(eq(quizSets.quizId, quizId))
+      .orderBy(quizSets.setNumber);
+  }
+
+  async getQuizSetById(id: number): Promise<QuizSet | undefined> {
+    const [quizSet] = await db
+      .select()
+      .from(quizSets)
+      .where(eq(quizSets.id, id));
+    return quizSet;
+  }
+
+  // QuizSchedule operations
+  async createQuizSchedule(
+    schedule: InsertQuizSchedule,
+  ): Promise<QuizSchedule> {
+    const [createdSchedule] = await db
+      .insert(quizSchedules)
+      .values(schedule)
+      .returning();
+    return createdSchedule;
+  }
+
+  async getQuizSchedulesByUser(userId: number): Promise<QuizSchedule[]> {
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(eq(quizSchedules.userId, userId));
+  }
+
+  async getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.userId, userId),
+          gte(quizSchedules.scheduledDate, today),
+          lt(quizSchedules.scheduledDate, tomorrow),
+          eq(quizSchedules.status, "pending"),
+        ),
+      );
+  }
+
+  async getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]> {
+    const tomorrow = new Date();
+    tomorrow.setHours(0, 0, 0, 0);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.userId, userId),
+          gte(quizSchedules.scheduledDate, tomorrow),
+          eq(quizSchedules.status, "pending"),
+        ),
+      );
+  }
+
+  async updateQuizSchedule(
+    id: number,
+    data: Partial<QuizSchedule>,
+  ): Promise<QuizSchedule | undefined> {
+    const [schedule] = await db
+      .update(quizSchedules)
+      .set(data)
+      .where(eq(quizSchedules.id, id))
+      .returning();
+    return schedule;
+  }
+
+  async getQuizSchedulesByQuizAndSet(
+    quizId: number,
+    quizSetId: number,
+    userId: number,
+  ): Promise<QuizSchedule[]> {
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.quizId, quizId),
+          eq(quizSchedules.quizSetId, quizSetId),
+          eq(quizSchedules.userId, userId),
+        ),
+      );
+  }
+
+  async getQuizPerformance(
+    userId: number,
+    subjectId?: number,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<{ date: string; score: number; quizSet: number }[]> {
+    // Build the condition for filtering
+    const whereConditions = [
+      eq(quizSchedules.userId, userId),
+      eq(quizSchedules.status, "completed"),
+      sql`${quizSchedules.completedDate} IS NOT NULL`,
+      sql`${quizSchedules.score} IS NOT NULL`,
+    ];
+
+    // Add subject filter if provided
+    let queryBuilder = db
+      .select({
+        date: quizSchedules.completedDate,
+        score: quizSchedules.score,
+        quizSet: quizSchedules.quizSetId,
+        quizId: quizSchedules.quizId,
+      })
+      .from(quizSchedules);
+
+    if (subjectId) {
+      queryBuilder = queryBuilder
+        .innerJoin(quizzes, eq(quizzes.id, quizSchedules.quizId))
+        .where(and(...whereConditions, eq(quizzes.subjectId, subjectId)));
+    } else {
+      queryBuilder = queryBuilder.where(and(...whereConditions));
+    }
+
+    // Add date range filters if provided
+    if (startDate) {
+      queryBuilder = queryBuilder.where(
+        gte(quizSchedules.completedDate, startDate),
+      );
+    }
+
+    if (endDate) {
+      queryBuilder = queryBuilder.where(
+        lte(quizSchedules.completedDate, endDate),
+      );
+    }
+
+    const results = await queryBuilder.orderBy(
+      asc(quizSchedules.completedDate),
+    );
+
+    return results.map((result) => ({
+      date: result.date?.toISOString().split("T")[0] || "",
+      score: result.score || 0,
+      quizSet: result.quizSet,
+    }));
+  }
+
+  // Doubt Query operations
+  async createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery> {
+    // Map subject name to the database column
+    const [createdDoubt] = await db
+      .insert(doubtQueries)
+      .values({
+        userId: doubt.userId,
+        subjectId: doubt.subjectId,
+        question: doubt.question,
+        board: doubt.board,
+        class: doubt.class,
+        subjectName: doubt.subjectName,
+        fileUrl: doubt.fileUrl,
+        fileType: doubt.fileType,
+        status: "pending",
+        createdAt: new Date(),
+      })
+      .returning();
+    return createdDoubt;
+  }
+
+  async getDoubtQueriesByUser(userId: number): Promise<DoubtQuery[]> {
+    return await db
+      .select()
+      .from(doubtQueries)
+      .where(eq(doubtQueries.userId, userId));
+  }
+
+  async answerDoubtQuery(
+    id: number,
+    answer: string,
+  ): Promise<DoubtQuery | undefined> {
+    const [doubt] = await db
+      .update(doubtQueries)
+      .set({
+        answer,
+        status: "answered",
+        answeredAt: new Date(),
+      })
+      .where(eq(doubtQueries.id, id))
+      .returning();
+    return doubt;
+  }
+}
+
+export const storage = new DatabaseStorage();

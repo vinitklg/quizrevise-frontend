@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-
+import Sidebar from "@/components/dashboard/Sidebar";
 import {
   Form,
   FormControl,
@@ -69,7 +69,6 @@ const createQuizSchema = z.object({
   bloomTaxonomy: z.array(z.string()).optional(),
   difficultyLevels: z.array(z.string()).optional(),
   numberOfQuestions: z.number().optional(),
-  diagramSupport: z.boolean().optional(),
 });
 
 type CreateQuizFormValues = z.infer<typeof createQuizSchema>;
@@ -79,10 +78,9 @@ const CreateQuiz = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCreationNotification, setShowCreationNotification] = useState(false);
 
   // Get user's subscribed subjects
-  const userSubjects = user?.selectedSubjects || [];
+  const userSubjects = user?.subscribedSubjects || [];
 
   // Fetch all subjects to match with user's subscribed subject codes
   const { data: allSubjects = [], isLoading: isLoadingSubjects } =
@@ -134,6 +132,12 @@ const CreateQuiz = () => {
   const onSubmit = async (data: CreateQuizFormValues) => {
     setIsSubmitting(true);
     
+    // Show loading message
+    toast({
+      title: "Creating Quiz...",
+      description: "Please wait while we generate your quiz questions.",
+    });
+    
     try {
       // Include all form data
       const formattedData = {
@@ -156,33 +160,20 @@ const CreateQuiz = () => {
             ? data.difficultyLevels
             : ["standard"],
         numberOfQuestions: data.numberOfQuestions || 10,
-        diagramSupport: data.diagramSupport || false,
       };
 
-      // Show prominent creation notification
-      setShowCreationNotification(true);
-      
-      // Start the quiz creation process (don't wait for completion)
-      apiRequest("POST", "/api/quizzes", formattedData).catch(error => {
-        console.error("Quiz creation failed:", error);
-        setShowCreationNotification(false);
+      const response = await apiRequest("POST", "/api/quizzes", formattedData);
+      const responseData = await response.json();
+
+      toast({
+        title: "Quiz created successfully!",
+        description: "Please go to Today's Quizzes to take your test.",
       });
 
-      // Reset form
-      form.reset();
-
-      // Navigate to today's quizzes after showing notification for 30 seconds
-      setTimeout(() => {
-        navigate(`/dashboard/today`);
-      }, 30000);
-
-      // Hide notification after 30 seconds (same time as navigation)
-      setTimeout(() => {
-        setShowCreationNotification(false);
-      }, 30000);
-      
+      // Navigate to today's quizzes after successful quiz creation
+      navigate(`/dashboard/today`);
     } catch (error) {
-      let errorMessage = "Failed to start quiz creation. Please try again.";
+      let errorMessage = "Failed to create quiz. Please try again.";
 
       // Check if it's a subscription limit error
       if (
@@ -205,39 +196,18 @@ const CreateQuiz = () => {
   // No longer need the handleSubjectChange function since we're using text inputs
 
   return (
-    <div className="py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Create Quiz
-        </h1>
+    <div className="flex h-screen overflow-hidden">
+      <div className="hidden md:flex md:flex-shrink-0 md:w-64">
+        <Sidebar />
+      </div>
 
-        {/* Prominent Quiz Creation Notification */}
-        {showCreationNotification && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 mx-4 max-w-md w-full text-center">
-              <div className="mb-6">
-                <div className="animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Creating Your Quiz
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
-                  AI is generating 8 sets of personalized questions for your spaced repetition learning journey.
-                </p>
-              </div>
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <p className="text-blue-800 dark:text-blue-200 font-medium">
-                  If similar questions exist, this will be instant. Otherwise, new questions will be generated in 1-2 minutes. Please refresh the page after completion.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowCreationNotification(false)}
-                className="mt-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                Dismiss (continues in background)
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
+          <div className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Create Quiz
+              </h1>
 
               <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
@@ -339,7 +309,26 @@ const CreateQuiz = () => {
                                       </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                      {isLoadingSubjects ? (
+                                      {user?.subscriptionTier === "free" ? (
+                                        subscribedSubjects.length === 0 ? (
+                                          <SelectItem
+                                            value="no-subjects"
+                                            disabled
+                                          >
+                                            No preferred subjects found. Update
+                                            your profile.
+                                          </SelectItem>
+                                        ) : (
+                                          subscribedSubjects.map((subject) => (
+                                            <SelectItem
+                                              key={subject.code}
+                                              value={subject.name}
+                                            >
+                                              {subject.name}
+                                            </SelectItem>
+                                          ))
+                                        )
+                                      ) : isLoadingSubjects ? (
                                         <SelectItem value="loading" disabled>
                                           Loading subjects...
                                         </SelectItem>
@@ -348,12 +337,12 @@ const CreateQuiz = () => {
                                           value="no-subjects"
                                           disabled
                                         >
-                                          No subjects selected. Please update your profile.
+                                          No subscribed subjects found.
                                         </SelectItem>
                                       ) : (
                                         subscribedSubjects.map((subject) => (
                                           <SelectItem
-                                            key={subject.code}
+                                            key={subject.id}
                                             value={subject.name}
                                           >
                                             {subject.name}
@@ -400,6 +389,10 @@ const CreateQuiz = () => {
                                 {
                                   id: "assertion-reasoning",
                                   label: "Assertion & Reasoning",
+                                },
+                                {
+                                  id: "fill-in-blanks",
+                                  label: "Fill in the Blanks",
                                 },
                                 { id: "true-false", label: "True/False" },
                               ].map((type) => (
@@ -481,35 +474,6 @@ const CreateQuiz = () => {
                               ))}
                             </div>
                           </div>
-
-                          {/* Diagram Support Section */}
-                          <FormField
-                            control={form.control}
-                            name="diagramSupport"
-                            render={({ field }) => (
-                              <FormItem className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                                <div>
-                                  <h3 className="font-medium mb-2">📊 Diagram Support</h3>
-                                  <FormDescription className="text-sm text-gray-600 dark:text-gray-400">
-                                    Force diagram generation for visual concepts (Geometry, Physics, Chemistry, Biology)
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id="diagramSupport"
-                                      checked={field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                    <label htmlFor="diagramSupport" className="text-sm font-normal">
-                                      Force Diagram Generation
-                                    </label>
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
 
                           <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                             <h3 className="font-medium">Difficulty Levels</h3>
@@ -610,8 +574,8 @@ const CreateQuiz = () => {
                               AI-Generated Questions
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Our AI creates 8 sets of questions in the background. 
-                              Your quiz will be ready in 5-10 minutes and appear in "Today's Quizzes".
+                              Our AI will create 8 sets of questions tailored to
+                              your selected chapter.
                             </p>
                           </div>
                         </div>
@@ -646,6 +610,9 @@ const CreateQuiz = () => {
                   </Card>
                 </div>
               </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+import SubjectSelection from "@/components/SubjectSelection";
 
 const signupSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -35,9 +36,10 @@ const signupSchema = z.object({
     .min(10, "Phone number must be at least 10 digits")
     .max(15, "Phone number must not exceed 15 digits")
     .optional(),
-  preferredSubject: z.string().optional(),
+  subscribedSubjects: z.array(z.string()).default([]),
   grade: z.coerce.number().min(6).max(12).optional(),
   board: z.enum(["CBSE", "ICSE", "ISC"]).optional(),
+  stream: z.string().optional(),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -47,11 +49,8 @@ const Signup = () => {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Fetch subjects for the dropdown
-  const { data: subjects = [] } = useQuery<{id: number, name: string}[]>({
-    queryKey: ["/api/subjects"],
-  });
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedStream, setSelectedStream] = useState<string>("");
   
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -62,14 +61,27 @@ const Signup = () => {
       firstName: "",
       lastName: "",
       phoneNumber: "",
-      preferredSubject: "",
+      subscribedSubjects: [],
+      grade: undefined,
+      board: undefined,
+      stream: "",
     },
   });
+
+  const watchedGrade = form.watch("grade");
+  const watchedBoard = form.watch("board");
 
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/auth/signup", data);
+      // Include selected subjects and stream in the signup data
+      const signupData = {
+        ...data,
+        subscribedSubjects: selectedSubjects,
+        stream: selectedStream || data.stream,
+      };
+
+      await apiRequest("POST", "/api/auth/signup", signupData);
       
       // Invalidate user query to refetch after signup
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
@@ -265,22 +277,22 @@ const Signup = () => {
                 />
               </div>
               
-              <FormField
-                control={form.control}
-                name="preferredSubject"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Subjects</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Physics, Chemistry, Mathematics" {...field} />
-                    </FormControl>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Enter multiple subjects separated by commas (e.g., Physics, Mathematics)
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Structured Subject Selection */}
+              {watchedBoard && watchedGrade && (
+                <div className="space-y-4">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Select Your Subjects
+                  </label>
+                  <SubjectSelection
+                    board={watchedBoard}
+                    grade={watchedGrade}
+                    stream={selectedStream}
+                    selectedSubjects={selectedSubjects}
+                    onSubjectsChange={setSelectedSubjects}
+                    onStreamChange={setSelectedStream}
+                  />
+                </div>
+              )}
 
               <div>
                 <Button

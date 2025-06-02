@@ -1,27 +1,28 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "./components/ui/toaster";
-import { TooltipProvider } from "./components/ui/tooltip";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import NotFound from "./pages/not-found";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import NotFound from "@/pages/not-found";
 
 // Pages
-import Home from "./pages/home";
-import About from "./pages/about";
-import Services from "./pages/services";
-import Pricing from "./pages/pricing";
-import Login from "./pages/login";
-import Signup from "./pages/signup";
-import Dashboard from "./pages/dashboard";
-import CreateQuiz from "./pages/dashboard/create-quiz";
-import TakeQuiz from "./pages/dashboard/take-quiz";
-import TodayQuizzes from "./pages/dashboard/today";
-import AskDoubts from "./pages/dashboard/doubts";
-import Settings from "./pages/dashboard/settings";
-import Performance from "./pages/dashboard/performance";
-import AdminDashboard from "./pages/admin";
+import Home from "@/pages/home";
+import About from "@/pages/about";
+import Services from "@/pages/services";
+import Pricing from "@/pages/pricing";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
+import Dashboard from "@/pages/dashboard";
+import CreateQuiz from "@/pages/dashboard/create-quiz";
+import TakeQuiz from "@/pages/dashboard/take-quiz";
+import QuizResults from "@/pages/dashboard/quiz-results";
+import TodayQuizzes from "@/pages/dashboard/today";
+import AskDoubts from "@/pages/dashboard/doubts";
+import Settings from "@/pages/dashboard/settings";
+import Performance from "@/pages/dashboard/performance";
+import AdminDashboard from "@/pages/admin";
 
 function Router() {
   return (
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/dashboard/create-quiz" component={CreateQuiz} />
       <Route path="/dashboard/take-quiz/:scheduleId" component={TakeQuiz} />
+      <Route path="/dashboard/quiz-results/:scheduleId" component={QuizResults} />
       <Route path="/dashboard/today" component={TodayQuizzes} />
       <Route path="/dashboard/doubts" component={AskDoubts} />
       <Route path="/dashboard/performance" component={Performance} />
@@ -59,11 +61,11 @@ function App() {
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="flex-grow">
+            <Toaster />
             <Router />
           </main>
           <Footer />
         </div>
-        <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
   );
