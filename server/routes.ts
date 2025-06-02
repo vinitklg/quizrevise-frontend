@@ -266,18 +266,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Find or create the subject first to get its code for validation
-      const subjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
-      let selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
+      const allSubjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
+      let selectedSubject = allSubjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
       
       // If subject doesn't exist, create it dynamically
       if (!selectedSubject) {
+        const subjectCode = `${user.board || "CBSE"}_${user.grade || 10}_${user.stream ? user.stream.toUpperCase() + '_' : ''}${reqData.subject.toUpperCase().replace(/\s+/g, '_')}`;
         selectedSubject = await storage.createSubject({
           name: reqData.subject,
           gradeLevel: user.grade || 10,
           board: user.board || "CBSE",
-          code: `${user.board || "CBSE"}_${user.grade || 10}_${reqData.subject.toUpperCase().replace(/\s+/g, '_')}`,
+          code: subjectCode,
           stream: user.stream || null,
-          isCore: true
+          isCore: !user.stream // Core subjects don't have a stream
         });
       }
       
@@ -287,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const hasAccess = user.subscribedSubjects.includes(reqData.subject) || 
                          user.subscribedSubjects.includes(selectedSubject.code || '') ||
                          user.subscribedSubjects.some(subCode => {
-                           const subject = subjects.find(s => s.code === subCode);
+                           const subject = allSubjects.find(s => s.code === subCode);
                            return subject && subject.name.toLowerCase() === reqData.subject.toLowerCase();
                          });
         
@@ -298,19 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Find or create the subject dynamically based on user input
-      const subjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
-      let selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
-      
-      // If subject doesn't exist, create it dynamically
-      if (!selectedSubject) {
-        selectedSubject = await storage.createSubject({
-          name: reqData.subject,
-          gradeLevel: user.grade || 10,
-          board: user.board || "CBSE"
-        });
-        console.log(`Created new subject: ${reqData.subject} for ${user.board || "CBSE"} Grade ${user.grade || 10}`);
-      }
+      // selectedSubject is already found or created above in the validation section
       
       const chapters = await storage.getChaptersBySubject(selectedSubject.id);
       let selectedChapter = chapters.find(c => c.name.toLowerCase() === reqData.chapter.toLowerCase());
