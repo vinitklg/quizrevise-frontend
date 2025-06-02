@@ -872,19 +872,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
       
-      const result = await pool.query(
+      // First, get the basic schedule information
+      const scheduleResult = await pool.query(
         `SELECT 
           qs.id,
           qs.quiz_id as "quizId",
           qs.quiz_set_id as "quizSetId", 
           qs.scheduled_date as "scheduledDate",
           qs.status,
-          q.title as quiz_title,
-          qset.set_number as set_number,
-          qset.questions
+          q.title as quiz_title
         FROM quiz_schedules qs
         JOIN quizzes q ON qs.quiz_id = q.id
-        LEFT JOIN quiz_sets qset ON qs.quiz_set_id = qset.id
         WHERE qs.user_id = $1 
           AND DATE(qs.scheduled_date) = $2 
           AND qs.status = 'pending'
@@ -893,7 +891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Transform the results to match expected format
-      const todayQuizzes = result.rows.map(row => ({
+      const todayQuizzes = scheduleResult.rows.map(row => ({
         id: row.id,
         quizId: row.quizId,
         quizSetId: row.quizSetId,
@@ -903,8 +901,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: row.quiz_title || 'Unknown Quiz'
         },
         quizSet: {
-          setNumber: row.set_number || 1,
-          questions: row.questions || []
+          setNumber: 1,
+          questions: []
         }
       }));
       
