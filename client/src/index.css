@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide duplicate sidebars when using DashboardLayout */
+.dashboard-layout-wrapper .flex.h-screen.overflow-hidden > .hidden.md\\:flex.md\\:flex-shrink-0.md\\:w-64,
+.dashboard-layout-wrapper .flex.h-screen.overflow-hidden > .md\\:flex.md\\:flex-shrink-0.md\\:w-64,
+.dashboard-layout-wrapper .flex.min-h-screen.overflow-hidden > .hidden.md\\:flex.md\\:flex-shrink-0.md\\:w-64,
+.dashboard-layout-wrapper .flex.min-h-screen.overflow-hidden > .md\\:flex.md\\:flex-shrink-0.md\\:w-64 {
+  display: none !important;
+}
+
+/* Hide any sidebar wrapper divs in dashboard pages when inside DashboardLayout */
+.dashboard-layout-wrapper .flex.h-screen.overflow-hidden,
+.dashboard-layout-wrapper .flex.min-h-screen.overflow-hidden {
+  display: block !important;
+}
+
+.dashboard-layout-wrapper .flex.h-screen.overflow-hidden > .flex.flex-col.flex-1.overflow-hidden,
+.dashboard-layout-wrapper .flex.min-h-screen.overflow-hidden > .flex.flex-col.flex-1.overflow-hidden {
+  overflow: visible !important;
+  height: auto !important;
+}
+
 :root {
       --background: 0 0% 100%;
 --foreground: 20 14.3% 4.1%;

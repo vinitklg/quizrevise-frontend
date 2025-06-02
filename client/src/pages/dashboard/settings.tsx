@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
+
 import SubjectSelection from "@/components/SubjectSelection";
 import { Button } from "@/components/ui/button";
 import {
@@ -205,36 +205,19 @@ const Settings = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen overflow-hidden">
-        <div className="hidden md:flex md:flex-shrink-0 md:w-64">
-          <Sidebar />
-        </div>
-        
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-            <div className="py-6">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse w-48 mb-6"></div>
-                <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-              </div>
-            </div>
-          </main>
+      <div className="py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse w-48 mb-6"></div>
+          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="hidden md:flex md:flex-shrink-0 md:w-64">
-        <Sidebar />
-      </div>
-      
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Settings</h1>
+    <div className="py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Settings</h1>
               
               <Tabs defaultValue="account" className="space-y-6">
                 <TabsList>
@@ -361,12 +344,30 @@ const Settings = () => {
                               <Button 
                                 type="button"
                                 onClick={async () => {
-                                  const updateData = {
-                                    subscribedSubjects: selectedSubjects,
-                                    stream: selectedStream || user?.stream,
-                                  };
-                                  await onSubmitProfile(updateData as any);
-                                  setIsUpdatingProfile(false); // Close the subject selection UI
+                                  if (!user) return;
+                                  
+                                  try {
+                                    const updateData = {
+                                      subscribedSubjects: selectedSubjects,
+                                      stream: selectedStream || user.stream,
+                                    };
+                                    
+                                    await apiRequest("PATCH", `/api/users/${user.id}`, updateData);
+                                    
+                                    toast({
+                                      title: "Subjects updated",
+                                      description: "Your subject preferences have been updated successfully.",
+                                    });
+                                    
+                                    queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+                                    setIsUpdatingProfile(false);
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error updating subjects",
+                                      description: "There was a problem updating your subjects. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  }
                                 }}
                                 disabled={selectedSubjects.length === 0}
                               >
@@ -670,9 +671,6 @@ const Settings = () => {
                   </div>
                 </TabsContent>
               </Tabs>
-            </div>
-          </div>
-        </main>
       </div>
     </div>
   );

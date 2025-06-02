@@ -1,0 +1,88 @@
+// File: server/diagramRenderer.ts
+// Status: Will be modularized for ICSE/CBSE Class 9–10 math diagrams
+
+import fs from 'fs';
+import path from 'path';
+
+interface DiagramRenderOptions {
+  instruction: string;
+  subject: string;
+  questionId: string;
+  width?: number;
+  height?: number;
+}
+
+export async function renderDiagram(options: DiagramRenderOptions): Promise<string | null> {
+  const { instruction, subject, questionId } = options;
+
+  const diagramsDir = path.join(process.cwd(), 'public', 'diagrams');
+  if (!fs.existsSync(diagramsDir)) fs.mkdirSync(diagramsDir, { recursive: true });
+
+  try {
+    const normalizedSubject = subject.toLowerCase();
+    if (normalizedSubject.includes('math')) return await renderMathDiagram(instruction, questionId);
+    return null; // Future: add support for science subjects
+  } catch (error) {
+    console.error('Diagram rendering error:', error);
+    return null;
+  }
+}
+
+// Modularized by topic
+async function renderMathDiagram(instruction: string, questionId: string): Promise<string> {
+  const fileName = `math_${questionId}_${Date.now()}.svg`;
+  const filePath = path.join(process.cwd(), 'public', 'diagrams', fileName);
+  let svg = '';
+
+  if (/circle|chord|arc|radius|diameter/i.test(instruction)) {
+    svg = generateCircleSVG(instruction);
+  } else if (/cyclic quadrilateral|opposite angles|exterior angle/i.test(instruction)) {
+    svg = generateCyclicQuadrilateralSVG(instruction);
+  } else if (/triangle|altitude|median|isosceles|equilateral/i.test(instruction)) {
+    svg = generateTriangleSVG(instruction);
+  } else if (/coordinate|x-axis|y-axis|section formula|distance/i.test(instruction)) {
+    svg = generateCoordinateGeometrySVG(instruction);
+  } else if (/histogram|bar graph|pie chart/i.test(instruction)) {
+    svg = generateStatisticsChartSVG(instruction);
+  } else if (/cuboid|cylinder|cone|sphere/i.test(instruction)) {
+    svg = generateMensuration3DSVG(instruction);
+  } else if (/construction|bisect|perpendicular/i.test(instruction)) {
+    svg = generateConstructionSVG(instruction);
+  } else if (/angle|interior|exterior/i.test(instruction)) {
+    svg = generateAngleSVG(instruction);
+  } else {
+    svg = generateGenericMathSVG(instruction);
+  }
+
+  fs.writeFileSync(filePath, svg);
+  return `/diagrams/${fileName}`;
+}
+
+// TODO: Add these actual SVG generators below
+function generateCircleSVG(instruction: string): string {
+  return `<svg>Circle placeholder</svg>`;
+}
+function generateCyclicQuadrilateralSVG(instruction: string): string {
+  return `<svg>Cyclic quadrilateral placeholder</svg>`;
+}
+function generateTriangleSVG(instruction: string): string {
+  return `<svg>Triangle placeholder</svg>`;
+}
+function generateCoordinateGeometrySVG(instruction: string): string {
+  return `<svg>Coordinate geometry placeholder</svg>`;
+}
+function generateStatisticsChartSVG(instruction: string): string {
+  return `<svg>Statistics chart placeholder</svg>`;
+}
+function generateMensuration3DSVG(instruction: string): string {
+  return `<svg>Mensuration 3D shape placeholder</svg>`;
+}
+function generateConstructionSVG(instruction: string): string {
+  return `<svg>Construction diagram placeholder</svg>`;
+}
+function generateAngleSVG(instruction: string): string {
+  return `<svg>Angle placeholder</svg>`;
+}
+function generateGenericMathSVG(instruction: string): string {
+  return `<svg>Generic placeholder for instruction: ${instruction}</svg>`;
+}

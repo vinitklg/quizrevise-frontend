@@ -60,19 +60,51 @@ Return only:
 - Any commentary, tips, or explanation
 - Any metadata or tags
 
-🎯 DIAGRAM SUPPORT FOR MATHEMATICS:
-If the question involves a diagram, include a special field:
+🎯 DIAGRAM SUPPORT FOR CBSE/ICSE CLASS 9-10 MATHEMATICS:
+For any question requiring visual representation, include a "diagram_instruction" field.
 
-"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw triangle ABC with AB = 6 cm, angle B = 90°, mark all angles and sides clearly')."
+**MANDATORY DIAGRAM REQUIREMENT for these curriculum topics:**
 
-Diagram Types: Geometry figures, angle construction, coordinate plots, function graphs
-Tool Support: Manim, GeoGebra, Matplotlib, SVG/Canvas rendering
+**GEOMETRY (Class 9-10 Core Topics):**
+- Triangle congruency: "Draw triangles ABC and DEF showing SSS/SAS/AAS/RHS congruency with marked equal sides/angles"
+- Parallelogram properties: "Draw parallelogram ABCD showing opposite sides parallel and equal, mark diagonal intersections"
+- Midpoint theorem: "Draw triangle ABC with midpoints D and E on sides AB and AC, show DE parallel to BC"
+- Pythagoras theorem: "Draw right triangle ABC with squares on all three sides, label a², b², c²"
+- Circle theorems: "Draw circle with center O, chord AB, show perpendicular from center bisecting chord"
+- Cyclic quadrilaterals: "Draw quadrilateral PQRS inscribed in circle, mark opposite angles summing to 180°"
 
-For geometry questions, be specific about:
-- Exact measurements and dimensions
-- Angle markings and labels
-- Point coordinates if applicable
-- Special geometric properties to highlight`,
+**MENSURATION:**
+- 3D solids: "Draw cylinder with radius r and height h, show curved surface area and total surface area"
+- Cuboids: "Draw cuboid showing length, breadth, height with all dimensions labeled clearly"
+
+**COORDINATE GEOMETRY:**
+- Cartesian plane: "Draw coordinate axes with origin O, plot points and show distance/midpoint calculations"
+- Linear equations: "Draw graph of linear equation showing x-intercept, y-intercept, and slope"
+
+**ALGEBRA & NUMBER SYSTEMS:**
+- Number line: "Draw number line showing rational and irrational numbers like √2, √3 marked precisely"
+- Polynomial graphs: "Draw parabola showing roots, vertex, and axis of symmetry for quadratic expression"
+
+**CONSTRUCTIONS:**
+- Geometric constructions: "Draw construction steps using compass and ruler for angle bisectors/perpendiculars"
+- Regular polygons: "Draw regular hexagon inscribed in circle showing construction arcs and steps"
+
+**STATISTICS:**
+- Data representation: "Draw bar graph/histogram with proper scales, labels, and frequency distribution"
+- Pie charts: "Draw circular chart showing percentage divisions with clear sector labels"
+
+**TRIGONOMETRY:**
+- Right triangles: "Draw right triangle showing opposite, adjacent, hypotenuse with trigonometric ratios"
+- Height and distance: "Draw tower/building with angle of elevation/depression from observation point"
+
+Example diagram instructions for common Class 9-10 topics:
+- "Draw triangle ABC with AB = 6 cm, BC = 8 cm, angle B = 90°, construct squares on all sides for Pythagoras theorem"
+- "Draw parallelogram PQRS with PQ = 5 cm, QR = 3 cm, show that opposite sides are equal and parallel"
+- "Draw circle with center O and radius 7 cm, draw chord AB = 10 cm, show perpendicular from O to AB"
+- "Draw cylinder with base radius 3 cm and height 7 cm, label dimensions for surface area calculation"
+- "Draw coordinate plane, plot points A(2,3), B(-1,4), C(0,-2), show distance and midpoint calculations"
+
+**NO EXCEPTIONS: Every geometry, mensuration, or visual mathematics question MUST include specific diagram_instruction.**`,
 
   // Science (Classes 6-10) prompt
   "Science": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Science.
@@ -112,19 +144,21 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 - Metadata
 - Unnecessary formatting
 
-🎯 DIAGRAM SUPPORT FOR SCIENCE:
-If the question involves a diagram, include a special field:
+**MANDATORY DIAGRAM REQUIREMENT: For ANY science question involving:**
+- Laboratory apparatus (microscopes, test tubes, beakers, burettes)
+- Biological structures (cells, organs, systems, plants)
+- Experimental setups (chemical reactions, physics experiments)
+- Scientific processes (photosynthesis, respiration, digestive system)
 
-"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw and label the human respiratory system showing trachea, bronchi, lungs, and alveoli')."
+You MUST include a "diagram_instruction" field with specific visual details.
 
-Diagram Types: Scientific apparatus, body systems, experimental setups, process diagrams
-Tool Support: BioRender, draw.io, SVG, Matplotlib
+Required diagram instruction examples:
+- "Draw and label a plant cell showing nucleus, chloroplasts, cell wall, and vacuole"
+- "Draw experimental setup for testing CO2 with test tube, lime water, and delivery tube"
+- "Draw human digestive system showing mouth, esophagus, stomach, intestines, and liver"
+- "Draw microscope with labeled eyepiece, objective lens, stage, and mirror"
 
-For science diagrams, be specific about:
-- Accurate labeling of all parts
-- Clear experimental setup descriptions
-- Process flow directions and stages
-- Safety equipment and proper connections`,
+**NO EXCEPTIONS: Every experiment/biology question MUST have diagram_instruction.**`,
 
   // Physics (Classes 11-12) prompt
   "Physics": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Physics.
@@ -170,20 +204,22 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 - Explanations or hints
 - Any teaching tone or assistant-style output
 
-🎯 DIAGRAM SUPPORT FOR PHYSICS:
-If the question involves a diagram, include a special field:
+**MANDATORY DIAGRAM REQUIREMENT: For ANY physics question involving:**
+- Ray diagrams (reflection, refraction, lenses, mirrors)
+- Circuit diagrams (resistors, batteries, current flow)
+- Wave patterns (interference, diffraction, oscillations)
+- Force diagrams (vectors, mechanics, motion)
+- Experimental setups (pendulum, optics, electricity)
 
-"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw a ray diagram showing refraction through a glass prism with incident ray, emergent ray, and deviation angle marked')."
+You MUST include a "diagram_instruction" field with specific visual details.
 
-Diagram Types: Ray diagrams, circuit diagrams, wave patterns, force diagrams, experimental setups
-Tool Support: Manim, TikZ, draw.io, GeoGebra, circuit simulators
+Required diagram instruction examples:
+- "Draw ray diagram showing refraction through glass prism with incident ray at 45°, emergent ray, and deviation angle marked"
+- "Draw circuit diagram with 12V battery, 4Ω resistor, and ammeter in series, show current direction"
+- "Draw force diagram of block on inclined plane at 30°, show weight, normal force, and friction"
+- "Draw convex lens with object at 2F, show ray paths and image formation"
 
-For physics diagrams, be specific about:
-- Exact component values and connections
-- Ray paths and angle measurements
-- Force vectors and directions
-- Proper circuit symbols and connections
-- Wave properties and measurements`,
+**NO EXCEPTIONS: Every physics question with visual components MUST have diagram_instruction.**`,
 
   // Chemistry (Classes 11-12) prompt
   "Chemistry": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Chemistry.
@@ -230,20 +266,21 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 - Explanatory or assistant-style answers
 - Step skipping or informal responses
 
-🎯 DIAGRAM SUPPORT FOR CHEMISTRY:
-If the question involves a diagram, include a special field:
+**MANDATORY DIAGRAM REQUIREMENT: For ANY chemistry question involving:**
+- Laboratory apparatus (burettes, flasks, test tubes, distillation setups)
+- Molecular structures (organic compounds, crystal lattices, bonds)
+- Chemical reactions (mechanisms, electron flow, intermediates)
+- Experimental setups (titrations, synthesis, analysis)
 
-"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw a labeled setup for acid-base titration between HCl and NaOH showing burette, conical flask, indicator, and stand')."
+You MUST include a "diagram_instruction" field with specific visual details.
 
-Diagram Types: Lab apparatus, reaction setups, molecular structures, experimental configurations
-Tool Support: Chemix.org, draw.io, matplotlib, chemical structure tools
+Required diagram instruction examples:
+- "Draw acid-base titration setup with burette containing NaOH, conical flask with HCl, indicator drops, and retort stand"
+- "Draw molecular structure of methane showing tetrahedral geometry with C-H bonds and bond angles"
+- "Draw distillation apparatus with round bottom flask, condenser, thermometer, and collection flask"
+- "Draw electrochemical cell with anode, cathode, salt bridge, and electron flow direction"
 
-For chemistry diagrams, be specific about:
-- Accurate apparatus labeling and connections
-- Proper chemical symbols and formulas
-- Reaction mechanism arrows and intermediates
-- Safety equipment and proper setup procedures
-- Molecular geometry and bond representations`,
+**NO EXCEPTIONS: Every chemistry question with apparatus/structures MUST have diagram_instruction.**`,
 
   // Biology (Classes 11-12) prompt
   "Biology": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Biology.
@@ -288,20 +325,22 @@ Generate {number_of_questions} {question_type} questions that reflect the {bloom
 - Any kind of assistant-style or casual answers
 - Extra tips or learning suggestions
 
-🎯 DIAGRAM SUPPORT FOR BIOLOGY:
-If the question involves a diagram, include a special field:
+**MANDATORY DIAGRAM REQUIREMENT: For ANY biology question involving:**
+- Cell structures (plant cells, animal cells, organelles)
+- Human body systems (circulatory, respiratory, digestive, nervous)
+- Plant anatomy (roots, stems, leaves, flowers)
+- Biological processes (mitosis, meiosis, photosynthesis, respiration)
+- Anatomical structures (heart, kidney, brain, eye)
 
-"diagram_instruction": "Provide a clear, concise description of what to draw (e.g., 'Draw and label the structure of nephron showing glomerulus, Bowman's capsule, proximal tubule, loop of Henle, and collecting duct')."
+You MUST include a "diagram_instruction" field with specific visual details.
 
-Diagram Types: Organs, cells, biological structures, anatomical systems, process flowcharts
-Tool Support: BioRender, draw.io, SVG, Manim
+Required diagram instruction examples:
+- "Draw and label plant cell showing cell wall, nucleus, chloroplasts, vacuole, and cytoplasm"
+- "Draw human heart with four chambers labeled - left and right atria, left and right ventricles, show blood flow"
+- "Draw nephron structure with glomerulus, Bowman's capsule, proximal tubule, loop of Henle, and collecting duct"
+- "Draw photosynthesis process in leaf showing chloroplast, light reactions, and Calvin cycle"
 
-For biology diagrams, be specific about:
-- Accurate anatomical labeling of all parts
-- Clear process flow directions and stages
-- Cellular organelles and their functions
-- System interconnections and relationships
-- Proper biological terminology and structures`,
+**NO EXCEPTIONS: Every biology question with structures/processes MUST have diagram_instruction.**`,
 
   // Accountancy (Classes 11-12) prompt
   "Accountancy": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Accountancy.
@@ -342,7 +381,88 @@ Generate {number_of_questions} {question_type} questions that match the {blooms_
 ❌ Strictly avoid:
 - Theory-only questions or definitions
 - Commentary or teaching explanations
-- Informal accounting practices`
+- Informal accounting practices`,
+
+  // Economics (Classes 11-12) prompt
+  "Economics": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Economics.
+
+Your responsibility is to prepare NEP-aligned, competency-based board-level questions from the topic '{topic}' in chapter '{chapter}'.
+
+🎯 Task:
+Generate {number_of_questions} {question_type} questions that reflect the {blooms_level} level of Bloom's Taxonomy.
+
+🧠 Guidelines Based on Bloom's Level:
+- Focus on economic analysis, graph interpretation, and real-world applications
+- Include data analysis questions with tables, charts, and economic indicators
+- Frame questions around current economic scenarios and policy decisions
+
+📌 Formatting Rules:
+- Frame analytical and application-based questions
+- Include economic data, statistics, and real-world scenarios
+- Use Indian currency formatting (₹) for all monetary values
+- Present solutions with proper economic reasoning and calculations
+
+📤 Output Format:
+1. Numbered questions with economic context
+2. Step-by-step economic analysis and solutions
+3. Include "diagram_instruction" when applicable
+4. No theoretical definitions or basic concepts
+
+**MANDATORY DIAGRAM REQUIREMENT: For ANY economics question involving:**
+- Demand and supply curves (shifts, equilibrium, elasticity)
+- Production possibility frontiers and economic models
+- Market structures and competition graphs
+- Business cycles and economic indicators charts
+
+You MUST include a "diagram_instruction" field with specific visual details.
+
+Required diagram instruction examples:
+- "Draw demand and supply curves showing rightward shift in demand, mark new equilibrium price and quantity"
+- "Draw production possibility frontier for country producing cars and computers, show efficient and inefficient points"
+- "Draw perfect competition graph showing firm's profit maximization with MC, MR, AC curves"
+- "Draw business cycle diagram showing expansion, peak, contraction, and trough phases"
+
+**NO EXCEPTIONS: Every economics question with graphs/curves MUST have diagram_instruction.**`,
+
+  // Business Studies (Classes 11-12) prompt  
+  "Business Studies": `You are an experienced Examination Head and Senior Board Paper Setter for the {board} Board, Class {class}, Subject: Business Studies.
+
+Your responsibility is to prepare NEP-aligned, competency-based board-level questions from the topic '{topic}' in chapter '{chapter}'.
+
+🎯 Task:
+Generate {number_of_questions} {question_type} questions that reflect the {blooms_level} level of Bloom's Taxonomy.
+
+🧠 Guidelines Based on Bloom's Level:
+- Focus on business case analysis, management decisions, and organizational scenarios
+- Include real company examples and business situations
+- Frame questions around business problems requiring strategic thinking
+
+📌 Formatting Rules:
+- Frame case-based and application questions with business scenarios
+- Include financial data, organizational contexts, and management challenges
+- Present solutions with proper business reasoning and strategic analysis
+
+📤 Output Format:
+1. Numbered questions with business case contexts
+2. Step-by-step business analysis and strategic solutions
+3. Include "diagram_instruction" when applicable
+4. No theoretical definitions or memorization-based content
+
+**MANDATORY DIAGRAM REQUIREMENT: For ANY business studies question involving:**
+- Organizational structures (hierarchical, matrix, functional)
+- Business process flows (production, marketing, finance)
+- Communication networks and reporting structures
+- Business planning and strategic frameworks
+
+You MUST include a "diagram_instruction" field with specific visual details.
+
+Required diagram instruction examples:
+- "Draw functional organizational structure for manufacturing company showing CEO, department heads, and reporting lines"
+- "Draw business process flow for product development from idea generation to market launch"
+- "Draw marketing mix framework showing 4Ps - Product, Price, Place, Promotion with interconnections"
+- "Draw SWOT analysis matrix for retail company with internal and external factors clearly marked"
+
+**NO EXCEPTIONS: Every business question with structures/processes MUST have diagram_instruction.**`
 };
 
 // General fallback prompt for subjects not listed above

@@ -7,6 +7,8 @@ import {
   quizSets,
   quizSchedules,
   doubtQueries,
+  feedback,
+  quizFeedback,
   type User,
   type InsertUser,
   type Subject,
@@ -23,9 +25,13 @@ import {
   type InsertQuizSchedule,
   type DoubtQuery,
   type InsertDoubtQuery,
+  type Feedback,
+  type UpsertFeedback,
+  type QuizFeedback,
+  type UpsertQuizFeedback,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lt, gt, lte, asc, desc, isNull, sql } from "drizzle-orm";
+import { eq, and, gte, lt, gt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -66,6 +72,15 @@ export interface IStorage {
   getQuizById(id: number): Promise<Quiz | undefined>;
   getQuizzesByUser(userId: number): Promise<Quiz[]>;
   getActiveQuizzesByUser(userId: number): Promise<Quiz[]>;
+  findSimilarQuiz(criteria: {
+    subjectId: number;
+    topicId: number;
+    grade: number;
+    board: string;
+    questionTypes: string[];
+    difficultyLevels: string[];
+    numberOfQuestions: number;
+  }): Promise<{ quizSets: QuizSet[] } | undefined>;
 
   // QuizSet operations
   createQuizSet(quizSet: InsertQuizSet): Promise<QuizSet>;
@@ -92,11 +107,38 @@ export interface IStorage {
     startDate?: Date,
     endDate?: Date,
   ): Promise<{ date: string; score: number; quizSet: number }[]>;
+  getSubjectsWithPerformanceData(userId: number): Promise<{ id: number; name: string }[]>;
 
   // Doubt Query operations
   createDoubtQuery(doubt: InsertDoubtQuery): Promise<DoubtQuery>;
   getDoubtQueriesByUser(userId: number): Promise<DoubtQuery[]>;
   answerDoubtQuery(id: number, answer: string): Promise<DoubtQuery | undefined>;
+
+  // Feedback operations
+  createFeedback(feedback: UpsertFeedback): Promise<Feedback>;
+  getFeedbackByUser(userId: number): Promise<Feedback[]>;
+  getAllFeedback(): Promise<Feedback[]>;
+  updateFeedback(id: number, data: Partial<Feedback>): Promise<Feedback | undefined>;
+
+  // Quiz feedback operations
+  createQuizFeedback(feedback: UpsertQuizFeedback): Promise<QuizFeedback>;
+  getQuizFeedback(quizId: number, userId: number): Promise<QuizFeedback | undefined>;
+
+  // Admin operations
+  getTotalUsers(): Promise<number>;
+  getActiveUsers(): Promise<number>;
+  getTotalQuizzes(): Promise<number>;
+  getCompletedQuizzes(): Promise<number>;
+  getTotalSubjects(): Promise<number>;
+  getUsersByTier(): Promise<{ free: number; standard: number; premium: number }>;
+  getQuizzesThisWeek(): Promise<number>;
+  getAverageScore(): Promise<number>;
+  getRecentActivity(): Promise<any[]>;
+  getAllUsers(): Promise<any[]>;
+  getAllSubjects(): Promise<any[]>;
+  getAllQuizzes(): Promise<any[]>;
+  updateUserPassword(userId: number, hashedPassword: string): Promise<void>;
+  getQuizzesByUser(userId: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -319,6 +361,52 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(quizzes.userId, userId), eq(quizzes.status, "active")));
   }
 
+  async findSimilarQuiz(criteria: {
+    subjectId: number;
+    topicId: number;
+    grade: number;
+    board: string;
+    questionTypes: string[];
+    difficultyLevels: string[];
+    numberOfQuestions: number;
+  }): Promise<{ quizSets: QuizSet[] } | undefined> {
+    try {
+      // Find a quiz with similar parameters
+      const [similarQuiz] = await db
+        .select()
+        .from(quizzes)
+        .where(
+          and(
+            eq(quizzes.subjectId, criteria.subjectId),
+            eq(quizzes.topicId, criteria.topicId),
+            eq(quizzes.numberOfQuestions, criteria.numberOfQuestions),
+            eq(quizzes.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (!similarQuiz) {
+        return undefined;
+      }
+
+      // Get all quiz sets for this quiz
+      const quizSetsData = await db
+        .select()
+        .from(quizSets)
+        .where(eq(quizSets.quizId, similarQuiz.id))
+        .orderBy(quizSets.setNumber);
+
+      if (quizSetsData.length === 8) {
+        return { quizSets: quizSetsData };
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error("Error finding similar quiz:", error);
+      return undefined;
+    }
+  }
+
   // QuizSet operations
   async createQuizSet(quizSet: InsertQuizSet): Promise<QuizSet> {
     const [createdQuizSet] = await db
@@ -364,11 +452,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodayQuizSchedules(userId: number): Promise<QuizSchedule[]> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const now = new Date();
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
 
     return await db
       .select()
@@ -376,11 +462,11 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(quizSchedules.userId, userId),
-          gte(quizSchedules.scheduledDate, today),
-          lt(quizSchedules.scheduledDate, tomorrow),
+          lte(quizSchedules.scheduledDate, endOfToday), // Show all quizzes scheduled for today or earlier
           eq(quizSchedules.status, "pending"),
         ),
-      );
+      )
+      .orderBy(quizSchedules.scheduledDate);
   }
 
   async getUpcomingQuizSchedules(userId: number): Promise<QuizSchedule[]> {
@@ -443,6 +529,15 @@ export class DatabaseStorage implements IStorage {
       sql`${quizSchedules.score} IS NOT NULL`,
     ];
 
+    // Add date range filters if provided
+    if (startDate) {
+      whereConditions.push(gte(quizSchedules.completedDate, startDate));
+    }
+
+    if (endDate) {
+      whereConditions.push(lte(quizSchedules.completedDate, endDate));
+    }
+
     // Add subject filter if provided
     let queryBuilder = db
       .select({
@@ -450,6 +545,7 @@ export class DatabaseStorage implements IStorage {
         score: quizSchedules.score,
         quizSet: quizSchedules.quizSetId,
         quizId: quizSchedules.quizId,
+        scheduleId: quizSchedules.id,
       })
       .from(quizSchedules);
 
@@ -461,28 +557,37 @@ export class DatabaseStorage implements IStorage {
       queryBuilder = queryBuilder.where(and(...whereConditions));
     }
 
-    // Add date range filters if provided
-    if (startDate) {
-      queryBuilder = queryBuilder.where(
-        gte(quizSchedules.completedDate, startDate),
-      );
-    }
-
-    if (endDate) {
-      queryBuilder = queryBuilder.where(
-        lte(quizSchedules.completedDate, endDate),
-      );
-    }
-
     const results = await queryBuilder.orderBy(
       asc(quizSchedules.completedDate),
     );
 
     return results.map((result) => ({
-      date: result.date?.toISOString().split("T")[0] || "",
+      date: `${result.date?.toISOString().split("T")[0]} (Set ${result.quizSet})`,
       score: result.score || 0,
       quizSet: result.quizSet,
     }));
+  }
+
+  async getSubjectsWithPerformanceData(userId: number): Promise<{ id: number; name: string }[]> {
+    const results = await db
+      .select({
+        id: subjects.id,
+        name: subjects.name,
+      })
+      .from(subjects)
+      .innerJoin(quizzes, eq(quizzes.subjectId, subjects.id))
+      .innerJoin(quizSchedules, eq(quizSchedules.quizId, quizzes.id))
+      .where(
+        and(
+          eq(quizSchedules.userId, userId),
+          eq(quizSchedules.status, "completed"),
+          sql`${quizSchedules.score} IS NOT NULL`
+        )
+      )
+      .groupBy(subjects.id, subjects.name)
+      .orderBy(subjects.name);
+
+    return results;
   }
 
   // Doubt Query operations
@@ -527,6 +632,218 @@ export class DatabaseStorage implements IStorage {
       .where(eq(doubtQueries.id, id))
       .returning();
     return doubt;
+  }
+
+  // Admin operations
+  async getTotalUsers(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users);
+    return result[0]?.count || 0;
+  }
+
+  async getActiveUsers(): Promise<number> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, thirtyDaysAgo));
+    return result[0]?.count || 0;
+  }
+
+  async getTotalQuizzes(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(quizzes);
+    return result[0]?.count || 0;
+  }
+
+  async getCompletedQuizzes(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(quizSchedules)
+      .where(eq(quizSchedules.status, "completed"));
+    return result[0]?.count || 0;
+  }
+
+  async getTotalSubjects(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(subjects);
+    return result[0]?.count || 0;
+  }
+
+  async getUsersByTier(): Promise<{ free: number; standard: number; premium: number }> {
+    const results = await db
+      .select({
+        tier: users.subscriptionTier,
+        count: sql<number>`count(*)`
+      })
+      .from(users)
+      .groupBy(users.subscriptionTier);
+
+    const tiers = { free: 0, standard: 0, premium: 0 };
+    results.forEach(result => {
+      if (result.tier === 'free') tiers.free = result.count;
+      else if (result.tier === 'standard') tiers.standard = result.count;
+      else if (result.tier === 'premium') tiers.premium = result.count;
+    });
+
+    return tiers;
+  }
+
+  async getQuizzesThisWeek(): Promise<number> {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(quizzes)
+      .where(gte(quizzes.createdAt, weekAgo));
+    return result[0]?.count || 0;
+  }
+
+  async getAverageScore(): Promise<number> {
+    const result = await db
+      .select({ avg: sql<number>`avg(${quizSchedules.score})` })
+      .from(quizSchedules)
+      .where(eq(quizSchedules.status, "completed"));
+    return Math.round(result[0]?.avg || 0);
+  }
+
+  async getRecentActivity(): Promise<any[]> {
+    const recentQuizzes = await db
+      .select({
+        id: quizzes.id,
+        type: sql<string>`'quiz_created'`,
+        message: sql<string>`'Quiz "' || ${quizzes.title} || '" was created'`,
+        timestamp: quizzes.createdAt,
+        userId: quizzes.userId
+      })
+      .from(quizzes)
+      .orderBy(desc(quizzes.createdAt))
+      .limit(20);
+
+    const recentCompletions = await db
+      .select({
+        id: quizSchedules.id,
+        type: sql<string>`'quiz_completed'`,
+        message: sql<string>`'Quiz completed with score ' || ${quizSchedules.score} || '%'`,
+        timestamp: quizSchedules.completedDate,
+        userId: quizSchedules.userId
+      })
+      .from(quizSchedules)
+      .where(eq(quizSchedules.status, "completed"))
+      .orderBy(desc(quizSchedules.completedDate))
+      .limit(10);
+
+    const allActivity = [...recentQuizzes, ...recentCompletions]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 15);
+
+    return allActivity;
+  }
+
+  async getAllUsers(): Promise<any[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    // First delete related data
+    await db.delete(quizSchedules).where(eq(quizSchedules.userId, userId));
+    await db.delete(doubtQueries).where(eq(doubtQueries.userId, userId));
+    await db.delete(quizzes).where(eq(quizzes.userId, userId));
+    
+    // Then delete the user
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async getAllSubjects(): Promise<any[]> {
+    return await db.select().from(subjects).orderBy(subjects.name);
+  }
+
+  async getAllQuizzes(): Promise<any[]> {
+    const allQuizzes = await db
+      .select({
+        id: quizzes.id,
+        title: quizzes.title,
+        subjectId: quizzes.subjectId,
+        chapterId: quizzes.chapterId,
+        topicId: quizzes.topicId,
+        questionTypes: quizzes.questionTypes,
+        difficultyLevel: quizzes.difficultyLevel,
+        createdAt: quizzes.createdAt,
+        userId: quizzes.userId,
+        username: users.username,
+        userEmail: users.email
+      })
+      .from(quizzes)
+      .innerJoin(users, eq(quizzes.userId, users.id))
+      .orderBy(desc(quizzes.createdAt));
+
+    return allQuizzes;
+  }
+
+  // Feedback operations
+  async createFeedback(feedbackData: UpsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db
+      .insert(feedback)
+      .values(feedbackData)
+      .returning();
+    return newFeedback;
+  }
+
+  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.userId, userId))
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async getAllFeedback(): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .orderBy(desc(feedback.createdAt));
+  }
+
+  async updateFeedback(id: number, data: Partial<Feedback>): Promise<Feedback | undefined> {
+    const [updated] = await db
+      .update(feedback)
+      .set(data)
+      .where(eq(feedback.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Admin-specific methods
+  async updateUserPassword(userId: number, hashedPassword: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+  }
+
+  async getQuizzesByUser(userId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(quizzes)
+      .where(eq(quizzes.userId, userId))
+      .orderBy(desc(quizzes.createdAt));
+  }
+
+  // Quiz feedback operations
+  async createQuizFeedback(feedback: UpsertQuizFeedback): Promise<QuizFeedback> {
+    const [newFeedback] = await db
+      .insert(quizFeedback)
+      .values(feedback)
+      .returning();
+    return newFeedback;
+  }
+
+  async getQuizFeedback(quizId: number, userId: number): Promise<QuizFeedback | undefined> {
+    const [feedback] = await db
+      .select()
+      .from(quizFeedback)
+      .where(and(eq(quizFeedback.quizId, quizId), eq(quizFeedback.userId, userId)));
+    return feedback;
   }
 }
 

@@ -1,10 +1,12 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import NotFound from "@/pages/not-found";
 
 // Pages
@@ -20,11 +22,32 @@ import TakeQuiz from "@/pages/dashboard/take-quiz";
 import QuizResults from "@/pages/dashboard/quiz-results";
 import TodayQuizzes from "@/pages/dashboard/today";
 import AskDoubts from "@/pages/dashboard/doubts";
+import FeedbackPage from "@/pages/dashboard/feedback";
 import Settings from "@/pages/dashboard/settings";
 import Performance from "@/pages/dashboard/performance";
-import AdminDashboard from "@/pages/admin";
+import AdminDashboard from "@/pages/admin/dashboard";
+import AdminLogin from "@/pages/admin/login";
+import AdminUsers from "@/pages/admin/users";
+import AdminSubjects from "@/pages/admin/subjects";
+import AdminQuizzes from "@/pages/admin/quizzes";
+import AdminActivity from "@/pages/admin/activity";
+import AdminDatabase from "@/pages/admin/database";
+import AdminSettings from "@/pages/admin/settings";
+import AdminFeedbacks from "@/pages/admin/feedbacks";
+import ChangePassword from "@/pages/admin/change-password";
+import UserDetails from "@/pages/admin/user-details";
 
 function Router() {
+  const [location] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Define which routes should use dashboard layout (authenticated routes)
+  const isDashboardRoute = location.startsWith('/dashboard') || location.startsWith('/admin');
+  
+  // Define which routes are public (don't require authentication)
+  const isPublicRoute = ['/', '/about', '/services', '/pricing', '/login', '/signup'].includes(location) || 
+                       location.startsWith('/admin/login');
+
   return (
     <Switch>
       {/* Public pages */}
@@ -42,10 +65,21 @@ function Router() {
       <Route path="/dashboard/quiz-results/:scheduleId" component={QuizResults} />
       <Route path="/dashboard/today" component={TodayQuizzes} />
       <Route path="/dashboard/doubts" component={AskDoubts} />
+      <Route path="/dashboard/feedback" component={FeedbackPage} />
       <Route path="/dashboard/performance" component={Performance} />
       <Route path="/dashboard/settings" component={Settings} />
       
       {/* Admin pages */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/subjects" component={AdminSubjects} />
+      <Route path="/admin/quizzes" component={AdminQuizzes} />
+      <Route path="/admin/feedbacks" component={AdminFeedbacks} />
+      <Route path="/admin/activity" component={AdminActivity} />
+      <Route path="/admin/database" component={AdminDatabase} />
+      <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/change-password" component={ChangePassword} />
+      <Route path="/admin/users/:id" component={UserDetails} />
       <Route path="/admin" component={AdminDashboard} />
       
       {/* Fallback to 404 */}
@@ -54,18 +88,48 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const [location] = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Define which routes should use dashboard layout (only student dashboard routes)
+  const isDashboardRoute = location.startsWith('/dashboard');
+  
+  // Define which routes are public (don't require authentication)
+  const isPublicRoute = ['/', '/about', '/services', '/pricing', '/login', '/signup'].includes(location) || 
+                       location.startsWith('/admin/login');
+
+  // Show dashboard layout for authenticated dashboard routes (excluding admin)
+  const shouldUseDashboardLayout = !isLoading && isAuthenticated && isDashboardRoute;
+  
+  // Show public layout for public routes or when not authenticated
+  const shouldUsePublicLayout = isPublicRoute || !isAuthenticated || isLoading;
+
+  return (
+    <>
+      <Toaster />
+      {shouldUseDashboardLayout ? (
+        <DashboardLayout>
+          <Router />
+        </DashboardLayout>
+      ) : (
+        <div className="flex flex-col min-h-screen">
+          {shouldUsePublicLayout && <Header />}
+          <main className="flex-grow">
+            <Router />
+          </main>
+          {shouldUsePublicLayout && <Footer />}
+        </div>
+      )}
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow">
-            <Toaster />
-            <Router />
-          </main>
-          <Footer />
-        </div>
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );

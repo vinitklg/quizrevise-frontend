@@ -157,6 +157,57 @@ export type InsertDoubtQuery = {
   fileType?: string;
 };
 
+// Feedback table
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  username: text("username"),
+  userEmail: text("useremail"),
+  userPhone: text("userphone"),
+  board: text("board"),
+  class: integer("class"),
+  subject: text("subject"),
+  type: text("type").notNull(), // "general", "technical", "suggestion"
+  feedbackText: text("feedback_text"),
+  rating: integer("rating"), // 1-5 star rating
+  file: text("file"), // File URL or path
+  status: text("status").default("pending").notNull(), // pending, reviewed, resolved
+  adminResponse: text("admin_response"),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+});
+
+export type UpsertFeedback = typeof feedback.$inferInsert;
+export type Feedback = typeof feedback.$inferSelect;
+
+// Quiz feedback table for post-quiz ratings
+export const quizFeedback = pgTable("quiz_feedback", {
+  id: serial("id").primaryKey(),
+  quizId: integer("quiz_id").notNull().references(() => quizzes.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(), // 1-5 rating
+  comments: text("comments"), // Optional feedback comments
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type UpsertQuizFeedback = typeof quizFeedback.$inferInsert;
+export type QuizFeedback = typeof quizFeedback.$inferSelect;
+
+// Question type definitions for JSON fields
+export interface Question {
+  id: number;
+  questionType: string;
+  question: string;
+  options?: { [key: string]: string } | string[];
+  correctAnswer: string;
+  explanation?: string;
+  bloomTaxonomy?: string;
+  difficultyLevel?: string;
+  diagram_instruction?: string;
+  diagramUrl?: string;
+}
+
 // Authentication schemas
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -186,3 +237,9 @@ export const generateQuizSchema = z.object({
   difficultyLevels: z.array(z.enum(["basic", "standard", "challenging", "most-challenging"])).min(1, "Select at least one difficulty level"),
   numberOfQuestions: z.number().min(5).max(50),
 });
+
+// Feedback schema
+export const insertFeedbackSchema = createInsertSchema(feedback, {
+  type: z.enum(["general", "technical", "suggestion"]),
+  feedbackText: z.string().min(5, "Feedback must be at least 5 characters").optional(),
+}).omit({ id: true, createdAt: true, reviewedAt: true, reviewedBy: true });

@@ -1,0 +1,40 @@
+
+      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .cylinder-fill { fill: #e0f2fe; stroke: #0277bd; stroke-width: 2; }
+            .cylinder-edge { fill: none; stroke: #0277bd; stroke-width: 2; }
+            .dashed { stroke-dasharray: 5,5; opacity: 0.6; }
+            .label { font-family: Arial, sans-serif; font-size: 12px; fill: #1f2937; text-anchor: middle; }
+            .title { font-family: Arial, sans-serif; font-size: 11px; fill: #6b7280; }
+          </style>
+          <linearGradient id="cylinderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#b3e5fc"/>
+            <stop offset="50%" style="stop-color:#e1f5fe"/>
+            <stop offset="100%" style="stop-color:#b3e5fc"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Single Cylinder -->
+        <g transform="translate(200, 80)">
+          <!-- Cylinder body -->
+          <rect x="-40" y="0" width="80" height="30" fill="url(#cylinderGrad)" class="cylinder-edge"/>
+          <!-- Top ellipse -->
+          <ellipse cx="0" cy="0" rx="40" ry="10" class="cylinder-fill"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="0" cy="30" rx="40" ry="10" class="cylinder-fill"/>
+          <!-- Hidden back edge -->
+          <ellipse cx="0" cy="0" rx="40" ry="10" class="cylinder-edge dashed"/>
+          
+          <!-- Dimension labels -->
+          <line x1="40" y1="15" x2="55" y2="15" class="cylinder-edge"/>
+          <text x="65" y="20" class="label">r = 3</text>
+          
+          <line x1="-50" y1="0" x2="-50" y2="30" class="cylinder-edge"/>
+          <text x="-55" y="15" class="label" transform="rotate(-90, -55, 15)">h = 1.5</text>
+        </g>
+        
+        <!-- Instruction text -->
+        <text x="200" y="25" class="title" text-anchor="middle">Draw a cylinder with height 1.5 m and base diameter 1 m, label height and radius clearly</text>
+      </svg>
+    

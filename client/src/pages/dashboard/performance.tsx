@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import PerformanceChart from '@/components/dashboard/PerformanceChart';
-import Sidebar from '@/components/dashboard/Sidebar';
 import { CalendarIcon, Filter } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -19,12 +18,11 @@ const Performance = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
-  // Hard code the commercial subjects that match the Create Quiz page
-  const commercialSubjects = [
-    "commercial studies",
-    "economic",
-    "accounts"
-  ];
+  // Get subjects that user has taken tests for
+  const { data: subjects } = useQuery({
+    queryKey: ['/api/quizzes/performance/subjects'],
+    enabled: !!user,
+  });
 
   const { data: performanceData, isLoading } = useQuery({
     queryKey: ['/api/quizzes/performance', selectedSubject, startDate, endDate],
@@ -67,7 +65,7 @@ const Performance = () => {
     if (!performanceData || performanceData.length === 0) return [];
     
     // Group by date and calculate average score
-    const groupedData = performanceData.reduce((acc, current) => {
+    const groupedData = performanceData.reduce((acc: any, current: any) => {
       if (!acc[current.date]) {
         acc[current.date] = { total: current.score, count: 1 };
       } else {
@@ -78,17 +76,16 @@ const Performance = () => {
     }, {});
     
     // Convert to array format for chart
-    return Object.keys(groupedData).map(date => ({
+    return Object.entries(groupedData).map(([date, data]: [string, any]) => ({
       date,
-      score: Math.round(groupedData[date].total / groupedData[date].count),
-      quizSet: groupedData[date].count
+      score: Math.round(data.total / data.count)
     }));
   };
 
   const calculateAverageScore = () => {
     if (!performanceData || performanceData.length === 0) return 0;
     
-    const total = performanceData.reduce((sum, item) => sum + item.score, 0);
+    const total = performanceData.reduce((sum: number, item: any) => sum + item.score, 0);
     return Math.round(total / performanceData.length);
   };
 
@@ -102,7 +99,7 @@ const Performance = () => {
       needsImprovement: 0  // Below 60%
     };
     
-    performanceData.forEach(item => {
+    performanceData.forEach((item: any) => {
       if (item.score >= 90) counts.excellent++;
       else if (item.score >= 75) counts.good++;
       else if (item.score >= 60) counts.average++;
@@ -118,192 +115,151 @@ const Performance = () => {
   const completedQuizzes = performanceData?.length || 0;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="hidden md:flex md:flex-shrink-0 md:w-64">
-        <Sidebar />
-      </div>
-      
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
-          <div className="py-6">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Performance Analysis</h1>
-              
-              {/* Filters */}
-              <div className="mb-6 flex flex-wrap gap-3 items-end">
-                <div>
-                  <Label htmlFor="subject-filter">Subject</Label>
-                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                    <SelectTrigger id="subject-filter" className="w-[180px]">
-                      <SelectValue placeholder="All Subjects" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Subjects</SelectItem>
-                      {/* Show commercial subjects from Create Quiz page */}
-                      {commercialSubjects.map((subject, index) => (
-                        <SelectItem key={`commercial-${index}`} value={subject}>
-                          {subject}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label>Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[180px] justify-start text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <div>
-                  <Label>End Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[180px] justify-start text-left font-normal",
-                          !endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <Button variant="outline" onClick={resetFilters} className="flex items-center">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Reset Filters
+    <div className="py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Performance Analysis</h1>
+        
+        {/* Filters */}
+        <div className="mb-6 flex flex-wrap gap-3 items-end">
+          <div>
+            <Label htmlFor="subject-filter">Subject</Label>
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger id="subject-filter" className="w-[180px]">
+                <SelectValue placeholder="All Subjects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {subjects?.map((subject) => (
+                  <SelectItem key={subject.id} value={subject.id.toString()}>
+                    {subject.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Start Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[180px] justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP") : "Pick a date"}
                 </Button>
-              </div>
-              
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Average Score</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{averageScore}%</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Completed Quizzes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{completedQuizzes}</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Excellent Scores</CardTitle>
-                    <CardDescription>90% or higher</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{scoreDistribution.excellent}</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Needs Improvement</CardTitle>
-                    <CardDescription>Below 60%</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{scoreDistribution.needsImprovement}</div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Performance Chart */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Performance Over Time</CardTitle>
-                  <CardDescription>Average scores by date</CardDescription>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div>
+            <Label>End Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[180px] justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <Button onClick={resetFilters} variant="outline" size="icon">
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Performance Overview Cards */}
+            <div className="lg:col-span-2 grid gap-6 md:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Quizzes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {chartData.length > 0 ? (
-                    <div className="h-80">
-                      <PerformanceChart data={chartData} />
-                    </div>
-                  ) : (
-                    <div className="flex justify-center items-center h-80 text-gray-500 dark:text-gray-400">
-                      {isLoading ? "Loading data..." : "No performance data available"}
-                    </div>
-                  )}
+                  <div className="text-2xl font-bold">{completedQuizzes}</div>
                 </CardContent>
               </Card>
               
-              {/* Score Distribution */}
               <Card>
-                <CardHeader>
-                  <CardTitle>Score Distribution</CardTitle>
-                  <CardDescription>Breakdown of your quiz performance</CardDescription>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Average Score</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <div className="text-lg font-medium text-green-600 dark:text-green-400">Excellent</div>
-                      <div className="text-2xl font-bold">{scoreDistribution.excellent}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">90-100%</div>
-                    </div>
-                    
-                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <div className="text-lg font-medium text-blue-600 dark:text-blue-400">Good</div>
-                      <div className="text-2xl font-bold">{scoreDistribution.good}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">75-89%</div>
-                    </div>
-                    
-                    <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                      <div className="text-lg font-medium text-yellow-600 dark:text-yellow-400">Average</div>
-                      <div className="text-2xl font-bold">{scoreDistribution.average}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">60-74%</div>
-                    </div>
-                    
-                    <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                      <div className="text-lg font-medium text-red-600 dark:text-red-400">Needs Improvement</div>
-                      <div className="text-2xl font-bold">{scoreDistribution.needsImprovement}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Below 60%</div>
-                    </div>
-                  </div>
+                  <div className="text-2xl font-bold">{averageScore}%</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Excellent Scores</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{scoreDistribution.excellent}</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">90-100%</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">Needs Improvement</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{scoreDistribution.needsImprovement}</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Below 60%</p>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Performance Chart */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Performance Over Time</CardTitle>
+                <CardDescription>Your quiz scores over the selected period</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chartData.length > 0 ? (
+                  <PerformanceChart data={chartData} />
+                ) : (
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    <p>No performance data available for the selected period.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </main>
+        )}
       </div>
     </div>
   );

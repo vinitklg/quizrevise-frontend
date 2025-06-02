@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateQuizQuestions, answerDoubtQuery } from "./openai";
+import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } from "./openai";
+import { renderDiagram } from "./diagramRenderer";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import { 
@@ -28,6 +29,15 @@ const isAuthenticated = (req: Request, res: Response, next: Function) => {
     next();
   } else {
     res.status(401).json({ message: "Unauthorized" });
+  }
+};
+
+// Middleware to check if user is admin
+const isAdminAuthenticated = (req: Request, res: Response, next: Function) => {
+  if (req.session.userId && (req.session as any).isAdmin) {
+    next();
+  } else {
+    res.status(401).json({ message: "Admin access required" });
   }
 };
 
@@ -111,6 +121,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = loginSchema.parse(req.body);
       
+      // Check for admin credentials
+      if (validatedData.email === "admin@quickrevise.com" && validatedData.password === "admin123") {
+        req.session.userId = 6; // Admin user ID
+        req.session.isAdmin = true;
+        return res.json({
+          id: 6,
+          username: "admin",
+          email: "admin@quickrevise.com",
+          isAdmin: true,
+          message: "Admin login successful"
+        });
+      }
+      
       const user = await storage.getUserByEmail(validatedData.email);
       if (!user) {
         return res.status(401).json({ message: "Invalid email or password" });
@@ -142,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err) {
         return res.status(500).json({ message: "Logout failed" });
       }
-      res.status(200).json({ message: "Logged out successfully" });
+      res.redirect("/");
     });
   });
 
@@ -265,32 +288,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Find or create the subject first to get its code for validation
-      const allSubjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
-      let selectedSubject = allSubjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
-      
-      // If subject doesn't exist, create it dynamically
-      if (!selectedSubject) {
-        const subjectCode = `${user.board || "CBSE"}_${user.grade || 10}_${user.stream ? user.stream.toUpperCase() + '_' : ''}${reqData.subject.toUpperCase().replace(/\s+/g, '_')}`;
-        selectedSubject = await storage.createSubject({
-          name: reqData.subject,
-          gradeLevel: user.grade || 10,
-          board: user.board || "CBSE",
-          code: subjectCode,
-          stream: user.stream || null,
-          isCore: !user.stream // Core subjects don't have a stream
-        });
-      }
-      
       // Verify subject is in the user's subscribed subjects if they're on a paid plan
       if (user.subscriptionTier !== "free" && user.subscribedSubjects && user.subscribedSubjects.length > 0) {
-        // Check both subject name and subject code for compatibility
-        const hasAccess = user.subscribedSubjects.includes(reqData.subject) || 
-                         user.subscribedSubjects.includes(selectedSubject.code || '') ||
-                         user.subscribedSubjects.some(subCode => {
-                           const subject = allSubjects.find(s => s.code === subCode);
-                           return subject && subject.name.toLowerCase() === reqData.subject.toLowerCase();
-                         });
+        // Check if any subscribed subject matches the requested subject name
+        const hasAccess = user.subscribedSubjects.some(subscribedSubject => {
+          // Extract subject name from subscribed subject code (e.g., ICSE_10_MATHEMATICS -> Mathematics)
+          const subjectName = subscribedSubject.split('_').pop()?.toLowerCase();
+          return subjectName === reqData.subject.toLowerCase() || 
+                 subscribedSubject.toLowerCase().includes(reqData.subject.toLowerCase());
+        });
         
         if (!hasAccess) {
           return res.status(403).json({ 
@@ -299,7 +305,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // selectedSubject is already found or created above in the validation section
+      // Find or create the subject dynamically based on user input
+      const subjects = await storage.getSubjectsByBoardAndGrade(user.board || "CBSE", user.grade || 10);
+      let selectedSubject = subjects.find(s => s.name.toLowerCase() === reqData.subject.toLowerCase());
+      
+      // If subject doesn't exist, create it dynamically
+      if (!selectedSubject) {
+        selectedSubject = await storage.createSubject({
+          name: reqData.subject,
+          gradeLevel: user.grade || 10,
+          board: user.board || "CBSE"
+        });
+        console.log(`Created new subject: ${reqData.subject} for ${user.board || "CBSE"} Grade ${user.grade || 10}`);
+      }
       
       const chapters = await storage.getChaptersBySubject(selectedSubject.id);
       let selectedChapter = chapters.find(c => c.name.toLowerCase() === reqData.chapter.toLowerCase());
@@ -336,7 +354,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         questionTypes: reqData.questionTypes || ["mcq"],
         bloomTaxonomy: reqData.bloomTaxonomy || ["knowledge", "comprehension"],
         difficultyLevels: reqData.difficultyLevels || ["standard"],
-        numberOfQuestions: reqData.numberOfQuestions || 10
+        numberOfQuestions: reqData.numberOfQuestions || 10,
+        diagramSupport: reqData.diagramSupport || false
       };
       
       // Check if user has reached their quiz limit
@@ -389,89 +408,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active"
       });
       
-      // Generate first set immediately for instant user access
-      console.log(`Generating immediate quiz set 1/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+      // Check if similar quiz questions already exist for this topic
+      console.log(`Checking for existing quiz questions for topic: ${selectedTopic.name}`);
       
-      const firstSetQuestions = await generateQuizQuestions(
-        selectedSubject.name,
-        selectedChapter.name,
-        selectedTopic.name,
-        user.grade || 10,
-        user.board || "CBSE",
-        validatedData.questionTypes,
-        validatedData.bloomTaxonomy,
-        validatedData.difficultyLevels,
-        validatedData.numberOfQuestions,
-        1
-      );
-      
-      const firstQuizSet = await storage.createQuizSet({
-        quizId: quiz.id,
-        setNumber: 1,
-        questions: firstSetQuestions.questions
-      });
-      
-      // Schedule the first set for today (immediate access)
-      const dates = calculateSpacedRepetitionDates(new Date());
-      const firstSchedule = await storage.createQuizSchedule({
-        quizId: quiz.id,
-        userId: user.id,
-        quizSetId: firstQuizSet.id,
-        scheduledDate: dates[0], // Today
-        status: "pending"
+      const existingQuiz = await storage.findSimilarQuiz({
+        subjectId: validatedData.subjectId,
+        topicId: validatedData.topicId,
+        grade: user.grade || 10,
+        board: user.board || "CBSE",
+        questionTypes: validatedData.questionTypes,
+        difficultyLevels: validatedData.difficultyLevels,
+        numberOfQuestions: validatedData.numberOfQuestions
       });
 
-      // Return immediately with the first set ready
+      let batchQuestions;
+      
+      if (existingQuiz && existingQuiz.quizSets.length === 8) {
+        console.log(`Found existing quiz questions for topic: ${selectedTopic.name}, reusing questions`);
+        
+        // Reuse existing questions but create new quiz instance for this user
+        batchQuestions = {
+          questions: existingQuiz.quizSets.flatMap((set: any) => 
+            set.questions.map((q: any) => ({
+              ...q,
+              setNumber: set.setNumber
+            }))
+          )
+        };
+      } else {
+        console.log(`Generating new quiz questions for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
+        
+        batchQuestions = await generateBatchQuizQuestions(
+          selectedSubject.name,
+          selectedChapter.name,
+          selectedTopic.name,
+          user.grade || 10,
+          user.board || "CBSE",
+          validatedData.questionTypes,
+          validatedData.bloomTaxonomy,
+          validatedData.difficultyLevels,
+          validatedData.numberOfQuestions,
+          validatedData.diagramSupport
+        );
+      }
+
+      // Group questions by set number and create quiz sets
+      const quizSets = [];
+      const questionsBySet: Record<number, any[]> = {};
+      
+      // Initialize sets 1-8
+      for (let i = 1; i <= 8; i++) {
+        questionsBySet[i] = [];
+      }
+      
+      // Distribute questions across sets
+      batchQuestions.questions.forEach((question: any) => {
+        const setNum = question.setNumber || 1;
+        if (questionsBySet[setNum]) {
+          questionsBySet[setNum].push(question);
+        }
+      });
+      
+      // Create quiz sets and process diagrams
+      for (let setNumber = 1; setNumber <= 8; setNumber++) {
+        const setQuestions = questionsBySet[setNumber] || [];
+        
+        // Process questions and render diagrams if they exist
+        const processedQuestions = await Promise.all(
+          setQuestions.map(async (question: any, index: number) => {
+            // Check if question has diagram instruction
+            if (question.diagram_instruction) {
+              try {
+                const diagramUrl = await renderDiagram({
+                  instruction: question.diagram_instruction,
+                  subject: selectedSubject.name,
+                  questionId: `${quiz.id}_${setNumber}_${index}`
+                });
+                
+                return {
+                  ...question,
+                  diagramUrl: diagramUrl
+                };
+              } catch (error) {
+                console.error('Error rendering diagram:', error);
+                return question;
+              }
+            }
+            return question;
+          })
+        );
+        
+        const quizSet = await storage.createQuizSet({
+          quizId: quiz.id,
+          setNumber: setNumber,
+          questions: processedQuestions
+        });
+        
+        quizSets.push(quizSet);
+      }
+      
+      // Create spaced repetition schedule for all 8 sets
+      const schedules = [];
+      const spacedDates = calculateSpacedRepetitionDates(new Date());
+      
+      for (let i = 0; i < quizSets.length; i++) {
+        console.log(`Scheduling quiz set ${i + 1}/8 for user ${user.id} on ${spacedDates[i].toDateString()}`);
+        
+        const schedule = await storage.createQuizSchedule({
+          quizId: quiz.id,
+          userId: user.id,
+          quizSetId: quizSets[i].id,
+          scheduledDate: spacedDates[i],
+          status: "pending"
+        });
+        
+        schedules.push(schedule);
+      }
+      
+      console.log(`Successfully created quiz for user ${user.id} with ${quizSets.length} sets and ${schedules.length} schedules`);
+      
       res.status(201).json({
         quiz,
-        firstSet: firstQuizSet,
-        schedule: firstSchedule,
-        status: "ready",
-        message: "Quiz created successfully! First set is ready to take. Remaining 7 sets will be generated in the background.",
-      });
-
-      // Generate remaining 7 sets asynchronously in the background
-      setImmediate(async () => {
-        try {
-          console.log(`Starting background generation for remaining sets (2-8) of quiz ${quiz.id} - user ${user.id}`);
-          
-          for (let setNumber = 2; setNumber <= 8; setNumber++) {
-            console.log(`Generating quiz set ${setNumber}/8 for user ${user.id}, subject: ${selectedSubject.name}, topic: ${selectedTopic.name}`);
-            
-            const questions = await generateQuizQuestions(
-              selectedSubject.name,
-              selectedChapter.name,
-              selectedTopic.name,
-              user.grade || 10,
-              user.board || "CBSE",
-              validatedData.questionTypes,
-              validatedData.bloomTaxonomy,
-              validatedData.difficultyLevels,
-              validatedData.numberOfQuestions,
-              setNumber
-            );
-            
-            const quizSet = await storage.createQuizSet({
-              quizId: quiz.id,
-              setNumber: setNumber,
-              questions: questions.questions
-            });
-            
-            // Schedule this set for its spaced repetition date
-            await storage.createQuizSchedule({
-              quizId: quiz.id,
-              userId: user.id,
-              quizSetId: quizSet.id,
-              scheduledDate: dates[setNumber - 1],
-              status: "pending"
-            });
-          }
-          
-          console.log(`Successfully completed background generation for quiz ${quiz.id} - user ${user.id} (sets 2-8)`);
-          
-        } catch (error) {
-          console.error(`Background quiz generation failed for quiz ${quiz.id}:`, error);
-        }
+        quizSets,
+        schedules,
+        message: `Created quiz with ${quizSets.length} sets for spaced repetition`
       });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -549,6 +609,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get subjects that user has taken tests for
+  app.get("/api/quizzes/performance/subjects", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const subjectsWithTests = await storage.getSubjectsWithPerformanceData(userId);
+      res.json(subjectsWithTests);
+    } catch (error) {
+      console.error("Error fetching subjects with performance data:", error);
+      res.status(500).json({ message: "Failed to get subjects with test data" });
+    }
+  });
+
   app.post("/api/quizzes/complete/:quizId/:quizSetId", isAuthenticated, async (req, res) => {
     try {
       const { quizId, quizSetId } = req.params;
@@ -592,6 +664,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get adaptive questions for spaced repetition based on performance
+  app.get("/api/quiz-schedule/:scheduleId/adaptive-questions", isAuthenticated, async (req, res) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      const userId = req.session.userId!;
+      
+      // Get the schedule and quiz information
+      const schedules = await storage.getQuizSchedulesByUser(userId);
+      const schedule = schedules.find(s => s.id === scheduleId);
+      
+      if (!schedule) {
+        return res.status(404).json({ message: "Quiz schedule not found" });
+      }
+      
+      // Get quiz set with all questions
+      const quizSet = await storage.getQuizSet(schedule.quizSetId);
+      if (!quizSet) {
+        return res.status(404).json({ message: "Quiz set not found" });
+      }
+      
+      // Get user's performance history for this quiz
+      const userSchedules = await storage.getQuizSchedulesByUser(userId);
+      const quizHistory = userSchedules.filter(s => 
+        s.quizId === schedule.quizId && 
+        s.status === "completed" && 
+        s.score !== null
+      );
+      
+      let selectedQuestions = [];
+      const allQuestions = quizSet.questions || [];
+      
+      if (quizHistory.length === 0) {
+        // First attempt - use foundational questions
+        selectedQuestions = allQuestions
+          .filter(q => q.difficultyLevel === "Basic" || q.difficultyLevel === "Moderate")
+          .slice(0, 15);
+      } else {
+        // Calculate average performance
+        const averageScore = quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length;
+        
+        if (averageScore >= 90) {
+          // High performance - challenge with hardest questions
+          selectedQuestions = allQuestions
+            .filter(q => q.difficultyLevel === "Challenging" || q.difficultyLevel === "Advanced")
+            .slice(0, 15);
+        } else if (averageScore >= 70) {
+          // Good performance - focus on mistakes and moderate challenges
+          const mistakeQuestions = [];
+          quizHistory.forEach(history => {
+            if (history.userAnswers) {
+              Object.keys(history.userAnswers).forEach(questionId => {
+                const userAnswer = history.userAnswers[questionId];
+                const question = allQuestions.find(q => q.id.toString() === questionId);
+                if (question && userAnswer !== question.correctAnswer) {
+                  mistakeQuestions.push(question);
+                }
+              });
+            }
+          });
+          
+          selectedQuestions = mistakeQuestions.slice(0, 10);
+          
+          // Fill remaining with moderate questions
+          if (selectedQuestions.length < 15) {
+            const moderateQuestions = allQuestions
+              .filter(q => q.difficultyLevel === "Moderate" && !selectedQuestions.includes(q))
+              .slice(0, 15 - selectedQuestions.length);
+            selectedQuestions = [...selectedQuestions, ...moderateQuestions];
+          }
+        } else {
+          // Low performance - focus on foundational concepts
+          selectedQuestions = allQuestions
+            .filter(q => q.difficultyLevel === "Basic" || q.difficultyLevel === "Moderate")
+            .slice(0, 15);
+        }
+      }
+      
+      // Ensure minimum 15 questions
+      if (selectedQuestions.length < 15) {
+        const remainingQuestions = allQuestions
+          .filter(q => !selectedQuestions.includes(q))
+          .slice(0, 15 - selectedQuestions.length);
+        selectedQuestions = [...selectedQuestions, ...remainingQuestions];
+      }
+      
+      res.json({
+        schedule,
+        questions: selectedQuestions.slice(0, 15),
+        adaptiveInfo: {
+          averageScore: quizHistory.length > 0 ? 
+            quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length : 0,
+          totalAttempts: quizHistory.length,
+          selectionReason: quizHistory.length === 0 ? "first_attempt" : 
+            quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length >= 90 ? "high_performance" :
+            quizHistory.reduce((sum, h) => sum + (h.score || 0), 0) / quizHistory.length >= 70 ? "mistake_focused" : "foundational"
+        }
+      });
+    } catch (error) {
+      console.error("Error getting adaptive questions:", error);
+      res.status(500).json({ message: "Failed to get adaptive questions" });
+    }
+  });
+
   // Get individual quiz schedule with questions
   app.get("/api/quiz-schedule/:scheduleId", isAuthenticated, async (req, res) => {
     try {
@@ -951,6 +1126,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feedback routes
+  app.post("/api/feedback", isAuthenticated, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const feedbackData = {
+        ...req.body,
+        userId: req.session.userId!,
+        userName: user.username,
+        userEmail: user.email,
+        status: "pending"
+      };
+
+      const feedback = await storage.createFeedback(feedbackData);
+      res.status(201).json(feedback);
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+
+  app.get("/api/feedback", isAuthenticated, async (req, res) => {
+    try {
+      const feedback = await storage.getFeedbackByUser(req.session.userId!);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error getting feedback:", error);
+      res.status(500).json({ message: "Failed to get feedback" });
+    }
+  });
+
+  // Post-quiz feedback endpoints
+  app.post("/api/quiz-feedback", isAuthenticated, async (req, res) => {
+    try {
+      const { quizId, rating, comments } = req.body;
+      const userId = req.session.userId!;
+
+      // For now, store as general feedback until database schema is updated
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const feedbackData = {
+        userId,
+        username: user.username,
+        userEmail: user.email,
+        type: "quiz_feedback",
+        feedbackText: `Quiz Rating: ${rating}/5${comments ? `\nComments: ${comments}` : ''}\nQuiz ID: ${quizId}`,
+        rating,
+        status: "pending"
+      };
+
+      const feedback = await storage.createFeedback(feedbackData);
+      res.status(201).json(feedback);
+    } catch (error) {
+      console.error("Error creating quiz feedback:", error);
+      res.status(500).json({ message: "Failed to submit quiz feedback" });
+    }
+  });
+
+  app.get("/api/quiz-feedback/:quizId", isAuthenticated, async (req, res) => {
+    try {
+      const quizId = parseInt(req.params.quizId);
+      const userId = req.session.userId!;
+
+      // Check if feedback exists for this quiz and user
+      const userFeedback = await storage.getFeedbackByUser(userId);
+      const existingFeedback = userFeedback.find(f => 
+        f.type === "quiz_feedback" && f.feedbackText?.includes(`Quiz ID: ${quizId}`)
+      );
+
+      res.json(existingFeedback || null);
+    } catch (error) {
+      console.error("Error getting quiz feedback:", error);
+      res.status(500).json({ message: "Failed to get quiz feedback" });
+    }
+  });
+
+  // Admin feedback routes
+  app.get("/api/admin/feedback", isAuthenticated, isAdminAuthenticated, async (req, res) => {
+    try {
+      const allFeedback = await storage.getAllFeedback();
+      res.json(allFeedback);
+    } catch (error) {
+      console.error("Error getting all feedback:", error);
+      res.status(500).json({ message: "Failed to get feedback" });
+    }
+  });
+
+  app.patch("/api/admin/feedback/:id", isAuthenticated, isAdminAuthenticated, async (req, res) => {
+    try {
+      const feedbackId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Add reviewer info if updating status
+      if (updateData.status) {
+        updateData.reviewedBy = req.session.userId;
+        updateData.reviewedAt = new Date();
+      }
+
+      const updatedFeedback = await storage.updateFeedback(feedbackId, updateData);
+      res.json(updatedFeedback);
+    } catch (error) {
+      console.error("Error updating feedback:", error);
+      res.status(500).json({ message: "Failed to update feedback" });
+    }
+  });
+
   // Subscription routes
   app.post("/api/subscription", isAuthenticated, async (req, res) => {
     try {
@@ -1048,6 +1335,279 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Seeding error:", error);
       res.status(500).json({ message: "Failed to seed curriculum data", error: error.message });
+    }
+  });
+
+  // Admin change password route
+  app.post("/api/admin/change-password", isAuthenticated, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = (req.session as any).userId;
+      
+      // Get current user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      const isValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash new password and update
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUserPassword(userId, hashedPassword);
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Get user details with activity tracking
+  app.get("/api/admin/users/:id/details", isAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get user statistics
+      const userQuizzes = await storage.getQuizzesByUser(userId);
+      const completedQuizzes = userQuizzes.filter(q => q.status === 'completed');
+      const averageScore = 0; // Will implement proper calculation later
+      
+      const userDetails = {
+        ...user,
+        totalQuizzes: userQuizzes.length,
+        completedQuizzes: completedQuizzes.length,
+        averageScore,
+        totalDoubtQueries: 0, // Would count from doubt_queries table
+        feedbackSubmitted: 0, // Would count from feedback table
+      };
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = userDetails;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user details error:", error);
+      res.status(500).json({ message: "Failed to get user details" });
+    }
+  });
+
+  // Get user details route
+  app.get("/api/admin/users/:id/details", isAdminAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get user statistics
+      const userQuizzes = await storage.getQuizzesByUser(userId);
+      const completedQuizzes = userQuizzes.filter(q => q.status === 'completed');
+      const averageScore = 0; // Will implement proper calculation later
+      
+      const userDetails = {
+        ...user,
+        totalQuizzes: userQuizzes.length,
+        completedQuizzes: completedQuizzes.length,
+        averageScore,
+        totalDoubtQueries: 0, // Will implement later
+        feedbackSubmitted: 0 // Will implement later
+      };
+      
+      res.json(userDetails);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Get user activity log
+  app.get("/api/admin/users/:id/activity", isAdminAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Mock activity data - in real app would come from activity log table
+      const activities = [
+        {
+          id: 1,
+          type: "login",
+          description: "User logged in",
+          createdAt: new Date(),
+        },
+        {
+          id: 2,
+          type: "quiz_created",
+          description: "Created quiz: Mathematics - Algebra",
+          createdAt: new Date(Date.now() - 86400000), // 1 day ago
+        },
+        {
+          id: 3,
+          type: "quiz_completed",
+          description: "Completed quiz with score 85%",
+          createdAt: new Date(Date.now() - 172800000), // 2 days ago
+        },
+      ];
+      
+      res.json(activities);
+    } catch (error) {
+      console.error("Get user activity error:", error);
+      res.status(500).json({ message: "Failed to get user activity" });
+    }
+  });
+
+  // Get user quizzes for admin view
+  app.get("/api/admin/users/:id/quizzes", isAdminAuthenticated, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const quizzes = await storage.getQuizzesByUser(userId);
+      
+      res.json(quizzes);
+    } catch (error) {
+      console.error("Get user quizzes error:", error);
+      res.status(500).json({ message: "Failed to get user quizzes" });
+    }
+  });
+
+  // Admin login route
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      // Simple admin check - in production you'd want a proper admin table
+      if (email === "admin@quickrevise.com" && password === "admin123") {
+        // Create or get admin user
+        let adminUser = await storage.getUserByEmail(email);
+        if (!adminUser) {
+          adminUser = await storage.createUser({
+            email,
+            password: await bcrypt.hash(password, 10),
+            username: "admin",
+            firstName: "Admin",
+            lastName: "User",
+            subscriptionTier: "premium"
+          });
+        }
+        
+        // Store admin session
+        (req.session as any).userId = adminUser.id;
+        (req.session as any).isAdmin = true;
+        
+        res.json({ 
+          message: "Admin login successful",
+          user: {
+            id: adminUser.id,
+            email: adminUser.email,
+            username: adminUser.username,
+            isAdmin: true
+          }
+        });
+      } else {
+        res.status(401).json({ message: "Invalid admin credentials" });
+      }
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ message: "Admin login failed" });
+    }
+  });
+
+  // Admin routes
+  app.get("/api/admin/stats", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const totalUsers = await storage.getTotalUsers();
+      const activeUsers = await storage.getActiveUsers();
+      const totalQuizzes = await storage.getTotalQuizzes();
+      const completedQuizzes = await storage.getCompletedQuizzes();
+      const totalSubjects = await storage.getTotalSubjects();
+      const usersByTier = await storage.getUsersByTier();
+      const quizzesThisWeek = await storage.getQuizzesThisWeek();
+      const averageScore = await storage.getAverageScore();
+
+      const stats = {
+        totalUsers,
+        activeUsers,
+        totalQuizzes,
+        completedQuizzes,
+        totalSubjects,
+        revenueThisMonth: 0, // TODO: Implement revenue calculation
+        usersByTier,
+        quizzesThisWeek,
+        averageScore
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get("/api/admin/recent-activity", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const recentActivity = await storage.getRecentActivity();
+      res.json(recentActivity);
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
+    }
+  });
+
+  app.get("/api/admin/users", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Don't allow deleting the admin user
+      if (userId === 6) {
+        return res.status(400).json({ message: "Cannot delete admin user" });
+      }
+
+      await storage.deleteUser(userId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.get("/api/admin/subjects", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const subjects = await storage.getAllSubjects();
+      res.json(subjects);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      res.status(500).json({ message: "Failed to fetch subjects" });
+    }
+  });
+
+  app.get("/api/admin/quizzes", isAdminAuthenticated, async (req: any, res) => {
+    try {
+      const quizzes = await storage.getAllQuizzes();
+      res.json(quizzes);
+    } catch (error) {
+      console.error("Error fetching quizzes:", error);
+      res.status(500).json({ message: "Failed to fetch quizzes" });
     }
   });
 

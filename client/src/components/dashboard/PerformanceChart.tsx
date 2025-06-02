@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -25,12 +25,14 @@ interface PerformanceChartProps {
 
 const PerformanceChart = ({ data, title = "Performance Over Time" }: PerformanceChartProps) => {
   const chartData = useMemo(() => {
-    // Sort data by date
+    // Sort data by date and add quiz identification
     return [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map((item) => ({
+      .map((item, index) => ({
         date: formatDate(item.date),
         score: item.score,
-        quizSet: `Set ${item.quizSet}`
+        quizSet: `Set ${item.quizSet}`,
+        quizId: `Q${index + 1}`,
+        displayName: `Quiz ${index + 1} - Set ${item.quizSet}`
       }));
   }, [data]);
 
@@ -42,7 +44,7 @@ const PerformanceChart = ({ data, title = "Performance Over Time" }: Performance
       <CardContent>
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <BarChart
               data={chartData}
               margin={{
                 top: 5,
@@ -53,9 +55,10 @@ const PerformanceChart = ({ data, title = "Performance Over Time" }: Performance
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey="date" 
+                dataKey="quizId" 
                 tick={{ fontSize: 12 }}
                 tickMargin={10}
+                label={{ value: 'Quiz Attempts', position: 'insideBottom', offset: -5 }}
               />
               <YAxis 
                 domain={[0, 100]}
@@ -70,19 +73,27 @@ const PerformanceChart = ({ data, title = "Performance Over Time" }: Performance
               />
               <Tooltip 
                 formatter={(value: number) => [`${value}%`, 'Score']} 
-                labelFormatter={(label) => `Date: ${label}`}
+                labelFormatter={(label, payload) => {
+                  if (payload && payload[0]) {
+                    return `${payload[0].payload.displayName} on ${payload[0].payload.date}`;
+                  }
+                  return `Quiz: ${label}`;
+                }}
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
               />
               <Legend />
-              <Line
-                type="monotone"
+              <Bar
                 dataKey="score"
                 name="Quiz Score"
-                stroke="var(--chart-1, #3B82F6)"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
+                fill="var(--chart-1, #3B82F6)"
+                radius={[4, 4, 0, 0]}
               />
-            </LineChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </CardContent>

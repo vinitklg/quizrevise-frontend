@@ -41,7 +41,8 @@ const Login = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/auth/login", data);
+      const response = await apiRequest("POST", "/api/auth/login", data);
+      const user = await response.json();
       
       // Invalidate user query to refetch after login
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
@@ -51,7 +52,15 @@ const Login = () => {
         description: "Welcome back to QuizRevise!",
       });
       
-      navigate("/dashboard");
+      // Check if user is admin and redirect accordingly
+      console.log("Login response user:", user); // Debug log
+      if (user.isAdmin === true || user.username === 'admin' || user.email === 'admin@quickrevise.com') {
+        console.log("Redirecting to admin dashboard"); // Debug log
+        navigate("/admin");
+      } else {
+        console.log("Redirecting to student dashboard"); // Debug log
+        navigate("/dashboard");
+      }
     } catch (error) {
       toast({
         title: "Login failed",

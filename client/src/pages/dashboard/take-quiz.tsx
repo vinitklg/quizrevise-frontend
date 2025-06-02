@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Clock, CheckCircle } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
+import PostQuizFeedback from "@/components/PostQuizFeedback";
 
 interface Question {
   id: string;
@@ -53,6 +53,7 @@ export default function TakeQuiz() {
   const [isCompleted, setIsCompleted] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [quizResults, setQuizResults] = useState<any>(null);
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
 
   // Fetch quiz schedule and questions
   const { data: schedule, isLoading } = useQuery<QuizSchedule>({
@@ -155,7 +156,6 @@ export default function TakeQuiz() {
   if (isLoading) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
@@ -166,7 +166,6 @@ export default function TakeQuiz() {
   if (!schedule) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Quiz Not Found</h2>
@@ -183,7 +182,6 @@ export default function TakeQuiz() {
   if (isCompleted && showResults && quizResults) {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-        <Sidebar />
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto p-6">
             {/* Results Header */}
@@ -207,7 +205,10 @@ export default function TakeQuiz() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">Incorrect</p>
                   </div>
                 </div>
-                <Button onClick={() => setLocation("/dashboard/today")} className="w-full">
+                <Button onClick={() => {
+                  console.log("Back button clicked, showing feedback popup");
+                  setShowFeedbackPopup(true);
+                }} className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Today's Quizzes
                 </Button>
@@ -277,8 +278,6 @@ export default function TakeQuiz() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
-      
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50 dark:bg-gray-900">
           <div className="py-6">
@@ -318,29 +317,88 @@ export default function TakeQuiz() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* MCQ Questions */}
-                  {(currentQuestion.type === "mcq" || currentQuestion.questionType === "mcq") && currentQuestion.options && (
+                  {/* Display diagram if available */}
+                  {currentQuestion.diagramUrl && (
+                    <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700/50">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg">
+                          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-blue-800 dark:text-blue-300">Mathematical Diagram</h4>
+                      </div>
+                      
+                      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 mb-4">
+                        <div className="flex justify-center">
+                          <img 
+                            src={currentQuestion.diagramUrl} 
+                            alt="Mathematical diagram for the question" 
+                            className="max-w-full h-auto rounded-lg"
+                            style={{ maxHeight: '450px', minHeight: '200px' }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {currentQuestion.diagram_instruction && (
+                        <div className="bg-blue-100 dark:bg-blue-800/30 p-3 rounded-lg">
+                          <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Diagram Description:</p>
+                          <p className="text-sm text-blue-700 dark:text-blue-200 leading-relaxed">
+                            {currentQuestion.diagram_instruction}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* MCQ Questions - Show for any question that has options */}
+                  {currentQuestion.options && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
                     >
-                      {currentQuestion.options.map((option, index) => {
-                        // Extract just the letter (A, B, C, D) from options like "A. Text"
-                        const optionLetter = option.charAt(0);
-                        return (
-                          <div key={index} className="flex items-center space-x-2">
-                            <RadioGroupItem value={optionLetter} id={`option-${index}`} />
-                            <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                              {option}
-                            </Label>
-                          </div>
-                        );
-                      })}
+                      {(() => {
+                        if (typeof currentQuestion.options === 'object' && !Array.isArray(currentQuestion.options)) {
+                          // Handle MCQ questions with object format - only show A, B, C, D options
+                          const validOptions = ['A', 'B', 'C', 'D'];
+                          return Object.entries(currentQuestion.options)
+                            .filter(([key]) => validOptions.includes(key))
+                            .map(([key, value]) => (
+                              <div key={key} className="flex items-center space-x-2">
+                                <RadioGroupItem value={key} id={`option-${key}`} />
+                                <Label htmlFor={`option-${key}`} className="cursor-pointer">
+                                  {key}. {value}
+                                </Label>
+                              </div>
+                            ));
+                        } else {
+                          // Handle regular MCQ questions with array format
+                          const options = Array.isArray(currentQuestion.options) 
+                            ? currentQuestion.options 
+                            : [];
+                          
+                          return options.map((option, index) => {
+                            const optionText = typeof option === 'string' ? option : `${String.fromCharCode(65 + index)}. ${option}`;
+                            const optionLetter = optionText.charAt(0);
+                            
+                            return (
+                              <div key={index} className="flex items-center space-x-2">
+                                <RadioGroupItem value={optionLetter} id={`option-${index}`} />
+                                <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                                  {optionText}
+                                </Label>
+                              </div>
+                            );
+                          });
+                        }
+                      })()}
                     </RadioGroup>
                   )}
 
                   {/* Fill in the Blanks */}
-                  {(currentQuestion.type === "fill-in-blank" || currentQuestion.questionType === "fill-in-blanks") && (
+                  {currentQuestion.questionType === "fill-in-blanks" && (
                     <div className="space-y-3">
                       <Input
                         placeholder="Type your answer here..."
@@ -352,7 +410,7 @@ export default function TakeQuiz() {
                   )}
 
                   {/* Assertion and Reasoning */}
-                  {(currentQuestion.type === "assertion-reasoning" || currentQuestion.questionType === "assertion-reasoning") && (
+                  {currentQuestion.questionType === "assertion-reasoning" && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
@@ -385,7 +443,7 @@ export default function TakeQuiz() {
                   )}
 
                   {/* True/False Questions */}
-                  {(currentQuestion.type === "true-false" || currentQuestion.questionType === "true-false") && (
+                  {currentQuestion.questionType === "true-false" && (
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
@@ -430,6 +488,18 @@ export default function TakeQuiz() {
           </div>
         </main>
       </div>
+      
+      {/* Post-Quiz Feedback Popup */}
+      {showFeedbackPopup && schedule && (
+        <PostQuizFeedback
+          quizId={schedule.quizId}
+          onClose={() => setShowFeedbackPopup(false)}
+          onSubmit={() => {
+            setShowFeedbackPopup(false);
+            setLocation("/dashboard/today");
+          }}
+        />
+      )}
     </div>
   );
 }
