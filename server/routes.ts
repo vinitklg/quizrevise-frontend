@@ -16,10 +16,12 @@ import { ZodError } from "zod";
 // Add missing type declarations
 import { SessionData } from 'express-session';
 
-// Extend SessionData interface to include userId
+import session from 'express-session';
+
 declare module 'express-session' {
   interface SessionData {
-    userId: number;
+    isAdmin?: boolean;
+    userId?: number;
   }
 }
 
