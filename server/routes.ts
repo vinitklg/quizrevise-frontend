@@ -1,8 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } from "./openai";
-import { renderDiagram } from "./diagramRenderer";
+import { storage } from "./storage.js";
+import { generateQuizQuestions, generateBatchQuizQuestions, answerDoubtQuery } from "./openai.js";
+import { renderDiagram } from "./diagramRenderer.js";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import { 
@@ -10,7 +10,7 @@ import {
   signupSchema, 
   generateQuizSchema, 
   insertDoubtQuerySchema
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { ZodError } from "zod";
 
 // Add missing type declarations
@@ -1358,7 +1358,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed curriculum data endpoint
   app.post("/api/seed-curriculum", async (req, res) => {
     try {
-      const { seedCurriculumData } = await import("./seedData");
+     const { seedCurriculumData } = await import("./seedData.js");
+
       await seedCurriculumData();
       res.json({ message: "Curriculum data seeded successfully!" });
     } catch (error) {

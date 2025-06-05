@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { MessageSquare, FileText, Lightbulb, Upload, CheckCircle, Star } from "lucide-react";
-import type { Feedback } from "@shared/schema";
+import type { Feedback } from "../shared/schema.js";
 
 const feedbackCategories = [
   { value: "content", label: "Subject Content Issue", icon: FileText, color: "bg-orange-50 text-orange-700 border-orange-200" },

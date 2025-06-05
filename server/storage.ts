@@ -29,8 +29,8 @@ import {
   type UpsertFeedback,
   type QuizFeedback,
   type UpsertQuizFeedback,
-} from "@shared/schema";
-import { db } from "./db";
+} from "../shared/schema.js";
+import { db } from "./db.js";
 import { eq, and, gte, lt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
 
 import bcrypt from "bcryptjs";

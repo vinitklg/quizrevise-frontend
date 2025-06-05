@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { getPromptForSubject, substitutePromptVariables, type PromptVariables } from "./prompts";
+import { getPromptForSubject, substitutePromptVariables, type PromptVariables } from "./prompts.js";
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });

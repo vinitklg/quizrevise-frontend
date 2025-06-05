@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { formatDate, calculateTimeRemaining } from "@/lib/utils";
 import { ChevronRight, Clock, BarChart2, Eye } from "lucide-react";
 import { useState } from "react";
-import QuizResultsModal from "./QuizResultsModal";
+import QuizResultsModal from "./QuizResultsModal.js";
 
 interface TodayQuizProps {
   userId: number;

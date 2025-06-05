@@ -11,7 +11,7 @@ import { CalendarIcon, Filter } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import type { Subject } from "@shared/schema";
+import type { Subject } from "../shared/schema.js";
 type ChartDataItem = { date: string; score: number; quizSet: number };
 
 const Performance = () => {

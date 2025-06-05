@@ -1,5 +1,5 @@
-import { db } from "./db";
-import { subjects, chapters, topics } from "@shared/schema";
+import { db } from "./db.js";
+import { subjects, chapters, topics } from "../shared/schema.js";
 import { eq, and } from "drizzle-orm";
 
 // Comprehensive curriculum data for CBSE, ICSE, and ISC

@@ -37,7 +37,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Brain, BookOpen, Sparkles } from "lucide-react";
-import { Subject } from "@shared/schema";
+import { Subject } from "../shared/schema.js";
 
 interface Chapter {
   id: number;

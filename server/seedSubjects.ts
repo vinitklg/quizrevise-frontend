@@ -1,6 +1,6 @@
-import { db } from "./db";
-import { subjects } from "@shared/schema";
-import { subjectData } from "./subjectData"; // your current file
+import { db } from "./db.js";
+import { subjects } from "../shared/schema.js";
+import { subjectData } from "./subjectData.js"; // your current file
 
 export async function seedStandardizedSubjects() {
   try {
