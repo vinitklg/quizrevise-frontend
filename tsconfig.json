@@ -6,7 +6,7 @@
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
     "noEmit": false,
     "outDir": "./dist",
-    "rootDir": "./", // ✅ this now includes shared, server, vite.config.ts
+    "rootDir": "./",
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "ESNext",
