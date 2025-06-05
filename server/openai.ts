@@ -67,9 +67,9 @@ QUESTION DISTRIBUTION:
 - ${totalQuestions - numberOfQuestions} supporting questions (variations, related concepts, challenging applications)
 
 DIFFICULTY DISTRIBUTION:
-- 30% Basic/Moderate questions (for initial learning)
-- 40% Moderate/Challenging questions (for reinforcement)
-- 30% Challenging/Advanced questions (for mastery)
+- 20% Basic/Moderate questions (for initial learning)
+- 20% Moderate/Challenging questions (for reinforcement)
+- 60% Challenging/Advanced questions (for mastery)
 
 IMPORTANT: Format your response as a valid JSON object:
 {
@@ -106,24 +106,54 @@ CRITICAL REQUIREMENTS:
     const result = JSON.parse(rawContent);
     
     // Process and validate questions
-    if (result.questions && Array.isArray(result.questions)) {
-      result.questions = result.questions.map((question: any, index: number) => ({
-        id: question.id || index + 1,
-        questionType: question.questionType || "mcq",
-        question: question.question || "Question text missing",
-        options: Array.isArray(question.options) ? 
-          question.options.reduce((obj: any, opt: string, idx: number) => {
-            obj[String.fromCharCode(65 + idx)] = opt.replace(/^[A-D]\.?\s*/, '');
-            return obj;
-          }, {}) : question.options || {},
-        correctAnswer: question.correctAnswer || "A",
-        explanation: question.explanation || "Explanation not provided",
-        bloomTaxonomy: question.bloomTaxonomy || "Application",
-        difficultyLevel: question.difficultyLevel || "Moderate",
-        setNumber: question.setNumber || (Math.floor(index / (totalQuestions / 8)) + 1),
-        ...(question.diagram_instruction && { diagram_instruction: question.diagram_instruction })
-      }));
+if (result.questions && Array.isArray(result.questions)) {
+  result.questions = result.questions.map((question: any, index: number) => {
+    // Assign default values
+    question.id = question.id || index + 1;
+    question.questionType = question.questionType || "mcq";
+    question.question = question.question || "Question text missing";
+    question.correctAnswer = question.correctAnswer || "A";
+    question.explanation = question.explanation || "Explanation not provided";
+    question.bloomTaxonomy = question.bloomTaxonomy || "Application";
+    question.difficultyLevel = question.difficultyLevel || "Moderate";
+    question.setNumber = question.setNumber || (Math.floor(index / (totalQuestions / 8)) + 1);
+
+    // ✅ Add default options for true/false
+    if (
+      question.questionType === "true-false" &&
+      (!question.options || Object.keys(question.options).length === 0)
+    ) {
+      question.options = {
+        A: "True",
+        B: "False"
+      };
     }
+
+    // ✅ Convert options from array to object format
+    if (Array.isArray(question.options)) {
+      const optionsObj: Record<string, string> = {};
+      question.options.forEach((opt: string, idx: number) => {
+        const letter = String.fromCharCode(65 + idx); // A, B, C, D
+        optionsObj[letter] = opt.replace(/^[A-D]\.?\s*/, '');
+      });
+      question.options = optionsObj;
+    }
+
+    // ✅ Return final processed question object
+    return {
+      id: question.id,
+      questionType: question.questionType,
+      question: question.question,
+      options: question.options || {},
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation,
+      bloomTaxonomy: question.bloomTaxonomy,
+      difficultyLevel: question.difficultyLevel,
+      setNumber: question.setNumber,
+      ...(question.diagram_instruction && { diagram_instruction: question.diagram_instruction })
+    };
+  });
+}
     
     return result;
   } catch (error) {
@@ -132,7 +162,6 @@ CRITICAL REQUIREMENTS:
   }
 }
 
-// Generate quiz questions based on subject, chapter, topic, and various parameters
 export async function generateQuizQuestions(
   subject: string,
   chapter: string,
@@ -148,19 +177,17 @@ export async function generateQuizQuestions(
 ): Promise<{
   questions: Array<{
     question: string;
-    options: string[];
+    options: Record<string, string>;
     correctAnswer: string;
     explanation: string;
     questionType: string;
     bloomTaxonomy: string;
     difficultyLevel: string;
+    diagram_instruction?: string;
   }>;
 }> {
   try {
-    // Get the appropriate prompt for the subject
     const basePrompt = getPromptForSubject(subject);
-    
-    // Prepare variables for prompt substitution
     const promptVariables: PromptVariables = {
       board,
       class: grade.toString(),
@@ -171,32 +198,18 @@ export async function generateQuizQuestions(
       question_type: questionTypes.join(", "),
       blooms_level: difficultyLevels.join(", ")
     };
-    
-    // Substitute variables in the prompt
+
     let customizedPrompt = substitutePromptVariables(basePrompt, promptVariables);
-    
-    // Add diagram support instruction if enabled
+
     if (diagramSupport) {
-      customizedPrompt += `\n\n**FORCE DIAGRAM GENERATION: Since diagram support is enabled, you MUST include a "diagram_instruction" field for every question that involves visual concepts, geometric shapes, scientific apparatus, biological structures, or any content that can be represented visually. 
+      customizedPrompt += `
 
-DIAGRAM INSTRUCTION REQUIREMENTS FOR BOARD-LEVEL ACCURACY:
-- Clearly mention all POINTS (use capital letters: A, B, C, P, Q, R, O)
-- Specify all CHORDS with exact names (e.g., chord PQ, chord AB)
-- Include precise ANGLE MEASUREMENTS (e.g., ∠PRQ = 70°, ∠POQ at center)
-- Define exact POSITIONS (e.g., "Point R lies on the major arc of PQ", "Point R is on the circumference between P and Q")
-- Specify CIRCLE CENTER (e.g., center O) and radius when applicable
-- Indicate TYPE OF ANGLE (inscribed angle, central angle, angle in alternate segment)
-- Ensure all points have LABELS (capital letters) and all segments are named
-- Add measurement values wherever applicable in the question
-- Example: "Draw a circle with center O. Chord PQ is drawn. Point R lies on the major arc of PQ. ∠PRQ = 70° (inscribed angle). Show angle ∠POQ at the center. Label all points clearly."
-
-STRICT COMPLIANCE: Every geometry question must follow this exact format for diagram instructions.**`;
+**FORCE DIAGRAM GENERATION: Since diagram support is enabled, you MUST include a "diagram_instruction" field for every question that involves visual content.**`;
     }
-    
-    // Add JSON formatting instruction
+
     const finalPrompt = `${customizedPrompt}
 
-IMPORTANT: Format your response as a valid JSON object with the following structure:
+IMPORTANT: Format your response as a valid JSON object like this:
 {
   "questions": [
     {
@@ -205,93 +218,81 @@ IMPORTANT: Format your response as a valid JSON object with the following struct
       "question": "Question text here",
       "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
       "correctAnswer": "A",
-      "explanation": "Detailed step-by-step solution",
+      "explanation": "Explanation here",
       "bloomTaxonomy": "Application",
       "difficultyLevel": "Moderate",
-      "diagram_instruction": "Draw triangle ABC with AB = 6 cm, angle B = 90°, mark all angles and sides clearly"
+      "diagram_instruction": "Draw triangle ABC..."
     }
   ]
 }
 
-CRITICAL REQUIREMENTS:
-1. questionType must be exactly one of: "mcq", "assertion-reasoning", "true-false"
-2. For MCQ questions, options must be formatted as ["A. Text", "B. Text", "C. Text", "D. Text"]
-3. correctAnswer must be just the letter: "A", "B", "C", or "D"
-4. For geometry, physics diagrams, chemistry apparatus, or biology structures, ALWAYS include diagram_instruction
-5. Generate exactly ${numberOfQuestions} questions following the subject-specific guidelines above.
-
-This is set ${setNumber} of 8 for spaced repetition learning.`;
+REQUIREMENTS:
+- Generate exactly ${numberOfQuestions} questions.
+- Allowed types: "mcq", "assertion-reasoning", "true-false".
+- For true-false, include only two options: A. True, B. False
+- Set number: ${setNumber}`;
 
     const response = await openai.chat.completions.create({
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: finalPrompt
-        }
-      ],
+      messages: [{ role: "user", content: finalPrompt }],
       response_format: { type: "json_object" }
     });
 
     const rawContent = response.choices[0].message.content || "{}";
-    console.log("Raw OpenAI response:", rawContent);
-    
-    try {
-      const result = JSON.parse(rawContent);
-      
-      // Validate and fix question structure
-      if (result.questions && Array.isArray(result.questions)) {
-        result.questions = result.questions.map((question: any, index: number) => {
-          // Ensure all required fields are present
-          const fixedQuestion = {
-            id: question.id || index + 1,
-            questionType: question.questionType || "mcq",
-            question: question.question || "Question text missing",
-            options: question.options || {},
-            correctAnswer: question.correctAnswer || "A",
-            explanation: question.explanation || "Explanation not provided",
-            bloomTaxonomy: question.bloomTaxonomy || "Application",
-            difficultyLevel: question.difficultyLevel || "Moderate"
-          };
-          
-          // Add diagram instruction if present
-          if (question.diagram_instruction) {
-            (fixedQuestion as any).diagram_instruction = question.diagram_instruction;
-          }
-          
-          // Fix options format if it's an array instead of object
-          if (Array.isArray(fixedQuestion.options)) {
-            const optionsObj = {};
-            fixedQuestion.options.forEach((option: string, idx: number) => {
-              const letter = String.fromCharCode(65 + idx); // A, B, C, D
-              optionsObj[letter] = option.replace(/^[A-D]\.?\s*/, ''); // Remove existing letter prefix
-            });
-            fixedQuestion.options = optionsObj;
-          }
-          
-          return fixedQuestion;
-        });
-      }
-      
-      return result;
-    } catch (parseError) {
-      console.error("JSON parsing error:", parseError);
-      console.error("Content that failed to parse:", rawContent);
-      
-      // Return a fallback structure with empty questions array
-      return {
-        questions: [],
-        error: "Failed to parse AI response"
-      };
+    const result = JSON.parse(rawContent);
+
+if (result.questions && Array.isArray(result.questions)) {
+  result.questions = result.questions.map((question: any, index: number) => {
+    const fixedQuestion = {
+      id: question.id || index + 1,
+      questionType: question.questionType || "mcq",
+      question: question.question || "Question text missing",
+      correctAnswer: question.correctAnswer || "A",
+      explanation: question.explanation || "Explanation not provided",
+      bloomTaxonomy: question.bloomTaxonomy || "Application",
+      difficultyLevel: question.difficultyLevel || "Moderate",
+      setNumber: question.setNumber || (Math.floor(index / 10) + 1),
+      diagram_instruction: question.diagram_instruction || undefined,
+      options: [] as string[],
+    };
+
+    if (
+      fixedQuestion.questionType === "true-false" &&
+      (!question.options || Object.keys(question.options).length === 0)
+    ) {
+      fixedQuestion.options = ["A. True", "B. False"];
+    } else if (
+      question.options &&
+      typeof question.options === "object" &&
+      !Array.isArray(question.options)
+    ) {
+      fixedQuestion.options = Object.entries(question.options).map(
+        ([key, value]) => `${key}. ${value}`
+      );
+    } else if (Array.isArray(question.options)) {
+      fixedQuestion.options = question.options.map((opt: string, idx: number) => {
+        const letter = String.fromCharCode(65 + idx);
+        return `${letter}. ${opt.replace(/^[A-D]\.?\s*/, '')}`;
+      });
     }
-  } catch (error) {
-    console.error("Error generating quiz questions:", error);
-    throw new Error(`Failed to generate quiz questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+
+    // ✅ Fallback if options are still empty
+    if (!fixedQuestion.options || fixedQuestion.options.length === 0) {
+      fixedQuestion.options = ["A. Option 1", "B. Option 2"];
+    }
+
+    return fixedQuestion;
+  });
 }
 
-// Answer a student's doubt query
+return result;
+} catch (error) {
+  console.error("Error generating quiz questions:", error);
+  throw new Error(`Failed to generate quiz questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+} // ✅ catch
+} // ✅ closing generateQuizQuestions
+
+// ✅ New Function
 export async function answerDoubtQuery(
   question: string,
   subject: string,
@@ -300,7 +301,6 @@ export async function answerDoubtQuery(
 ): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       model: "gpt-4o",
       messages: [
         {

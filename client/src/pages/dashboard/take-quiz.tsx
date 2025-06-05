@@ -318,43 +318,11 @@ export default function TakeQuiz() {
                 </CardHeader>
                 <CardContent>
                   {/* Display diagram if available */}
-                  {currentQuestion.diagramUrl && (
-                    <div className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700/50">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg">
-                          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                          </svg>
-                        </div>
-                        <h4 className="text-lg font-semibold text-blue-800 dark:text-blue-300">Mathematical Diagram</h4>
-                      </div>
+                                       
                       
-                      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 mb-4">
-                        <div className="flex justify-center">
-                          <img 
-                            src={currentQuestion.diagramUrl} 
-                            alt="Mathematical diagram for the question" 
-                            className="max-w-full h-auto rounded-lg"
-                            style={{ maxHeight: '450px', minHeight: '200px' }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {currentQuestion.diagram_instruction && (
-                        <div className="bg-blue-100 dark:bg-blue-800/30 p-3 rounded-lg">
-                          <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Diagram Description:</p>
-                          <p className="text-sm text-blue-700 dark:text-blue-200 leading-relaxed">
-                            {currentQuestion.diagram_instruction}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
                   {/* MCQ Questions - Show for any question that has options */}
-                  {currentQuestion.options && (
+                  {currentQuestion.questionType !== "true-false" && currentQuestion.options && (
+
                     <RadioGroup
                       value={answers[currentQuestion.id] || ""}
                       onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}

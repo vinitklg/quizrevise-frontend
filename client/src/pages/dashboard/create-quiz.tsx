@@ -502,33 +502,15 @@ const CreateQuiz = () => {
                           </div>
 
                           {/* Diagram Support Section */}
-                          <FormField
-                            control={form.control}
-                            name="diagramSupport"
-                            render={({ field }) => (
-                              <FormItem className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                                <div>
-                                  <h3 className="font-medium mb-2">📊 Diagram Support</h3>
-                                  <FormDescription className="text-sm text-gray-600 dark:text-gray-400">
-                                    Force diagram generation for visual concepts (Geometry, Physics, Chemistry, Biology)
-                                  </FormDescription>
-                                </div>
-                                <FormControl>
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id="diagramSupport"
-                                      checked={field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                    <label htmlFor="diagramSupport" className="text-sm font-normal">
-                                      Force Diagram Generation
-                                    </label>
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                         <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+  <div>
+    <h3 className="font-medium mb-2">📊 Diagram Support</h3>
+    <p className="text-sm text-gray-600 dark:text-gray-400">
+      🔒 Coming Soon: You will be able to force diagram-based question generation (Geometry, Economics, Physics, Biology, etc.).
+    </p>
+  </div>
+</div>
+
 
                           <div className="space-y-4 border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                             <h3 className="font-medium">Difficulty Levels</h3>
