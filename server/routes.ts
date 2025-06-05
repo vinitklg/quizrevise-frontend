@@ -60,6 +60,9 @@ const calculateSpacedRepetitionDates = (startDate: Date): Date[] => {
   
   return dates;
 };
+app.get("/api/health", (req, res) => {
+  res.json({ message: "Backend is running" });
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up session middleware
