@@ -65,26 +65,26 @@ const Performance = () => {
   };
 
   const getPerformanceAverageByDate = () => {
-    if (!performanceData || performanceData.length === 0) return [];
-    
-    // Group by date and calculate average score
-    const groupedData = performanceData.reduce((acc: any, current: any) => {
-      if (!acc[current.date]) {
-        acc[current.date] = { total: current.score, count: 1 };
-      } else {
-        acc[current.date].total += current.score;
-        acc[current.date].count += 1;
-      }
-      return acc;
-    }, {});
-    
-    // Convert to array format for chart
-   return Object.entries(groupedData).map(([date, data]: [string, any]) => ({
-  date,
-  score: Math.round(data.total / data.count),
-  quizSet: 1 // or use a real value if needed
-}));
+  if (!performanceData || performanceData.length === 0) return [];
 
+  // Group by date and calculate average score
+  const groupedData = performanceData.reduce((acc: any, current: any) => {
+    if (!acc[current.date]) {
+      acc[current.date] = { total: current.score, count: 1 };
+    } else {
+      acc[current.date].total += current.score;
+      acc[current.date].count += 1;
+    }
+    return acc;
+  }, {});
+
+  // Convert to array format for chart
+  return Object.entries(groupedData).map(([date, data]: [string, any]) => ({
+    date,
+    score: Math.round(data.total / data.count),
+    quizSet: 1 // or use a real value if needed
+  }));
+};
 
   const calculateAverageScore = () => {
     if (!performanceData || performanceData.length === 0) return 0;
