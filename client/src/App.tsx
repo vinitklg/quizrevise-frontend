@@ -66,7 +66,8 @@ function Router() {
       <Route path="/dashboard/today" component={TodayQuizzes} />
       <Route path="/dashboard/doubts" component={AskDoubts} />
       <Route path="/dashboard/feedback" component={FeedbackPage} />
-      <Route path="/dashboard/performance" component={Performance} />
+     <Route path="/dashboard/performance" component={() => <Performance />} />
+
       <Route path="/dashboard/settings" component={Settings} />
       
       {/* Admin pages */}

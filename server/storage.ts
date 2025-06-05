@@ -730,9 +730,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, userId));
   }
 
-  async getAllSubjects(): Promise<any[]> {
-    return await db.select().from(subjects).orderBy(subjects.name);
-  }
 
   async getAllQuizzes(): Promise<any[]> {
     const allQuizzes = await db
@@ -797,13 +794,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
-  async getQuizzesByUser(userId: number): Promise<any[]> {
-    return await db
-      .select()
-      .from(quizzes)
-      .where(eq(quizzes.userId, userId))
-      .orderBy(desc(quizzes.createdAt));
-  }
 
   // Quiz feedback operations
   async createQuizFeedback(feedback: UpsertQuizFeedback): Promise<QuizFeedback> {
@@ -814,41 +804,42 @@ export class DatabaseStorage implements IStorage {
     return newFeedback;
   }
 
-  async getQuizFeedback(quizId: number, userId: number): Promise<QuizFeedback | undefined> {
+    async getQuizFeedback(quizId: number, userId: number): Promise<QuizFeedback | undefined> {
     const [feedback] = await db
       .select()
       .from(quizFeedback)
-      .where(and(eq(quizFeedback.quizId, quizId), eq(quizFeedback.userId, userId)));
+      .where(
+        and(
+          eq(quizFeedback.quizId, quizId),
+          eq(quizFeedback.userId, userId)
+        )
+      );
     return feedback;
   }
-}
-// ✅ Correct: Fetch one QuizSet by ID
-async getQuizSetById(id: number): Promise<QuizSet | undefined> {
-  const [quizSet] = await db
-    .select()
-    .from(quizSets)
-    .where(eq(quizSets.id, id));
-  return quizSet;
-}
 
-// ✅ Correct: Fetch QuizSchedules matching quizId + quizSetId + userId
-async getQuizSchedulesByQuizAndSet(
-  quizId: number,
-  quizSetId: number,
-  userId: number
-): Promise<QuizSchedule[]> {
-  const results = await db
-    .select()
-    .from(quizSchedules)
-    .where(
-      and(
-        eq(quizSchedules.quizId, quizId),
-        eq(quizSchedules.quizSetId, quizSetId),
-        eq(quizSchedules.userId, userId)
-      )
-    );
-  return results;
-}
+  async getQuizSetById(id: number): Promise<QuizSet | undefined> {
+    const [quizSet] = await db
+      .select()
+      .from(quizSets)
+      .where(eq(quizSets.id, id));
+    return quizSet;
+  }
 
-
-export const storage = new DatabaseStorage();
+  async getQuizSchedulesByQuizAndSet(
+    quizId: number,
+    quizSetId: number,
+    userId: number
+  ): Promise<QuizSchedule[]> {
+    return await db
+      .select()
+      .from(quizSchedules)
+      .where(
+        and(
+          eq(quizSchedules.quizId, quizId),
+          eq(quizSchedules.quizSetId, quizSetId),
+          eq(quizSchedules.userId, userId)
+        )
+      );
+  }
+} 
+export const storage = new DatabaseStorage(); // ✅ This must come after the class ends

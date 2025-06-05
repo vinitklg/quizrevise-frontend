@@ -34,10 +34,10 @@ export default function FeedbackPage() {
     file: null as File | null
   });
 
-  const { data: feedbacks, isLoading } = useQuery({
-    queryKey: ["/api/feedback"],
-    enabled: selectedTab === "my"
-  });
+const { data: feedbacks = [], isLoading } = useQuery<Feedback[]>({
+  queryKey: ["/api/feedback"],
+  enabled: selectedTab === "my"
+});
 
   const submitFeedback = useMutation({
     mutationFn: async (data: FormData) => {

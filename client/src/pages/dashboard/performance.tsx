@@ -11,6 +11,8 @@ import { CalendarIcon, Filter } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import type { Subject } from "@shared/schema";
+type ChartDataItem = { date: string; score: number; quizSet: number };
 
 const Performance = () => {
   const { user } = useAuth();
@@ -19,10 +21,11 @@ const Performance = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
   // Get subjects that user has taken tests for
-  const { data: subjects } = useQuery({
-    queryKey: ['/api/quizzes/performance/subjects'],
-    enabled: !!user,
-  });
+  const { data: subjects = [] } = useQuery<Subject[]>({
+  queryKey: ['/api/quizzes/performance/subjects'],
+  enabled: !!user,
+});
+
 
   const { data: performanceData, isLoading } = useQuery({
     queryKey: ['/api/quizzes/performance', selectedSubject, startDate, endDate],
@@ -76,11 +79,12 @@ const Performance = () => {
     }, {});
     
     // Convert to array format for chart
-    return Object.entries(groupedData).map(([date, data]: [string, any]) => ({
-      date,
-      score: Math.round(data.total / data.count)
-    }));
-  };
+   return Object.entries(groupedData).map(([date, data]: [string, any]) => ({
+  date,
+  score: Math.round(data.total / data.count),
+  quizSet: 1 // or use a real value if needed
+}));
+
 
   const calculateAverageScore = () => {
     if (!performanceData || performanceData.length === 0) return 0;
@@ -109,7 +113,8 @@ const Performance = () => {
     return counts;
   };
 
-  const chartData = getPerformanceAverageByDate();
+ const chartData: ChartDataItem[] = getPerformanceAverageByDate();
+
   const averageScore = calculateAverageScore();
   const scoreDistribution = getScoreDistribution();
   const completedQuizzes = performanceData?.length || 0;
@@ -150,7 +155,7 @@ const Performance = () => {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "PPP") : "Pick a date"}
+                 {startDate ? format(startDate as Date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -176,7 +181,7 @@ const Performance = () => {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, "PPP") : "Pick a date"}
+                  {endDate ? format(endDate as Date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -264,5 +269,4 @@ const Performance = () => {
     </div>
   );
 };
-
 export default Performance;

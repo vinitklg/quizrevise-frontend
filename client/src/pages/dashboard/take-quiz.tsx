@@ -16,10 +16,13 @@ import PostQuizFeedback from "@/components/PostQuizFeedback";
 interface Question {
   id: string;
   question: string;
-  type: "mcq" | "fill-blank" | "true-false";
-  options?: string[];
+  type: "mcq" | "fill-blank" | "true-false" | "assertion-reasoning";
+  questionType?: string; // ✅ optional field used in rendering
+  options?: string[] | Record<string, string>; // ✅ supports both array and object
   correctAnswer: string;
+  explanation?: string; // ✅ used when showing results
 }
+
 
 interface QuizSet {
   id: number;
