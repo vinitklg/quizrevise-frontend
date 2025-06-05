@@ -70,7 +70,6 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
     const port = process.env.PORT ? parseInt(process.env.PORT) : 5050;
 
-  server.listen(port, 'localhost', () => {
-    log(`serving on http://localhost:${port}`);
-  });
-})();  // 👈 This closes the async IIFE
+ server.listen(port, '0.0.0.0', () => {
+  log(`✅ Server is live at http://0.0.0.0:${port}`);
+});
