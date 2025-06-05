@@ -282,11 +282,13 @@ export async function seedDatabase() {
             ).then(rows => rows[0]);
           
           if (!subject) {
-            [subject] = await db.insert(subjects).values({
-              name: subjectName,
-              gradeLevel: parseInt(grade),
-              board: board
-            }).returning();
+           [subject] = await db.insert(subjects).values({
+  code: `${board}_${grade}_${subjectName}`.toUpperCase().replace(/\s+/g, "_"),
+  name: subjectName,
+  gradeLevel: parseInt(grade),
+  board: board
+}).returning();
+
             console.log(`Created subject: ${subjectName} for ${board} Grade ${grade}`);
           }
           

@@ -15,7 +15,8 @@ export async function seedStandardizedSubjects() {
           board,
           gradeLevel: parseInt(grade),
           stream: subject.stream || null,
-          isCore: subject.isCore,
+         is_core: subject.isCore,
+
         }))
       )
     );

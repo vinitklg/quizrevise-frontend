@@ -35,3 +35,4 @@ export async function seedStandardizedSubjects() {
     throw error;
   }
 }
+seedStandardizedSubjects();

@@ -206,11 +206,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
-  }
-
-  // Subject operations
+    // Subject operations
   async getAllSubjects(): Promise<Subject[]> {
     return await db.select().from(subjects);
   }
@@ -254,13 +250,12 @@ export class DatabaseStorage implements IStorage {
       eq(subjects.gradeLevel, grade)
     ];
 
-    // For grades 6-10, stream should be null
-    // For grades 11-12, filter by stream
-    if (grade <= 10) {
-      conditions.push(eq(subjects.stream, null));
-    } else if (stream) {
-      conditions.push(eq(subjects.stream, stream));
-    }
+  if (grade <= 10) {
+  // Use 'isNull' for type-safe null comparison
+  conditions.push(isNull(subjects.stream));
+} else if (stream !== undefined && stream !== null) {
+  conditions.push(eq(subjects.stream, stream));
+}
 
     return await db
       .select()
@@ -425,15 +420,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(quizSets.setNumber);
   }
 
-  async getQuizSetById(id: number): Promise<QuizSet | undefined> {
-    const [quizSet] = await db
-      .select()
-      .from(quizSets)
-      .where(eq(quizSets.id, id));
-    return quizSet;
-  }
-
-  // QuizSchedule operations
+   // QuizSchedule operations
   async createQuizSchedule(
     schedule: InsertQuizSchedule,
   ): Promise<QuizSchedule> {
@@ -498,29 +485,14 @@ export class DatabaseStorage implements IStorage {
     return schedule;
   }
 
-  async getQuizSchedulesByQuizAndSet(
-    quizId: number,
-    quizSetId: number,
-    userId: number,
-  ): Promise<QuizSchedule[]> {
-    return await db
-      .select()
-      .from(quizSchedules)
-      .where(
-        and(
-          eq(quizSchedules.quizId, quizId),
-          eq(quizSchedules.quizSetId, quizSetId),
-          eq(quizSchedules.userId, userId),
-        ),
-      );
-  }
 
   async getQuizPerformance(
     userId: number,
     subjectId?: number,
     startDate?: Date,
     endDate?: Date,
-  ): Promise<{ date: string; score: number; quizSet: number }[]> {
+  ):Promise<{ date: string; score: number; quizSet: number }[]>
+ {
     // Build the condition for filtering
     const whereConditions = [
       eq(quizSchedules.userId, userId),
@@ -561,11 +533,15 @@ export class DatabaseStorage implements IStorage {
       asc(quizSchedules.completedDate),
     );
 
-    return results.map((result) => ({
-      date: `${result.date?.toISOString().split("T")[0]} (Set ${result.quizSet})`,
-      score: result.score || 0,
-      quizSet: result.quizSet,
-    }));
+    return results.map((result) => {
+  const dateStr = result.date ? result.date.toISOString().split("T")[0] : "Unknown";
+  return {
+    date: `${dateStr} (Set ${result.quizSet})`,
+    score: result.score || 0,
+    quizSet: result.quizSet,
+  };
+});
+
   }
 
   async getSubjectsWithPerformanceData(userId: number): Promise<{ id: number; name: string }[]> {
@@ -767,7 +743,7 @@ export class DatabaseStorage implements IStorage {
         chapterId: quizzes.chapterId,
         topicId: quizzes.topicId,
         questionTypes: quizzes.questionTypes,
-        difficultyLevel: quizzes.difficultyLevel,
+        difficultyLevels: quizzes.difficultyLevels,
         createdAt: quizzes.createdAt,
         userId: quizzes.userId,
         username: users.username,

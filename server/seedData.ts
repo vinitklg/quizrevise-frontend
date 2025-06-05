@@ -97,10 +97,12 @@ export async function seedCurriculumData() {
           let subject;
           try {
             subject = await storage.createSubject({
-              name: subjectName,
-              gradeLevel: grade,
-              board: board
-            });
+  code: `${board}_${grade}_${subjectName}`.toUpperCase().replace(/\s+/g, "_"),
+  name: subjectName,
+  gradeLevel: grade,
+  board: board
+});
+
             console.log(`✓ Created subject: ${subjectName} (${board} Grade ${grade})`);
           } catch (error) {
             // Subject might already exist, try to get it
