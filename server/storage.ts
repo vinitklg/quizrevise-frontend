@@ -822,5 +822,33 @@ export class DatabaseStorage implements IStorage {
     return feedback;
   }
 }
+// ✅ Correct: Fetch one QuizSet by ID
+async getQuizSetById(id: number): Promise<QuizSet | undefined> {
+  const [quizSet] = await db
+    .select()
+    .from(quizSets)
+    .where(eq(quizSets.id, id));
+  return quizSet;
+}
+
+// ✅ Correct: Fetch QuizSchedules matching quizId + quizSetId + userId
+async getQuizSchedulesByQuizAndSet(
+  quizId: number,
+  quizSetId: number,
+  userId: number
+): Promise<QuizSchedule[]> {
+  const results = await db
+    .select()
+    .from(quizSchedules)
+    .where(
+      and(
+        eq(quizSchedules.quizId, quizId),
+        eq(quizSchedules.quizSetId, quizSetId),
+        eq(quizSchedules.userId, userId)
+      )
+    );
+  return results;
+}
+
 
 export const storage = new DatabaseStorage();

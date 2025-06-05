@@ -268,8 +268,10 @@ export async function seedDatabase() {
   
   try {
     for (const [board, grades] of Object.entries(curriculumData)) {
-      for (const [grade, subjects_data] of Object.entries(grades)) {
-        for (const [subjectName, chapters_data] of Object.entries(subjects_data)) {
+      for (const [grade, subjects_data] of Object.entries(grades as Record<string, any>))
+ {
+       for (const [subjectName, chapters_data] of Object.entries(subjects_data as Record<string, any>))
+ {
           
           // Create or get subject
           let subject = await db.select().from(subjects)
@@ -293,14 +295,15 @@ export async function seedDatabase() {
           }
           
           // Create chapters and topics
-          for (const [chapterName, topicsArray] of Object.entries(chapters_data)) {
+          for (const [chapterName, topicsArray] of Object.entries(chapters_data as Record<string, any>))
+ {
             
             // Create or get chapter
             let chapter = await db.select().from(chapters)
               .where(
-                db.and(
-                  db.eq(chapters.name, chapterName),
-                  db.eq(chapters.subjectId, subject.id)
+                and(
+                eq(chapters.name, chapterName),
+                eq(chapters.subjectId, subject.id)
                 )
               ).then(rows => rows[0]);
             
@@ -317,9 +320,9 @@ export async function seedDatabase() {
             for (const topicName of topicsArray) {
               const existingTopic = await db.select().from(topics)
                 .where(
-                  db.and(
-                    db.eq(topics.name, topicName),
-                    db.eq(topics.chapterId, chapter.id)
+                  and(
+                  eq(topics.name, topicName),
+                  eq(topics.chapterId, chapter.id)
                   )
                 ).then(rows => rows[0]);
               

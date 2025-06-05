@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { subjects } from "@shared/schema";
-import { subjectData } from "./subjectdata";
+import { subjectData } from "./subjectData";
 
 // ✅ Flatten and transform the subject data properly
 export const standardizedSubjects = Object.entries(subjectData).flatMap(
