@@ -116,7 +116,8 @@ export async function seedCurriculumData() {
           }
           
           // Create chapters and topics
-          for (const [chapterName, topics] of Object.entries(chapters)) {
+          for (const [chapterName, topics] of Object.entries(chapters as Record<string, string[]>)) {
+
             let chapter;
             try {
               chapter = await storage.createChapter({
@@ -133,7 +134,8 @@ export async function seedCurriculumData() {
             }
             
             // Create topics
-            for (const topicName of topics) {
+            for (const topicName of topics as string[]) {
+
               try {
                 await storage.createTopic({
                   chapterId: chapter.id,

@@ -704,8 +704,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         s.score !== null
       );
       
-      let selectedQuestions = [];
-      const allQuestions = quizSet.questions || [];
+      let selectedQuestions: any[] = [];
+
+      const allQuestions: any[] = Array.isArray(quizSet.questions) ? quizSet.questions : [];
+
+
       
       if (quizHistory.length === 0) {
         // First attempt - use foundational questions
@@ -723,11 +726,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .slice(0, 15);
         } else if (averageScore >= 70) {
           // Good performance - focus on mistakes and moderate challenges
-          const mistakeQuestions = [];
+         const mistakeQuestions: any[] = [];
+
           quizHistory.forEach(history => {
             if (history.userAnswers) {
               Object.keys(history.userAnswers).forEach(questionId => {
-                const userAnswer = history.userAnswers[questionId];
+                const userAnswer = (history.userAnswers as Record<string, any>)[questionId];
+
                 const question = allQuestions.find(q => q.id.toString() === questionId);
                 if (question && userAnswer !== question.correctAnswer) {
                   mistakeQuestions.push(question);
@@ -736,7 +741,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           });
           
-          selectedQuestions = mistakeQuestions.slice(0, 10);
+          selectedQuestions = (mistakeQuestions as any[]).slice(0, 10);
+
           
           // Fill remaining with moderate questions
           if (selectedQuestions.length < 15) {
@@ -1350,7 +1356,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Curriculum data seeded successfully!" });
     } catch (error) {
       console.error("Seeding error:", error);
-      res.status(500).json({ message: "Failed to seed curriculum data", error: error.message });
+      res.status(500).json({ message: "Failed to seed curriculum data", error: (error as Error).message
+ });
     }
   });
 

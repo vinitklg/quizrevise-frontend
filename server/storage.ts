@@ -275,7 +275,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(subjects.board, board),
           eq(subjects.gradeLevel, grade),
-          ne(subjects.stream, null)
+          isNull(subjects.stream)
+
         )
       );
 
@@ -535,7 +536,8 @@ export class DatabaseStorage implements IStorage {
       asc(quizSchedules.completedDate),
     );
 
-    return results.map((result) => {
+    return results.map((result: any) => {
+
   const dateStr = result.date ? result.date.toISOString().split("T")[0] : "Unknown";
   return {
     date: `${dateStr} (Set ${result.quizSet})`,
