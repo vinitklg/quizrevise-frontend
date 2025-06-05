@@ -31,7 +31,8 @@ import {
   type UpsertQuizFeedback,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lt, gt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
+import { eq, and, gte, lt, lte, ne, asc, desc, isNull, sql } from "drizzle-orm";
+
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -250,12 +251,13 @@ export class DatabaseStorage implements IStorage {
       eq(subjects.gradeLevel, grade)
     ];
 
-  if (grade <= 10) {
-  // Use 'isNull' for type-safe null comparison
+  if (grade <= 10 || stream === undefined || stream === null) {
   conditions.push(isNull(subjects.stream));
-} else if (stream !== undefined && stream !== null) {
+} else {
   conditions.push(eq(subjects.stream, stream));
 }
+
+
 
     return await db
       .select()
@@ -519,7 +521,7 @@ export class DatabaseStorage implements IStorage {
         quizId: quizSchedules.quizId,
         scheduleId: quizSchedules.id,
       })
-      .from(quizSchedules);
+      .from(quizSchedules) as any;
 
     if (subjectId) {
       queryBuilder = queryBuilder

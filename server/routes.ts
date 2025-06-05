@@ -16,7 +16,6 @@ import { ZodError } from "zod";
 // Add missing type declarations
 import { SessionData } from 'express-session';
 
-import session from 'express-session';
 
 declare module 'express-session' {
   interface SessionData {
@@ -219,7 +218,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get subjects from user's preferred subjects in profile
-      const preferredSubjects = user.preferredSubject || "";
+     const preferredSubjects = (user as any).preferredSubject || "";
+
       
       if (!preferredSubjects.trim()) {
         return res.json([]);
@@ -227,9 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Split preferred subjects by comma and clean them up
       const subjectNames = preferredSubjects
-        .split(',')
-        .map(subject => subject.trim())
-        .filter(subject => subject.length > 0);
+  .split(",")
+  .map((subject: string) => subject.trim())
+  .filter((subject: string) => subject.length > 0);
+
       
       // For each subject name, find or create the subject
       const subjects = [];
@@ -242,11 +243,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // If subject doesn't exist, create it
         if (!subject) {
-          subject = await storage.createSubject({
-            name: subjectName,
-            gradeLevel: user.grade || 10,
-            board: user.board || "CBSE"
-          });
+         subject = await storage.createSubject({
+  code: `${user.board || "CBSE"}_${user.grade || 10}_${subjectName}`,
+  name: subjectName,
+  gradeLevel: user.grade || 10,
+  board: user.board || "CBSE"
+});
+
         }
         
         if (subject) {
@@ -313,11 +316,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If subject doesn't exist, create it dynamically
       if (!selectedSubject) {
-        selectedSubject = await storage.createSubject({
-          name: reqData.subject,
-          gradeLevel: user.grade || 10,
-          board: user.board || "CBSE"
-        });
+       selectedSubject = await storage.createSubject({
+  code: `${user.board || "CBSE"}_${user.grade || 10}_${reqData.subject}`,
+  name: reqData.subject,
+  gradeLevel: user.grade || 10,
+  board: user.board || "CBSE"
+});
+
         console.log(`Created new subject: ${reqData.subject} for ${user.board || "CBSE"} Grade ${user.grade || 10}`);
       }
       
@@ -649,7 +654,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // ✅ NEW: If all sets of this quiz are completed, mark quiz as completed
-      const allSchedules = await storage.getQuizSchedulesByQuiz(userId, parseInt(quizId));
+      const allSchedules = await storage.getQuizSchedulesByQuizAndSet(
+  parseInt(quizId),
+  parseInt(quizSetId),
+  userId
+);
+
       const allCompleted = allSchedules.every(s => s.status === "completed");
 
       if (allCompleted) {
@@ -1309,7 +1319,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/subjects", isAuthenticated, async (req, res) => {
     try {
       // In a real app, you would check if the user is an admin
-      const subject = await storage.createSubject(req.body);
+      const subject = await storage.createSubject({
+  ...req.body,
+  code: `${req.body.board}_${req.body.gradeLevel}_${req.body.name}`
+});
+
       res.status(201).json(subject);
     } catch (error) {
       console.error(error);
