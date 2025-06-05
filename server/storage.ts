@@ -712,7 +712,10 @@ export class DatabaseStorage implements IStorage {
       .limit(10);
 
     const allActivity = [...recentQuizzes, ...recentCompletions]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .sort((a, b) =>
+  new Date(b.timestamp ?? 0).getTime() - new Date(a.timestamp ?? 0).getTime()
+)
+
       .slice(0, 15);
 
     return allActivity;
@@ -843,5 +846,20 @@ export class DatabaseStorage implements IStorage {
         )
       );
   }
+  async updateQuizStatus(quizId: number, status: string): Promise<void> {
+  await db
+    .update(quizSchedules)
+    .set({ status })
+    .where(eq(quizSchedules.quizId, quizId));
+}
+async getQuizSet(id: number): Promise<QuizSet | undefined> {
+  const [quizSet] = await db
+    .select()
+    .from(quizSets)
+    .where(eq(quizSets.id, id));
+  return quizSet;
+}
+
 } 
+
 export const storage = new DatabaseStorage(); // ✅ This must come after the class ends
