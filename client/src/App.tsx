@@ -24,7 +24,7 @@ import TodayQuizzes from "@/pages/dashboard/today";
 import AskDoubts from "@/pages/dashboard/doubts";
 import FeedbackPage from "@/pages/dashboard/feedback";
 import Settings from "@/pages/dashboard/settings";
-import Performance from "@/pages/dashboard/performance";
+import Performance from "@/pages/dashboard/performance-report";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminLogin from "@/pages/admin/login";
 import AdminUsers from "@/pages/admin/users";
