@@ -12,7 +12,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const BACKEND_URL = "https://quizrevise-backend.onrender.com"; // hardcoded ✅
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
   const fullUrl = `${BACKEND_URL}${url}`;
 
   const res = await fetch(fullUrl, {
