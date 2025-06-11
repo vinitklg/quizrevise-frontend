@@ -12,7 +12,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const BACKEND_URL = "https://quizrevise-backend.onrender.com"; // 💥 Hardcoded for now
+  const BACKEND_URL = "https://quizrevise-backend.onrender.com"; // hardcoded ✅
   const fullUrl = `${BACKEND_URL}${url}`;
 
   const res = await fetch(fullUrl, {
@@ -29,6 +29,7 @@ export async function apiRequest(
 
   return res;
 }
+
 
 
 type UnauthorizedBehavior = "returnNull" | "throw";
