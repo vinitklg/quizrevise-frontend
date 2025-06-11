@@ -31,15 +31,17 @@ export async function apiRequest(
   return res;
 }
 
-
-
 type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+    const url = queryKey[0] as string;
+
+    const res = await fetch(`${BACKEND_URL}${url}`, {
       credentials: "include",
     });
 
