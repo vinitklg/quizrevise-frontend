@@ -41,7 +41,8 @@ const Login = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/login", data);
+     const response = await apiRequest("POST", "/auth/login", data);
+
       const user = await response.json();
       
       // Invalidate user query to refetch after login

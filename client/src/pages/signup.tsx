@@ -81,7 +81,8 @@ const Signup = () => {
         stream: selectedStream || data.stream,
       };
 
-      await apiRequest("POST", "/api/auth/signup", signupData);
+     await apiRequest("POST", "/auth/signup", signupData);
+
       
       // Invalidate user query to refetch after signup
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
